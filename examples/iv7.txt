@@ -1,0 +1,344 @@
+::: defaults
+python_requirements=pandas,numpy,matplotlib, statsmodels, linearmodels
+pyodide_preload=true
+
+::: title(title="The Search for "Clean" Variation")
+
+::: write_speak
+Imagine you are trying to determine if a new, expensive heart surgery actually extends life more than standard medication. 
+
+:::svg
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="240" viewBox="0 0 520 240">
+  <defs>
+    <marker id="arrow1" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#111"/>
+    </marker>
+    <style>
+      .node { fill:#fff; stroke:#111; stroke-width:2; }
+      .lbl  { font: 600 14px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; fill:#111; }
+      .edge { stroke:#111; stroke-width:2.6; fill:none; marker-end:url(#arrow1); }
+    </style>
+  </defs>
+
+  <!-- Nodes -->
+  <circle cx="140" cy="120" r="46" class="node"/>
+  <text x="140" y="125" text-anchor="middle" class="lbl">Treatment</text>
+
+  <circle cx="380" cy="120" r="46" class="node"/>
+  <text x="380" y="125" text-anchor="middle" class="lbl">Outcome</text>
+
+  <!-- Edge (stops at circle boundaries) -->
+  <path d="M186,120 L334,120" class="edge"/>
+</svg>
+
+:::
+You look at the data and see that people who get the surgery live longer. Case closed, right? 
+
+
+Not so fast. The healthiest patients might be the ones doctors choose for surgery, while the frailest get the pills. This is **selection bias**.
+:::svg
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="360" viewBox="0 0 820 360">
+  <defs>
+    <marker id="arrow2" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#111"/>
+    </marker>
+    <style>
+      .node { fill:#fff; stroke:#111; stroke-width:2; }
+      .lbl  { font: 600 14px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; fill:#111; }
+      .sub  { font: 400 10px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; fill:#333; }
+      .edge { stroke:#111; stroke-width:2.6; fill:none; marker-end:url(#arrow2); }
+    </style>
+  </defs>
+
+  <!-- Nodes -->
+  <circle cx="250" cy="160" r="46" class="node"/>
+  <text x="250" y="165" text-anchor="middle" class="lbl">X</text>
+  <text x="250" y="187" text-anchor="middle" class="sub">treatment</text>
+
+  <circle cx="600" cy="160" r="46" class="node"/>
+  <text x="600" y="165" text-anchor="middle" class="lbl">Y</text>
+  <text x="600" y="187" text-anchor="middle" class="sub">outcome</text>
+
+  <circle cx="425" cy="295" r="46" class="node"/>
+  <text x="425" y="300" text-anchor="middle" class="lbl">U</text>
+  <text x="425" y="322" text-anchor="middle" class="sub">unobserved</text>
+
+  <!-- Edges (stop at circle boundaries) -->
+  <!-- X -> Y -->
+  <path d="M296,160 L554,160" class="edge"/>
+
+  <!-- U -> X -->
+  <path d="M403,254 C360,230 315,210 286,192" class="edge"/>
+
+  <!-- U -> Y -->
+  <path d="M447,254 C500,225 545,205 576,192" class="edge"/>
+</svg>
+:::
+In health economics, we call this the "endogeneity problem." Our treatment (surgery) is correlated with the error term (the patient's baseline health).
+
+To fix this, we need an **Instrumental Variable (I.V.)**—a sort of "natural experiment" that nudges some people into surgery for reasons that have nothing to do with their health.
+
+
+
+::: svg
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="360" viewBox="0 0 820 360">
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#111"/>
+    </marker>
+    <style>
+      .node { fill:#fff; stroke:#111; stroke-width:2; }
+      .lbl  { font: 600 14px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; fill:#111; }
+      .sub  { font: 400 10px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; fill:#333; }
+      .edge { stroke:#111; stroke-width:2.6; fill:none; marker-end:url(#arrow); }
+    </style>
+  </defs>
+
+  <!-- Nodes -->
+  <circle cx="120" cy="170" r="46" class="node"/>
+  <text x="120" y="174" text-anchor="middle" class="lbl">Z</text>
+  <text x="120" y="196" text-anchor="middle" class="sub">instrument</text>
+
+  <circle cx="410" cy="170" r="46" class="node"/>
+  <text x="410" y="174" text-anchor="middle" class="lbl">X</text>
+  <text x="410" y="196" text-anchor="middle" class="sub">treatment</text>
+
+  <circle cx="700" cy="170" r="46" class="node"/>
+  <text x="700" y="174" text-anchor="middle" class="lbl">Y</text>
+  <text x="700" y="196" text-anchor="middle" class="sub">outcome</text>
+
+  <circle cx="410" cy="300" r="46" class="node"/>
+  <text x="410" y="304" text-anchor="middle" class="lbl">U</text>
+  <text x="410" y="326" text-anchor="middle" class="sub">unobserved</text>
+
+  <!-- Edges (endpoints stop at circle boundaries) -->
+  <!-- Z -> X -->
+  <path d="M166,170 L364,170" class="edge"/>
+
+  <!-- X -> Y -->
+  <path d="M456,170 L654,170" class="edge"/>
+
+  <!-- U -> X -->
+  <path d="M410,254 L410,216" class="edge"/>
+
+  <!-- U -> Y -->
+  <path d="M452,281 C540,235 600,215 658,189" class="edge"/>
+</svg>
+
+
+::: wait(click=true)
+
+::: title(title=The Two Requirements of an Instrument)
+
+::: write_speak
+A valid instrument $Z$ must satisfy two strict rules to help us find the true effect of $X$ on $Y$.
+
+::: table
+| Requirement | Definition | Intuition |
+| :--- | :--- | :--- |
+| **Relevance** | $Z$ must be correlated with $X$ | The instrument must actually change the behavior we are studying. |
+| **Exogeneity** | $Z$ must be uncorrelated with the error term | The instrument must be as good as randomly assigned; it shouldn't affect $Y$ except through $X$. |
+
+:::mark("Relevance", speak="The instrument must be correlated with the treatment.")
+:::mark("Exogeneity", speak="The instrument must **not** be correlated with the outcome.")
+
+::: write_speak
+Let's use a classic health economics example: **Differential Distance**. 
+
+::: write_speak
+If you live 2 miles from a "High-Tech" hospital, you are more likely to get the surgery than if you live 20 miles away. 
+
+::: write_speak
+Does distance affect your heart health directly? Probably not. Does it affect whether you get surgery? Definitely.
+
+::: question
+If "Distance to Hospital" is our instrument, which condition is violated if people who care more about their health specifically choose to live closer to specialized hospitals?
+* Exogeneity (The Exclusion Restriction)
+Relevance
+Linearity
+Homoscedasticity
+
+::: title(title=The Mechanics: Two-Stage Least Squares)
+
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="420" viewBox="0 0 900 420">
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#111"/>
+    </marker>
+
+    <marker id="arrowGrey" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#666"/>
+    </marker>
+
+    <style>
+      .box { fill: #fff; stroke: #111; stroke-width: 2; rx: 14; ry: 14; }
+      .title { font: 600 18px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; fill: #111; }
+      .label { font: 500 16px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; fill: #111; }
+      .small { font: 400 14px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; fill: #222; }
+      .tiny { font: 400 12px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; fill: #444; }
+      .arrow { stroke: #111; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+      .arrowGrey { stroke: #666; stroke-width: 2.5; fill: none; marker-end: url(#arrowGrey); }
+      .dashed { stroke-dasharray: 7 7; }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text x="40" y="50" class="title">Instrumental Variables (IV): causal effect of X on Y using Z</text>
+
+  <!-- Boxes -->
+  <!-- Z -->
+  <rect x="70" y="140" width="210" height="90" class="box"/>
+  <text x="175" y="175" text-anchor="middle" class="label">Z (Instrument)</text>
+  <text x="175" y="200" text-anchor="middle" class="tiny">affects X, not Y directly</text>
+
+  <!-- X -->
+  <rect x="345" y="140" width="210" height="90" class="box"/>
+  <text x="450" y="175" text-anchor="middle" class="label">X (Endogenous)</text>
+  <text x="450" y="200" text-anchor="middle" class="tiny">treatment / policy / price</text>
+
+  <!-- Y -->
+  <rect x="620" y="140" width="210" height="90" class="box"/>
+  <text x="725" y="175" text-anchor="middle" class="label">Y (Outcome)</text>
+  <text x="725" y="200" text-anchor="middle" class="tiny">earnings / demand / health</text>
+
+  <!-- U -->
+  <rect x="360" y="295" width="180" height="80" class="box"/>
+  <text x="450" y="330" text-anchor="middle" class="label">U (Unobserved)</text>
+  <text x="450" y="355" text-anchor="middle" class="tiny">confounder</text>
+
+  <!-- Arrows -->
+  <!-- Z -> X -->
+  <path d="M280,185 L345,185" class="arrow"/>
+  <text x="312" y="170" text-anchor="middle" class="small">π</text>
+
+  <!-- X -> Y -->
+  <path d="M555,185 L620,185" class="arrow"/>
+  <text x="587" y="170" text-anchor="middle" class="small">β (causal)</text>
+
+  <!-- U -> X -->
+  <path d="M450,295 L450,230" class="arrowGrey"/>
+  <text x="466" y="265" class="tiny">bias source</text>
+
+  <!-- U -> Y -->
+  <path d="M520,308 C610,270 640,250 705,230" class="arrowGrey"/>
+
+  <!-- Forbidden direct effect Z -> Y (exclusion restriction) -->
+  <path d="M260,140 C400,60 560,60 690,140" class="arrow dashed"/>
+  <text x="475" y="95" text-anchor="middle" class="small">no direct path (exclusion)</text>
+
+  <!-- Notes box -->
+  <rect x="70" y="260" width="250" height="115" class="box"/>
+  <text x="90" y="288" class="label">Key conditions</text>
+  <text x="90" y="312" class="tiny">1) Relevance: Z → X (π ≠ 0)</text>
+  <text x="90" y="334" class="tiny">2) Exclusion: Z affects Y only via X</text>
+  <text x="90" y="356" class="tiny">3) Independence: Z ⟂ U</text>
+
+  <!-- Caption -->
+  <text x="40" y="405" class="tiny">
+    Idea: use variation in X induced by Z to estimate β, avoiding confounding from U.
+  </text>
+</svg>
+
+::: write_speak
+To implement this, we use a technique called **Two-Stage Least Squares (2SLS)**. 
+
+::: write_speak
+In **Stage 1**, we use the instrument (Distance) to predict the treatment (Surgery). This "cleans" the treatment of any correlation with the patient's hidden health status.
+
+::: math
+Surgery_i = \pi_0 + \pi_1 Distance_i + \nu_i
+
+::: write_speak
+In **Stage 2**, we use those *predicted* values ($\widehat{Surgery}_i$) to estimate the effect on Life Expectancy.
+
+::: math
+LifeExp_i = \beta_0 + \beta_{IV} \widehat{Surgery}_i + \epsilon_i
+
+::: python(title="Simulating 2SLS in Python", auto_run=after)
+import pandas as pd
+import numpy as np
+import statsmodels.api as sm
+
+# 1. Create fake data
+np.random.seed(42)
+n = 1000
+
+# Hidden Health: affects both Surgery (X) and Life Expectancy (Y)
+health = np.random.normal(0, 1, n)
+
+# Instrument (Z): distance to hospital (affects X, unrelated to health)
+dist = np.random.uniform(0, 50, n)
+
+# Surgery (X): endogenous (binary)
+surgery_prob = 0.5 - (0.01 * dist) + (0.2 * health) + np.random.normal(0, 0.1, n)
+surgery = (surgery_prob > 0.4).astype(int)
+
+# Life expectancy (Y)
+life_exp = 70 + 5 * surgery + 10 * health + np.random.normal(0, 1, n)
+
+# 2. Prepare DataFrame
+df = pd.DataFrame({"Y": life_exp, "X": surgery, "Z": dist})
+df["Intercept"] = 1.0
+
+# 3. 2SLS using statsmodels only
+# First stage: X ~ Intercept + Z
+first_stage = sm.OLS(df["X"], df[["Intercept", "Z"]]).fit()
+
+# Predicted X (a.k.a. X-hat)
+df["X_hat"] = first_stage.fittedvalues
+
+# Second stage: Y ~ Intercept + X_hat
+second_stage = sm.OLS(df["Y"], df[["Intercept", "X_hat"]]).fit()
+
+print("--- First stage: X ~ Z ---")
+print(first_stage.summary())
+
+print("\n--- Second stage (2SLS): Y ~ X_hat ---")
+print(second_stage.summary())
+
+# If you want heteroskedasticity-robust SEs for the second stage:
+second_stage_robust = second_stage.get_robustcov_results(cov_type="HC1")
+print("\n--- Second stage with robust SEs (HC1) ---")
+print(second_stage_robust.summary())
+:::
+
+::: wait
+
+::: write_speak
+Notice the coefficient for $X$. That is our **Local Average Treatment Effect (LATE)**. 
+
+::: write_speak
+It's "Local" because it only tells us the effect for "compliers"—people who got the surgery *because* they lived close by, but wouldn't have otherwise.
+
+::: title(title="The Exclusion Restriction Trap")
+
+::: write_speak
+The hardest part of Instrumental Variables is defending the **Exclusion Restriction**. You have to argue that the instrument has *zero* direct effect on the outcome.
+
+
+
+::: multiple_choice
+Suppose we use "State of Birth" as an instrument for "Years of Education" to see the effect on "Income." If people born in wealthier states get better nutrition (affecting future income directly), is the instrument valid?
+Yes, because State of Birth is random.
+* No, it violates the Exclusion Restriction.
+No, it violates the Relevance condition.
+Yes, but only for people who didn't move.
+
+::: title(title=Summary & Further Reading)
+
+::: write_speak
+Instrumental Variables are a powerful tool to move from **correlation to causation** when randomized controlled trials are impossible or unethical.
+
+::: write_speak
+Just remember: an instrument is only as good as the story you tell to defend its exogeneity.
+
+::: write
+### Deepen Your Understanding
+* **Mostly Harmless Econometrics** by Angrist & Pischke (The "Bible" of IV methods)
+* [Visualizing IV: A Guide for the Perplexed](https://www.sciencedirect.com/topics/economics-econometrics-and-finance/instrumental-variable)
+* [YouTube: Causal Inference with IVs by Scott Cunningham](https://www.youtube.com/watch?v=hp-mY6V_1_E)
+
+::: xplainer_link
+https://mixtape.scunnane.com/07-instrumental_variables
+Read the Causal Mixtape Chapter on IV
+

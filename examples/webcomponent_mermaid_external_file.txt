@@ -1,0 +1,30 @@
+::: title
+Mermaid from external file (test: components/comp-mermaid.js)
+
+::: write
+This example loads the Mermaid component from a <strong>separate JS file</strong> to test that the mechanism works. We use <code>::: webcomponent comp-mermaid(script=./components/comp-mermaid.js, body_attr=content)</code> so the script is loaded from <code>components/comp-mermaid.js</code>. Then <code>::: comp comp-mermaid</code> uses the block body as the diagram. If you see a diagram below, loading from file works. If you see nothing or &quot;Loading diagram…&quot; forever, the script or body passing failed.
+
+::: webcomponent comp-mermaid(script=./components/comp-mermaid.js, body_attr=content)
+
+::: write
+Diagram (body = Mermaid code):
+
+::: comp comp-mermaid
+flowchart LR
+  A[Start] --> B{OK?}
+  B -->|Yes| C[End]
+  B -->|No| A
+
+::: write
+If the diagram appeared above, the flow is: (1) webcomponent block loads comp-mermaid.js and registers body_attr=content. (2) comp block creates &lt;comp-mermaid&gt;, sets content attribute from block body, component renders. If it did not appear, check: script URL (same folder as HTML?), and whether the block body reached the component (content attribute or textContent).
+
+::: comp comp-mermaid
+sequenceDiagram
+  participant U as User
+  participant P as Player
+  U->>P: Click
+  P->>P: Run
+  P-->>U: Done
+
+::: write
+End of external-file test.

@@ -1,0 +1,159 @@
+::: defaults
+speech_lang="nb-NO"
+webr_result_location="left"
+speak_code_language="en-US"
+explain_code="all"
+
+::: names
+english: lang=en-US, voice=female
+
+r_requirements=readr, dplyr, ggplot2
+
+:::title
+ Hendelsesdata vs. personnivå – hvordan svare på spørsmål om pasienter?
+
+::: write_speak
+Helsedata kommer ofte som hendelsesdata: én rad per innleggelse, per konsultasjon, per resept. Samme person kan ha mange rader. Her ser vi hvordan du tenker hendelse mot person, og hvordan du svarer på spørsmål på personnivå.
+
+::: write
+# 1) Hva er hendelsesdata?
+
+Hendelsesdata = én rad per hendelse (f.eks. én rad per innleggelse). En pasient som er innlagt tre ganger gir tre rader. Spørsmål på **hendelsenivå**: «Hvor mange innleggelser?» Spørsmål på **personnivå**: «Hvor mange pasienter?», «Hvor mange innleggelser per pasient?»
+
+:::r
+library(dplyr)    # Laster dplyr for databehandling
+library(ggplot2)  # Laster ggplot2 for figurer
+npr <- read.csv("https://raw.githubusercontent.com/hmelberg/health_data/refs/heads/main/npr.csv")  # Leser inn NPR (én rad per innleggelse)
+npr <- npr %>%
+  mutate(
+    INNDATO = as.Date(INNDATO),     # Dato for innleggelse
+    UTDATO = as.Date(UTDATO),       # Dato for utskrivelse
+    LIGGETID = as.numeric(UTDATO - INNDATO),  # Liggetid i dager
+    # I ekte data har du ofte en pasient-ID. Her simulerer vi én for å vise skillet hendelse/person:
+    PASIENTID = sample(1:400, n(), replace = TRUE)  # 400 «pasienter»; samme person kan ha flere rader
+  )
+npr %>% summarise(antall_rader = n())  # Teller rader = antall hendelser (innleggelser)
+:::
+
+::: write(effect="fade")
+Én rad per innleggelse. PASIENTID er simulert: i praksis kommer den fra registeret. Nå kan vi både telle hendelser og gruppere på person.
+
+:::r
+npr %>% summarise(antall_pasienter = n_distinct(PASIENTID))  # Unike pasienter (personnivå)
+:::
+
+
+# 2) Telle hendelser vs. personer
+
+::: write
+n() teller rader (hendelser). n_distinct(PASIENTID) teller unike personer. Begge tallene trenger du for å forstå dataene.
+
+:::r
+npr %>%
+  summarise(
+    antall_hendelser = n(),                    # Antall rader = antall innleggelser
+    antall_personer = n_distinct(PASIENTID),   # Antall unike pasienter
+    hendelser_per_person = n() / n_distinct(PASIENTID)  # Gjennomsnitt innleggelser per pasient
+  )
+:::
+
+::: write(effect="fade")
+distinct() kan også brukes til å beholde én rad per gruppe, men n_distinct() inne i summarise() er ofte nok for å telle personer.
+
+
+# 3) Beskrive «hvor mange ganger» per person
+
+::: write
+For å svare på «Hvor mange innleggelser hadde hver pasient?» grupperer du på pasient-ID og teller rader i hver gruppe.
+
+:::r
+innleggelser_per_pasient <- npr %>%
+  group_by(PASIENTID) %>%        # Én gruppe per pasient
+  summarise(antall_innleggelser = n())  # Teller rader (hendelser) per pasient
+head(innleggelser_per_pasient, 10)  # Viser de 10 første
+:::
+
+:::r
+innleggelser_per_pasient %>%
+  count(antall_innleggelser, name = "antall_pasienter") %>%  # Hvor mange pasienter har 1, 2, 3, ... innleggelser?
+  arrange(antall_innleggelser)
+:::
+
+::: write(effect="fade")
+Først: én rad per pasient med antall innleggelser. Deretter: teller hvor mange pasienter som har 1, 2, 3, osv. innleggelser – det er et svar på personnivå.
+
+
+# 4) Plot: fordeling av antall hendelser per person
+
+::: write
+Et enkelt søylediagram viser fordelingen «antall pasienter med 1 innleggelse, 2 innleggelser, …».
+
+:::r
+innleggelser_per_pasient %>%
+  count(antall_innleggelser, name = "antall_pasienter") %>%
+  ggplot(aes(x = antall_innleggelser, y = antall_pasienter)) +
+  geom_col(fill = "steelblue") +
+  labs(
+    title = "Hvor mange innleggelser hadde pasientene?",
+    x = "Antall innleggelser",
+    y = "Antall pasienter"
+  )
+:::
+
+
+# 5) Oppsummere per person, deretter bruke resultatet
+
+::: write
+Du kan regne ut noe per hendelse (f.eks. liggetid), deretter oppsummere per person: total liggetid per pasient, eller gjennomsnittlig liggetid per innleggelse per pasient.
+
+:::r
+per_pasient <- npr %>%
+  filter(LIGGETID >= 0) %>%   # Utelater ugyldige liggetider
+  group_by(PASIENTID) %>%
+  summarise(
+    antall_innleggelser = n(),           # Hendelser per person
+    total_liggetid = sum(LIGGETID),     # Sum liggetid (alle innleggelser)
+    snitt_liggetid = mean(LIGGETID)     # Gjennomsnittlig liggetid per innleggelse (for denne personen)
+  )
+per_pasient %>% summarise(
+  pasienter = n(),
+  snitt_innleggelser = mean(antall_innleggelser),
+  snitt_total_liggetid = round(mean(total_liggetid), 1)
+)
+:::
+
+::: write(effect="fade")
+Først grupperer vi på PASIENTID og regner ut antall innleggelser, total liggetid og snitt liggetid per pasient. Deretter kan vi beskrive disse person-tallene (f.eks. gjennomsnittlig total liggetid på tvers av pasienter).
+
+
+# 6) Eksempel: «Hvor mange pasienter har minst én innleggelse med prosedyre X?»
+
+::: write
+På hendelsenivå: «Hvor mange innleggelser med prosedyre JFA20?» På personnivå: «Hvor mange pasienter har hatt minst én slik innleggelse?» – da må du gruppere på person og bruke filter eller distinct.
+
+:::r
+npr %>%
+  filter(PROSEDYRE1 == "JFA20") %>%   # Hendelser med denne prosedyren
+  summarise(antall_hendelser = n(), antall_pasienter = n_distinct(PASIENTID))
+:::
+
+:::r
+pasienter_med_prosedyre <- npr %>%
+  filter(PROSEDYRE1 == "JFA20") %>%
+  distinct(PASIENTID)   # Én rad per pasient som har hatt minst én slik hendelse
+pasienter_med_prosedyre %>% summarise(antall = n())  # Teller personer
+:::
+
+::: write(effect="fade")
+filter() gir alle hendelser med prosedyren. distinct(PASIENTID) reduserer til én rad per pasient som har minst én slik hendelse – derfra kan du telle eller slå sammen med andre data på personnivå.
+
+
+::: write_speak
+# Oppsummering
+
+Hendelsesdata: én rad per hendelse; samme person kan ha mange rader. For spørsmål på personnivå: grupper på pasient-ID med group_by(), bruk n() for antall hendelser og n_distinct() for antall personer, eller lag en person-tabell med summarise() og bruk den videre. Tenk alltid «er spørsmålet om hendelser eller om personer?» før du teller eller oppsummerer.
+
+::: link
+xplainer.app#r101
+Tilbake til første leksjon: Innføring i R (r101)
+:::

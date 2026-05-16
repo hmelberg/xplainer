@@ -1,0 +1,130 @@
+::: defaults(skin=playful)
+
+::: intro(text="Follow-up and censoring", subtitle="Health + R · Lecture 8 of 10", enter=blur-in, duration=3500, speak="Follow-up time and censoring.")
+
+::: new_page(title="Two dates per person", transition=iris)
+
+::: write_speak
+Every rate ratio, every hazard ratio, every Kaplan-Meier curve you will ever see is built on a single decision per person: when does their clock start, and when does it stop?
+
+::: write_speak
+Get those two dates right and everything else falls into place. Get them wrong and your answer silently lies to you. This whole lecture is about that quiet little backbone.
+
+::: new_page(title="Three ways the clock stops", transition=fade)
+
+::: write
+**Follow-up ends at the earliest of three events:**
+- The outcome of interest happens (success — or disaster, depending).
+- The person dies of something else (censored).
+- The study database runs out of time — ours ends **2023-12-31** (censored).
+
+::: speak
+Three things can end follow-up. The event of interest, death from some other cause, or the study simply ending. The earliest of the three wins. Remember that word — earliest.
+
+::: new_page(title="Picture four patients", transition=wipe-left)
+
+::: draw(size=420, animate=true)
+line(40, 40, 380, 40), speak="Here is our calendar axis, from twenty-fifteen on the left to twenty-twenty-three on the right."
+text(40, 30, "2015"), speak=""
+text(340, 30, "2023"), speak=""
+line(60, 90, 200, 90), speak="Patient A starts at her index date in twenty-fifteen and has a heart attack three years later."
+circle(200, 90, 6), speak="Red dot — the event happened. Follow-up ends here."
+line(80, 140, 180, 140), speak="Patient B is followed for about two years..."
+text(185, 145, "X"), speak="...then dies of something unrelated. Black X — censored at death."
+line(120, 190, 360, 190), speak="Patient C has no event and does not die. Follow-up ends when the study ends."
+rect(355, 180, 10, 20), speak="Blue bar — administrative censoring at twenty-twenty-three."
+line(160, 240, 260, 240), speak="Patient D enters later and also makes it to a cardiovascular hospitalisation."
+circle(260, 240, 6), speak="Another red dot. Different person, different clock — same logic."
+
+::: new_page(title="Start = index date (from Lecture 4)", transition=cross-dissolve)
+
+::: write_speak
+Remember from Lecture 4, the index date is the first-ever E11 diagnosis for each person in the cohort. That is where their clock starts. Not their birth, not the start of the registry — their index date.
+
+::: write_speak
+And remember from Lecture 7, we already found the first cardiovascular hospitalisation per person. That is one of our three possible end-of-follow-up events.
+
+::: new_page(title="Computing the end date", transition=fade)
+
+::: r(auto_run=before, title="Computing follow-up per person")
+library(dplyr)
+library(lubridate)
+# cohort already has person_id and index_date from Lecture 4
+# first_outcome_date comes from Lecture 7 (NA if no event)
+followup <- cohort |>
+  left_join(person |> select(person_id, death_date), by = "person_id") |>
+  mutate(
+    # pmin picks the EARLIEST of its arguments, row by row
+    end_date = pmin(
+      first_outcome_date,          # the cardiovascular event, if any
+      death_date,                  # death from any other cause, if any
+      ymd("2023-12-31"),           # administrative end of the study
+      na.rm = TRUE                 # ignore NAs so they do not poison the min
+    ),
+    # 1 if the event happened on or before end_date, 0 otherwise
+    outcome_flag = as.integer(!is.na(first_outcome_date) &
+                              first_outcome_date == end_date)
+  )
+
+::: write_speak
+Three candidates go into `pmin`, and the smallest date wins. The `na.rm = TRUE` is essential — without it, a single missing death date would turn the whole answer into `NA`.
+
+::: message(level=warn, icon=alert)
+**Three traps that eat PhD students alive:**
+
+1. Counting follow-up *before* the index date. That is immortal-time bias — the person could not possibly have had the event yet, so you are stacking the deck.
+2. Forgetting to censor at death. People who die of unrelated causes are not "event-free" forever — they are just gone.
+3. Using calendar time instead of time-since-index. Two patients with the same follow-up length should contribute the same amount, regardless of when they entered.
+
+::: new_page(title="The Surv object", transition=slide-up)
+
+::: write_speak
+In R, time-to-event data is almost always wrapped in a `Surv` object from the `survival` package. It bundles the duration and the event indicator into one column that every survival function understands.
+
+::: r(auto_run=before, title="Wrapping it in Surv")
+library(survival)
+followup <- followup |>
+  mutate(
+    time_years = as.numeric(end_date - index_date) / 365.25,  # days to years
+    surv_obj = Surv(time = time_years, event = outcome_flag)   # the magic pair
+  )
+# time is in years, event is 1 if the outcome happened, 0 if censored
+
+::: write_speak
+Two numbers per person. Time in years, and a zero or a one. That is all a Kaplan-Meier curve or a Cox model needs — everything else they compute themselves.
+
+::: new_page(title="Person-years", transition=fade)
+
+::: r(auto_run=before, title="Total person-time")
+# Add up all the follow-up durations in the cohort
+sum(as.numeric(followup$end_date - followup$index_date)) / 365.25
+#> [1] 7450.2
+
+::: write_speak
+Seven thousand four hundred fifty person-years of follow-up. That is like 745 people watched for 10 years, or 1490 people watched for 5 years — same information content. Person-time is the denominator of every rate you will ever compute.
+
+::: new_page(title="Check your intuition", transition=wipe-right)
+
+::: multiple_choice
+Patient A has index date 2015-06-01, died of an unrelated cause on 2018-09-15, and never had a cardiovascular event. Their follow-up is:
+* from 2015-06-01 to 2018-09-15, event = 0 (censored at death)
+- from 2015-06-01 to 2023-12-31, event = 0 (they made it to study end)
+- zero, because they died before the study ended
+- from 2015-06-01 to 2018-09-15, event = 1 (death counts as the event)
+
+::: celebrate(kind=confetti, bursts=2)
+
+::: sound(name=success)
+
+::: write_speak
+Exactly. Death from another cause stops the clock, but it is not *our* event — so the flag is zero. The patient contributed about 3.3 person-years and then exited quietly, stage left.
+
+::: new_page(title="Where we are going", transition=cross-dissolve)
+
+::: write_speak
+With a start date, an end date, and a zero-or-one flag for every person, we finally have the ingredients to compute actual numbers. Rates per thousand person-years. Kaplan-Meier curves. Median follow-up. All of it.
+
+::: write_speak
+That is Lecture 9. Bring your `Surv` object.
+
+::: xplainer_link(url="09_rates.txt", text="Next: Incidence rates and Kaplan-Meier")

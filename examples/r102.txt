@@ -1,0 +1,156 @@
+::: defaults
+speech_lang="nb-NO"
+webr_result_location="left"
+speak_code_language="en-US"
+explain_code="all"
+
+::: names
+english: lang=en-US, voice=female
+
+r_requirements=readr, dplyr, ggplot2
+
+:::title
+ R med dplyr og ggplot2 – samme oppgaver, andre verktøy
+
+::: write_speak
+I forrige video brukte vi bare innebygd R – «base R». Her gjør vi mye av det samme, men med bibliotekene dplyr og ggplot2. Du ser hvordan koden blir mer lesbar og lett å bygge videre på.
+
+::: write
+## Hvorfor bruke bibliotek?
+
+Base R kan det meste, men koden blir fort tung og uoversiktlig. Med dplyr og ggplot2:
+- **Lesbarhet:** Koden leses mer som setninger («ta data, filtrer, tell, sorter»).
+- **Konsistens:** Samme stil på databehandling og grafer.
+- **Færre feil:** Mindre repetisjon og enklere å endre steg for steg.
+
+Vi laster inn tidyverse – en pakke som blant annet inkluderer dplyr (data) og ggplot2 (grafer).
+
+:::r
+library(dplyr)    ## Laster dplyr som er et bibliotek som hjelper med dataanalyse
+library(ggplot2)  ## Laster ggplot2 for figurer
+npr <- read.csv("https://raw.githubusercontent.com/hmelberg/health_data/refs/heads/main/npr.csv")  ## Leser inn NPR-data fra GitHub og lagrer det som npr
+head(npr)  ## Viser de 6 første radene i datasettet
+:::
+
+
+## 2) Se variabler og telle observasjoner
+
+:::r(result_location="below")
+npr %>% pull(PROSEDYRE1)   # prosent pil prosent (%>%) sender data til neste steg; pull() henter én kolonne
+:::
+
+:::r
+npr %>% summarise(gjennomsnitt_fodsel = mean(FODSELSAAR))  # Beregner gjennomsnittlig fødselsår i datasettet
+:::
+
+:::r(result_location="below")
+npr %>% dim()  # Gir antall rader og kolonner (dimensjoner) i datasettet
+:::
+
+:::r
+npr %>% names()  # Viser alle variabelnavn (kolonner) i datasettet
+:::
+
+:::r
+npr %>% str()  # Strukturen til datasettet: typer og eksempler for hver variabel
+:::
+
+::: write(effect="fade")
+Piped operatoren %>% sender resultatet fra venstre inn som første argument til funksjonen til høyre. Da slipper vi å skrive datasettnavnet om og om igjen.
+
+::: write_speak
+Du kan lese det som «npr, så gjør dette». Variabler kan brukes uten npr$-prefiks inne i dplyr-funksjoner.
+
+
+## 3) Lage nye variabler med mutate
+
+::: write
+Liggetid finnes ikke i datasettet. Vi lager den fra inn- og utdato, akkurat som i base R – men med mutate() og flere variabler i samme steg.
+
+:::r(silent=true)
+npr <- npr %>%
+  mutate(
+    INNDATO = as.Date(INNDATO),                         # Gjør innleggelsesdato om til ekte dato
+    UTDATO = as.Date(UTDATO),                           # Gjør utskrivningsdato om til ekte dato
+    ALDER_BEREGNET = as.integer(format(INNDATO, "%Y")) - FODSELSAAR,  # Beregner alder ved innleggelse ut fra årstall
+    LIGGETID = as.numeric(UTDATO - INNDATO)             # Antall dager mellom innleggelse og utskrivelse
+  )
+:::
+
+:::r(result_location="below")
+npr <- npr %>%
+  mutate(
+    INNDATO = as.Date(INNDATO),                         # Gjør innleggelsesdato om til ekte dato
+    UTDATO = as.Date(UTDATO),                           # Gjør utskrivningsdato om til ekte dato
+    ALDER_BEREGNET = as.integer(format(INNDATO, "%Y")) - FODSELSAAR,  # Beregner alder ved innleggelse ut fra årstall
+    LIGGETID = as.numeric(UTDATO - INNDATO)             # Antall dager mellom innleggelse og utskrivelse
+  )
+npr %>% summarise(
+  min = min(LIGGETID), q1 = quantile(LIGGETID, 0.25),   # Minste liggetid og 1. kvartil
+  median = median(LIGGETID), snitt = mean(LIGGETID),    # Median og gjennomsnittlig liggetid
+  q3 = quantile(LIGGETID, 0.75), max = max(LIGGETID)    # 3. kvartil og maksimal liggetid
+)
+:::
+
+::: write(effect="fade")
+mutate() legger til eller overskriver kolonner. Vi skriver bare variabelnavn uten npr$. Flere kolonner lages i ett kall.
+
+::: write_speak
+Dette er typisk «tidy»-stil: ett datasett, ett steg per linje, og navnene følger med gjennom pipen.
+
+
+## 4) Histogram med ggplot2
+
+:::r
+npr %>%
+  ggplot(aes(x = ALDER_BEREGNET)) +                       # Bruk beregnet alder som x-akse
+  geom_histogram(fill = "skyblue", col = "white", bins = 30) +  ## Tegn histogram med 30 søyler
+  labs(
+    title = "Aldersfordeling ved innleggelse",            # Tittel på figuren
+    x = "Alder",                                          # Tekst på x-aksen
+    y = "Antall"                                          # Tekst på y-aksen (antall observasjoner)
+  )
+:::
+
+::: write(effect="fade")
+Med ggplot2 bygger du grafen lag for lag: først data og aes() (hva er x/y), deretter geom_histogram(), deretter labs() for tekster. Legg til flere lag med +.
+
+::: write_speak
+Sammenlignet med hist() i base R gir ggplot2 en mer enhetlig stil og enklere å justere titler, farger og tema senere.
+
+
+## 5) Telle og vise topp 10 prosedyrer
+
+:::r
+top10 <- npr %>%
+  count(PROSEDYRE1, sort = TRUE) %>%   # Teller hvor mange ganger hver prosedyrekode forekommer, sortert synkende
+  slice_head(n = 10)                   # Beholder bare de 10 vanligste prosedyrene
+top10                                  # Viser tabellen med topp 10
+:::
+
+::: write(effect="fade")
+count() teller forekomster per gruppe; sort = TRUE gir synkende rekkefølge. slice_head(n = 10) tar de 10 øverste radene. Ingen table(), order() eller as.data.frame().
+
+:::r
+top10 %>%
+  ggplot(aes(x = n, y = reorder(PROSEDYRE1, n))) +       # x: antall, y: prosedyrekoder sortert etter antall
+  geom_col(fill = "steelblue") +                         # Søylediagram der høyden er gitt av n
+  labs(title = "Topp 10 prosedyrer", x = "Antall", y = "Prosedyrekode")  # Tittel og aksetekster
+:::
+
+::: write(effect="fade")
+reorder(PROSEDYRE1, n) sorterer kategoriene på y-aksen etter antall. geom_col() er søylediagram når du allerede har tellinger (geom_bar() teller selv).
+
+::: write_speak
+Her ser du typisk dplyr + ggplot2: først rydde og telle med count() og slice_head(), deretter pipe direkte inn i ggplot(). Samme data, ingen ekstra variabler.
+
+
+::: write_speak
+## Oppsummering: base R vs. bibliotek
+
+Med base R bruker du read.csv(), table(), order(), hist() og barplot(). Det fungerer fint. Med dplyr og ggplot2 bruker du read.csv() eller read_csv() til innlasting, deretter count(), mutate(), ggplot() og geom_*(). Koden blir ofte kortere og mer lesbar, og du får en konsistent måte å jobbe på – spesielt når datasettet vokser eller du skal dele kode med andre. Begge veier er gyldig; bibliotekene er verktøy for å jobbe raskere og tydeligere.
+
+::: link
+xplainer.app#r103
+Neste leksjon: Filtrere, gruppere og oppsummere (r103)
+:::

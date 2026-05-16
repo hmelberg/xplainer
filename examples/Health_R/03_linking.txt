@@ -1,0 +1,151 @@
+::: defaults(skin=playful)
+
+::: intro(text="Linking patients across tables", subtitle="Health + R · Lecture 3 of 10", enter=blur-in, duration=3500, speak="Linking patients across tables.")
+
+::: new_page(title="A question you cannot answer alone", transition=iris)
+
+::: write_speak
+Here is a question. When did Patient number forty-two first pick up metformin, and did they land in a cardiac ward after that? Stare at any single table in our registry and you will not find the answer.
+
+::: write_speak
+The person table knows their birthday. The patient registry knows their hospital visits. The prescription registry knows their metformin fills. The story lives in the joins between them.
+
+::: message(level=info, icon=link)
+In Lecture 2 we loaded the three tables. Today we stitch them together on `person_id` so one patient becomes one timeline.
+
+::: new_page(title="Three flavours of join", transition=wipe-left)
+
+::: mermaid
+flowchart LR
+  A[person<br/>5,000 rows] -->|left_join| D[everyone kept<br/>NA where no match]
+  A -->|inner_join| E[only matched rows<br/>cohort shrinks]
+  A -->|anti_join| F[people with NO match<br/>great for QA]
+  B[patient_registry] --> D
+  B --> E
+  B --> F
+
+::: write_speak
+Three joins, three moods. `inner_join` is strict and drops anyone without a partner. `left_join` is generous and keeps the whole left side, padding with NAs. `anti_join` is suspicious and returns only the loners.
+
+::: write_speak
+If you are an epidemiologist with a cohort on the left, your default is `left_join`. You already decided who belongs in the study. You do not want a join to silently evict them because they never touched a hospital.
+
+::: new_page(title="The joins in code", transition=cross-dissolve)
+
+::: r(auto_run=before, title="Three joins, side by side")
+library(dplyr)
+
+# inner_join keeps only people who show up in BOTH tables
+cohort_seen <- inner_join(person, patient_registry, by = "person_id")
+
+# left_join keeps every person, even those with no hospital contact
+cohort_all <- left_join(person, patient_registry, by = "person_id")
+
+# anti_join returns people who never appear in the patient registry
+never_seen <- anti_join(person, patient_registry, by = "person_id")
+
+nrow(cohort_seen)   # rows: one per matched admission
+nrow(cohort_all)    # rows: every person, at least once
+nrow(never_seen)    # rows: healthy ghosts, a QA gift
+
+::: write_speak
+Notice the row counts. `cohort_all` usually has many more rows than `person` — one row per admission, not one per patient. That is not a bug, it is how relational data works.
+
+::: new_page(title="Dates that arrive as text", transition=fade)
+
+::: write_speak
+Real exports almost always hand you dates as character strings. Before you can sort a timeline, you have to parse them. Enter `lubridate`.
+
+::: r(auto_run=before, title="Parsing date columns")
+library(lubridate)
+
+# Suppose dispensing_date came in as "2014-03-21" character strings
+prescription_registry <- prescription_registry |>
+  mutate(dispensing_date = ymd(dispensing_date))   # year-month-day
+
+# If your vendor ships "21/03/2014" use dmy(); "03/21/2014" use mdy()
+# Pick the parser that matches the format, not the one that "kind of works"
+
+::: message(level=warn, icon=alert)
+Never trust `as.Date()` on an ambiguous format. `lubridate` parsers fail loudly on bad rows; silent coercion to NA is how wrong studies get published.
+
+::: new_page(title="Long vs wide: pivoting", transition=slide-up)
+
+::: write_speak
+Our prescription table is already long: one row per dispensing, exactly how joins and filters want it. But sometimes a colleague hands you a wide spreadsheet — one column per year — and you need to reshape it.
+
+::: r(auto_run=before, title="Wide to long with pivot_longer")
+library(tidyr)
+
+# Imagine a messy export with one column per year of metformin DDDs
+wide_export |>
+  pivot_longer(
+    cols = starts_with("ddd_"),          # ddd_2010, ddd_2011, ...
+    names_to = "year",                   # new column for the old column names
+    names_prefix = "ddd_",               # strip the prefix
+    values_to = "ddd_total"              # new column for the values
+  ) |>
+  mutate(year = as.integer(year))
+
+::: write_speak
+`pivot_wider` is the mirror image for when a reviewer demands a table with one column per year. Long is for computing. Wide is for humans reading printouts.
+
+::: new_page(title="Patient forty-two's story", transition=wipe-right)
+
+::: write_speak
+Now the payoff. We take one person, pull their rows from all three tables, and arrange every event by date. A lifetime on one screen.
+
+::: r(auto_run=before, title="Reconstructing one patient timeline")
+# Pick one person to trace end-to-end
+pid <- 42
+
+# Grab their baseline from the person table
+who <- person |> filter(person_id == pid)
+
+# Their hospital visits, only type 2 diabetes admissions
+admits <- patient_registry |>
+  filter(person_id == pid, icd10_main == "E11.9") |>
+  transmute(date = admission_date, event = paste("Admission:", ward))
+
+# Their metformin fills (ATC A10BA02)
+fills <- prescription_registry |>
+  filter(person_id == pid, atc_code == "A10BA02") |>
+  transmute(date = dispensing_date, event = paste("Metformin:", ddd_dispensed, "DDD"))
+
+# Stack the two event streams and sort into a timeline
+timeline <- bind_rows(admits, fills) |>
+  arrange(date)
+
+timeline   # one patient, one ordered story
+
+::: message(level=info, icon=star)
+This pattern — filter, join, arrange, read the story — is the foundation of every analysis in the rest of the series. Cohort building, exposure windows, outcomes, follow-up: all of it is a variation on this.
+
+::: new_page(title="Check your intuition", transition=fade)
+
+::: write_speak
+Quick check before we move on. Picture a clean cohort of one thousand people. You `left_join` it to the patient registry. The result comes back with fifteen thousand rows. What happened?
+
+::: multiple_choice
+Your 1,000-person cohort became 15,000 rows after left_join. What does that mean?
+- Some people had no hospital contact at all, so NAs multiplied the rows.
+- The join failed silently and duplicated each person fifteen times.
+* Many patients had multiple admissions, and left_join returns one row per match.
+- `left_join` always inflates row counts by a factor of fifteen.
+
+::: celebrate(kind=confetti, bursts=2)
+
+::: sound(name=success)
+
+::: write_speak
+Exactly. `left_join` is one-to-many by nature: every admission a patient had becomes its own row. If you wanted one row per person, you would summarise first or join onto a pre-aggregated table.
+
+::: new_page(title="Where this takes us", transition=cross-dissolve)
+
+::: write_speak
+We started with a question nobody could answer from a single table, and ended with Patient forty-two's life on a sorted timeline. Joins, date parsing, and a little pivoting are all it took.
+
+::: write_speak
+Next up: now that we can link everything to everything, we need to decide who actually belongs in our study. That is called building a cohort, and it is Lecture 4.
+
+::: xplainer_link(url="04_cohort.txt", text="Next: Lecture 4 — Building a cohort")

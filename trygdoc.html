@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Try: fetch public Google Doc as text</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 1rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.25rem; }
+    label { display: block; margin-top: 0.75rem; font-weight: 600; }
+    input[type="text"] { width: 100%; box-sizing: border-box; padding: 0.5rem; margin-top: 0.25rem; }
+    button { margin-top: 0.5rem; padding: 0.5rem 1rem; cursor: pointer; }
+    pre, .out { background: #f0f0f0; padding: 0.75rem; border-radius: 6px; white-space: pre-wrap; word-break: break-word; margin-top: 0.5rem; font-size: 0.9rem; }
+    .out.error { background: #fdd; }
+    .out.success { background: #dfd; }
+    .out.warn { background: #ffc; }
+    .method { margin-top: 1rem; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; }
+    .method h3 { margin: 0 0 0.5rem 0; font-size: 1rem; }
+    small { color: #666; display: block; margin-top: 0.25rem; }
+  </style>
+</head>
+<body>
+  <h1>Fetch public Google Doc as plain text (JS test)</h1>
+  <p>Paste a Google Docs link or just the document ID. The doc must be shared so “Anyone with the link” can view.</p>
+
+  <label for="input">Doc URL or ID</label>
+  <input type="text" id="input" placeholder="Paste full link (Anyone can view) or just the doc ID" value="https://docs.google.com/document/d/17ljz_ftXbM-tsPOe0vnNpQRp52gCEntapeXvc3KW9bw/edit?usp=sharing" />
+
+  <button type="button" id="btn">Fetch as text</button>
+
+  <div id="docIdOut" class="out" style="display:none;"></div>
+  <div id="result"></div>
+
+  <script>
+    const input = document.getElementById("input");
+    const btn = document.getElementById("btn");
+    const docIdOut = document.getElementById("docIdOut");
+    const result = document.getElementById("result");
+
+    function show(el, html, className) {
+      el.innerHTML = html;
+      el.className = "out " + (className || "");
+      el.style.display = "block";
+    }
+
+    function escapeHtml(s) {
+      const div = document.createElement("div");
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    /**
+     * Extract document ID from common Google Docs URL forms:
+     * - https://docs.google.com/document/d/DOC_ID/edit
+     * - https://docs.google.com/document/d/DOC_ID/view
+     * - https://docs.google.com/document/d/DOC_ID
+     * - DOC_ID (already just the id)
+     */
+    function extractDocId(urlOrId) {
+      const s = (urlOrId || "").trim();
+      if (!s) return null;
+      const m = s.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (m) return m[1];
+      if (/^[a-zA-Z0-9_-]+$/.test(s)) return s;
+      return null;
+    }
+
+    async function getExportTxt(docId) {
+      const url = `https://docs.google.com/document/d/${docId}/export?format=txt`;
+      const res = await fetch(url, { mode: "cors" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.text();
+    }
+
+    async function getPublishedTxt(docId) {
+      const url = `https://docs.google.com/document/d/${docId}/pub?output=txt`;
+      const res = await fetch(url, { mode: "cors" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.text();
+    }
+
+    /**
+     * Fallback: fetch published HTML and strip tags to get plain text.
+     * Pub URL (no output=txt): usually returns HTML.
+     */
+    async function getPublishedHtmlAsText(docId) {
+      const url = `https://docs.google.com/document/d/${docId}/pub`;
+      const res = await fetch(url, { mode: "cors" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const html = await res.text();
+      const div = document.createElement("div");
+      div.innerHTML = html;
+      return (div.textContent || div.innerText || "").trim();
+    }
+
+    async function run() {
+      const raw = input.value.trim();
+      const docId = extractDocId(raw);
+
+      result.innerHTML = "";
+      docIdOut.style.display = "none";
+
+      if (!docId) {
+        show(result, "Could not parse a document ID. Paste a full Google Docs URL or the ID (e.g. 1ABCxyz123).", "error");
+        return;
+      }
+
+      show(docIdOut, "Document ID: <code>" + escapeHtml(docId) + "</code>", "");
+      docIdOut.style.display = "block";
+
+      const methods = [
+        {
+          name: "export?format=txt",
+          fn: () => getExportTxt(docId),
+          note: "Standard export endpoint. Often triggers download or sign-in in a new tab; CORS may block fetch().",
+        },
+        {
+          name: "pub?output=txt",
+          fn: () => getPublishedTxt(docId),
+          note: "For docs “Published to the web”. May not return plain text depending on Google’s response.",
+        },
+        {
+          name: "pub (HTML → strip tags)",
+          fn: () => getPublishedHtmlAsText(docId),
+          note: "Fetches published HTML and strips tags. Only works if CORS allows.",
+        },
+      ];
+
+      for (const m of methods) {
+        const box = document.createElement("div");
+        box.className = "method";
+        box.innerHTML = "<h3>" + escapeHtml(m.name) + "</h3><small>" + escapeHtml(m.note) + "</small><pre class='method-result'>Trying…</pre>";
+        result.appendChild(box);
+        const pre = box.querySelector(".method-result");
+
+        try {
+          const text = await m.fn();
+          pre.textContent = text ? text.slice(0, 2000) + (text.length > 2000 ? "\n\n… [truncated]" : "") : "(empty)";
+          box.classList.add("success");
+        } catch (err) {
+          pre.textContent = "Error: " + err.message;
+          if (err.message.includes("CORS") || err.message.includes("Failed to fetch")) {
+            pre.textContent += "\n\nCORS or network blocked. Try opening the export URL in a new tab, or use a server-side proxy.";
+          }
+          box.classList.add("error");
+        }
+      }
+    }
+
+    btn.addEventListener("click", run);
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") run(); });
+  </script>
+</body>
+</html>

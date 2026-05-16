@@ -1,0 +1,97 @@
+::: defaults(skin=playful)
+
+::: intro(text="The Sovaldi decision", subtitle="hecon101 · Lecture 10 of 10", enter=blur-in, duration=3500, speak="The Sovaldi decision. The finale.")
+
+::: new_page(title="One drug, three answers", transition=iris)
+
+::: write_speak
+One drug, three countries, three different answers. This is the lecture where the framework meets the newspaper.
+
+::: new_page(title="The facts on the table", transition=fade)
+
+::: table
+| Fact                          | Value                         |
+| ----------------------------- | ----------------------------- |
+| Drug                          | Sovaldi (sofosbuvir), Gilead  |
+| Launched                      | 2014                          |
+| Cure rate                     | > 95%                         |
+| List price (12-week course)   | €60,000 / $84,000             |
+| Eligible patients in Europe   | ~3–5 million                  |
+| Full rollout cost (Europe)    | ~€100+ billion                |
+
+::: write_speak
+Every number on that card is defensible. Together, they broke every health system that looked at them.
+
+::: new_page(title="Country 1 — United Kingdom", transition=wipe-left)
+
+::: write
+**UK / NHS / NICE.** Confidential discount with Gilead (~50% off list). Phased rollout over 5 years. Roughly **10,000 patients per year** treated first, sickest prioritised, rest queued.
+
+::: write_speak
+NICE did not say no. They said yes, slowly, and quietly at half price.
+
+::: write
+*Tool check.* **CEA** (Lecture 8): ICER ~€12,000/QALY — well under the £20–30k/QALY threshold (Lecture 9). **BIA** (Lecture 9): solved by negotiation + queue. **Cost:** thousands of curable people wait. Classic utilitarian move (Lecture 7).
+
+::: new_page(title="Country 2 — France", transition=wipe-right)
+
+::: write
+**France / HAS.** Fully reimbursed from day one — but only for **fibrosis stage F2 and above** (the sicker patients). Price negotiated down. Expanded to **all patients in 2016** once the budget math worked.
+
+::: write_speak
+France paid full freight for some, and told the rest to get sicker first. Then they changed their mind.
+
+::: write
+*Tool check.* **CEA** (Lecture 8) ✓. **BIA** (Lecture 9) ✓ via staging. But **horizontal equity** (Lecture 7) takes a hit: two patients, same insurance, same disease name, different access — only the fibrosis score differs.
+
+::: new_page(title="Country 3 — US state Medicaid", transition=wipe-left)
+
+::: write
+**US / state Medicaid programs.** Most states restricted Sovaldi to **fibrosis stage F3–F4** (the sickest only). Sobriety requirements in several states. **ACLU lawsuits** followed, 2015–2017. Several states lost in court and loosened criteria.
+
+::: write_speak
+The US rationed openly by severity, and then found out whether "sick enough" is a medical question or a legal one.
+
+::: write
+*Tool check.* **Adverse selection + market failure** (Lecture 5): fragmented payers, no single negotiator, Gilead holds all the cards. **Supply-side incentives** (Lecture 6): Medicaid is a capped budget, so rationing is the only lever. Rationing by severity is **vertical equity** (Lecture 7) — medically rational, legally contested.
+
+::: new_page(title="So — who got it right?", transition=cross-dissolve)
+
+::: countdown(n=3, step_ms=900, text="Which country got it right?", speak="Three. Two. One.")
+
+::: reveal
+None of them. And all of them. That's the point — each system optimised a different corner of the same impossible triangle: cost, coverage, and equity.
+
+::: celebrate(kind=flash, bursts=2)
+
+::: new_page(title="Looping back to Lecture 1", transition=slide-up)
+
+::: write
+Remember the four features that made health economics weird in **Lecture 1**? Every country's Sovaldi policy is a different bet on which feature hurts most.
+
+::: write
+**Uncertainty** → UK's phased rollout absorbs forecast risk over 5 years. **Asymmetric information** → France's fibrosis staging lets clinicians, not patients, gate access. **Externalities** → treating Hep C reduces onward transmission; none of the three systems priced this in cleanly. **Equity** → every country picked a different ethical lens from Lecture 7, and every choice left somebody behind.
+
+::: write_speak
+The framework does not pick a winner. It tells you exactly which trade-off each country made, and who paid for it.
+
+::: new_page(title="Check yourself", transition=fade)
+
+::: multiple_choice
+Which country's Sovaldi policy most clearly violated *horizontal equity*?
+* France — F1 and F4 patients had the same insurance and the same disease name, but different access
+- UK — because they delayed rollout over 5 years
+- US — because they explicitly rationed by fibrosis stage
+
+::: celebrate(kind=fireworks, bursts=4)
+::: sound(name=success)
+
+::: new_page(title="The whole course, in one sentence", transition=cross-dissolve)
+
+::: write
+From Lecture 2's Grossman stock, to Lecture 3's RAND elasticity of −0.2, to Lecture 4's moral hazard, to Lecture 5's lemons, to Lecture 8's €12,000/QALY ICER, to Lecture 9's BIA — you now have the vocabulary for every fight a health ministry will ever have.
+
+::: write_speak
+Health economics is not a machine that spits out the answer. It is a framework that makes your disagreement with your colleague much more precise.
+
+::: xplainer_link(url="01_why_different.txt", text="Back to the start: Lecture 1")

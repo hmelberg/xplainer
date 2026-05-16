@@ -1,0 +1,151 @@
+# Master plan — hecon101: Introduction to Health Economics
+
+A 10-lecture xplainer series introducing master's students to health economics.
+Each lecture is short (5-7 minutes of playtime), visually rich, and grounded in
+**named real-world examples**. Narration is kept light — prefer silent `::: write`
+for definitions and formulas, reserve `::: write_speak` for the 1-2 key sentences
+that really need a voice.
+
+## Audience
+
+Master's students in public health, economics, health policy, health management,
+and medicine. Assumes introductory microeconomics and basic statistics. No prior
+health economics required.
+
+## The running case: the Sovaldi debate
+
+Every lecture circles back to one concrete case: **Sovaldi (sofosbuvir)**, an oral
+drug launched by Gilead in 2014 that **cures hepatitis C in >95% of patients**.
+A 12-week course was priced at **€60,000-84,000 per patient**. With 3-5 million
+Hep C patients in Europe, a full rollout would have consumed national drug
+budgets. Every health system had to decide: cover it for whom, on what terms, at
+what price?
+
+This one case illustrates nearly every idea in the course — demand, insurance,
+market failure, cost-effectiveness, equity, budget impact — so it threads all
+ten lectures together. Use it as the anchor example at least once per lecture.
+
+## Shared numbers & concepts (use these consistently)
+
+| Concept                                | Value to use                 |
+|----------------------------------------|------------------------------|
+| WTP threshold (reference)              | €30,000 per QALY             |
+| RAND HIE price elasticity of demand    | ≈ -0.2                       |
+| Sovaldi list price (12-week course)    | €60,000                      |
+| Sovaldi QALY gain vs old treatment     | ~5 QALYs per patient         |
+| Sovaldi ICER at list price (rough)     | ~€12,000/QALY                |
+| Nordic Hep C prevalence                | ~0.5% of adults (illustration) |
+| Acronym key                            | ICER, CEA, QALY, BIA, HTA, HIE |
+
+## Style rules — every lecture
+
+- Start with `::: defaults(skin=playful)` then `::: intro(text="<title>", subtitle="hecon101 · Lecture N of 10", enter=blur-in, duration=3500, speak="<spoken title>")`.
+- End with `::: xplainer_link(url="<next file>.txt", text="Next: <next lecture title>")`. Lecture 10 loops back to lecture 1.
+- **Narration is LIGHT**: every `::: write_speak` block must be **AT MOST 2
+  sentences**. Anything longer goes in silent `::: write` (no audio).
+- **Prefer visuals over prose**: every lecture uses at least **2 non-narrated
+  block types** from {draw, svg, mermaid, table, math, image, message}.
+- **Use concrete numbers and names**: real studies (RAND HIE, Oregon HIE, Akerlof),
+  real drugs (Sovaldi, statins), real country systems (NICE UK, IQWiG Germany,
+  HAS France, ICER US), real numbers (€30,000/QALY, not "a high threshold").
+- At least **6 distinct block types** per lecture.
+- Exactly one `::: multiple_choice` or `::: question` per lecture.
+- Target playtime: 5-7 minutes (~15-20 blocks).
+- Reference the Sovaldi running example in at least one block per lecture.
+- Reference prior lectures by number when building on concepts.
+
+## The ten lectures
+
+### 01 — Why health economics is different
+**File**: `01_why_different.txt`. Hook: Sovaldi priced a cure at €60,000. If this
+were a car or a phone, "demand = supply curve intersection" would close the case.
+But here, standard microeconomics feels broken. Why? Four distinguishing features:
+**uncertainty** (you don't know when you'll need care), **asymmetric information**
+(the doctor knows more than you), **externalities** (vaccinating you protects me),
+**equity concerns** (nobody accepts "priced out of chemo"). Set up the course as
+a guided tour of how economists handle these four gaps.
+
+### 02 — Health as investment (Grossman model)
+**File**: `02_grossman.txt`. Health is a stock that depreciates over time. You
+inherit some, you produce more via time and medical care, it decays (fast when
+old, slow when young). Grossman (1972): demand for health is demand for an
+investment good AND a consumption good. Demand for health CARE is *derived* from
+demand for health. One simple diagram: stock over age, with investment peaks
+keeping it above a critical threshold. Keep the math to one line.
+
+### 03 — Demand for health care
+**File**: `03_demand.txt`. Price elasticity of demand. The **RAND Health
+Insurance Experiment** (1974-1982, 2,750 families, randomized to cost-sharing
+arms): elasticity ≈ **-0.2**. The **Oregon Health Insurance Experiment** (2008
+Medicaid lottery): effect of coverage on ER visits and outpatient use. Why
+health-care demand is inelastic: you don't price-shop during a heart attack.
+Moral hazard exists but it's moderate in magnitude.
+
+### 04 — Insurance and moral hazard
+**File**: `04_insurance.txt`. Why people buy insurance: risk aversion +
+diminishing marginal utility of income. Ex-ante moral hazard (less prevention
+because insurance pays if you get sick) vs ex-post moral hazard (more care
+because it's free at the point of use). Cost-sharing tools: deductibles,
+coinsurance, copays. Sovaldi example: if you have a €5,000 deductible, does that
+matter when the drug costs €60,000? Oregon HIE result: Medicaid raised ER use
+despite cost-sharing — moral hazard exists.
+
+### 05 — Adverse selection and market failure
+**File**: `05_adverse_selection.txt`. Akerlof's lemons model, applied to
+insurance: if insurer can't see risk, premium → average cost → healthy drop out
+→ pool gets sicker → premium rises → death spiral. Fixes: individual mandate
+(ACA, Swiss Santésuisse, German system), risk adjustment, community rating,
+reinsurance. Example: 2017 debate on ACA mandate repeal.
+
+### 06 — Supply side: physician and hospital incentives
+**File**: `06_supply.txt`. Physician as imperfect agent for the patient.
+Supplier-induced demand (Fuchs 1978 tonsillectomy study; per-capita surgeries
+track surgeon density). Payment systems compared: **fee-for-service** (pays for
+volume), **capitation** (pays for enrolled patients), **DRG / case-mix** (pays
+per discharge). Example: Kaiser Permanente (capitation + integration) vs
+traditional Medicare (fee-for-service). What each system incentivizes.
+
+### 07 — Equity vs efficiency
+**File**: `07_equity.txt`. Two ethical lenses: **Rawlsian** (maximize the
+minimum) vs **utilitarian** (maximize the total). Horizontal equity = equal
+treatment for equal need; vertical equity = appropriate differentiation by need.
+Orphan drugs create the classic tension: €500,000 per QALY for a rare disease —
+CEA says no, equity argument says yes. Sovaldi tie-in: should Hep C treatment
+priority go to the sickest, the youngest, or those with children at home?
+
+### 08 — Cost-effectiveness analysis (CEA)
+**File**: `08_cea.txt`. The formula: **ICER = (Cost_B - Cost_A) / (QALY_B -
+QALY_A)**. What a QALY is: a year of life weighted by health-related quality
+(0 = dead, 1 = perfect health). Compute Sovaldi's ICER from the shared numbers
+(€60,000 cost, 5 QALYs gained → €12,000/QALY) and compare to the €30,000/QALY
+threshold. The cost-effectiveness plane (quadrants) as a picture.
+
+### 09 — Decision-making: thresholds, BIA, MCDA
+**File**: `09_decisions.txt`. Who actually decides what gets covered? **NICE**
+(UK, £20-30k/QALY threshold), **IQWiG** (Germany, no explicit threshold),
+**HAS** (France, therapeutic benefit scale), **ICER** (US, voluntary). Key move:
+even if CEA says yes, **Budget Impact Analysis** can say no — Sovaldi's ICER is
+great per patient, but rolling it out to 200,000 patients costs €12 billion.
+MCDA for factors CEA can't price (severity, equity, innovation).
+
+### 10 — Case study: the Sovaldi decision
+**File**: `10_sovaldi_case.txt`. The finale. Walk through how three different
+countries handled Sovaldi: **UK** (NHS price negotiation, phased rollout),
+**France** (conditional reimbursement restricted to sickest first), **US** (state
+Medicaid rationing by fibrosis stage, lawsuits). Critique each using the tools
+from Lectures 1-9. Discuss what a "just" answer would look like. Loop back to
+the four distinguishing features from Lecture 1.
+
+## Cross-reference chain
+
+01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 01
+
+Links are relative, e.g. `url="02_grossman.txt"`.
+
+## Authoring notes
+
+- Read `src/explain_prompt3.txt` first and follow it.
+- Keep spoken text light. The user will be reading on a screen while listening;
+  do not compete for their attention.
+- Cite at least one named study or country system per lecture.
+- Vary the `::: new_page(transition=...)` style so the series feels musical.

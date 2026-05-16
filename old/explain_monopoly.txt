@@ -1,0 +1,112 @@
+::: defaults(font_size_px=22, draw_coords="cartesian", draw_location="right")
+
+::: new_page(title="The Monopoly Problem")
+::: write_speak(location="left")
+Welcome! Today we're going to visualize exactly why monopolies are considered inefficient by economists. We call this inefficiency **Deadweight Loss**.
+
+To understand this, we need to compare two worlds:
+
+1. **Perfect Competition:** Where supply meets demand.
+2. **Monopoly:** Where one seller controls the price.
+
+Let's start by setting up our market graph.
+::: draw
+{"cmd":"line","x1":0,"y1":0,"x2":0,"y2":100,"stroke":"#888","strokeWidth":2}
+{"cmd":"line","x1":0,"y1":0,"x2":100,"y2":0,"stroke":"#888","strokeWidth":2}
+{"cmd":"text","x":5,"y":95,"text":"Price ($)","fill":"#888"}
+{"cmd":"text","x":90,"y":5,"text":"Quantity","fill":"#888"}
+
+::: wait(click=true)
+::: write_speak(location="left")
+First, here is the **Demand Curve** (Blue). It shows how much people are willing to pay.
+
+And here is the **Marginal Cost (MC)** (Red). For simplicity, let's assume it costs the firm a constant $20 to produce each unit.
+::: draw
+{"cmd":"line","x1":0,"y1":100,"x2":100,"y2":0,"stroke":"#3b82f6","label":"Demand","strokeWidth":3}
+{"cmd":"line","x1":0,"y1":20,"x2":100,"y2":20,"stroke":"#ef4444","label":"MC","strokeWidth":3}
+
+::: new_page(title="The Social Optimum")
+::: write_speak(location="left")
+In a perfectly competitive market, firms would produce as long as the customer is willing to pay more than the cost of production.
+
+They would produce until **Price = Marginal Cost**.
+
+This happens at **Point C** (). This is the **Social Optimum**. It maximizes the total benefit to society.
+::: draw
+{"cmd":"line","x1":0,"y1":0,"x2":0,"y2":100,"stroke":"#888","strokeWidth":2}
+{"cmd":"line","x1":0,"y1":0,"x2":100,"y2":0,"stroke":"#888","strokeWidth":2}
+{"cmd":"line","x1":0,"y1":100,"x2":100,"y2":0,"stroke":"#3b82f6","strokeWidth":1}
+{"cmd":"line","x1":0,"y1":20,"x2":100,"y2":20,"stroke":"#ef4444","strokeWidth":1}
+{"cmd":"circle","cx":80,"cy":20,"r":4,"fill":"#10b981","id":"optimum"}
+{"cmd":"line","x1":80,"y1":20,"x2":80,"y2":0,"stroke":"#10b981","strokeDasharray":"5,5"}
+{"cmd":"text","x":82,"y":25,"text":"Social Optimum (Q=80)","fill":"#10b981","fontSize":16}
+
+::: new_page(title="The Monopolist's Choice")
+::: write_speak(location="left")
+But a Monopolist doesn't care about the social optimum. They care about **Profit**.
+
+To maximize profit, they look at their **Marginal Revenue (MR)** curve (the Green dashed line). This curve falls twice as fast as Demand.
+::: draw
+{"cmd":"line","x1":0,"y1":0,"x2":0,"y2":100,"stroke":"#888"}
+{"cmd":"line","x1":0,"y1":0,"x2":100,"y2":0,"stroke":"#888"}
+{"cmd":"line","x1":0,"y1":100,"x2":100,"y2":0,"stroke":"#3b82f6","label":"D"}
+{"cmd":"line","x1":0,"y1":20,"x2":100,"y2":20,"stroke":"#ef4444","label":"MC"}
+{"cmd":"line","x1":0,"y1":100,"x2":50,"y2":0,"stroke":"#22c55e","strokeDasharray":"5,5","label":"MR"}
+
+::: wait(click=true)
+::: write_speak(location="left")
+The Monopolist produces where **MR = MC**.
+
+Look at the graph:
+
+1. They stop producing at **Q = 40**.
+2. They charge the highest price people will pay at that quantity: **$60**.
+
+Notice the difference? The Monopolist produces **less** (40 vs 80) and charges **more** ($60 vs $20).
+::: draw
+{"cmd":"circle","cx":40,"cy":20,"r":4,"fill":"black"}
+{"cmd":"line","x1":40,"y1":20,"x2":40,"y2":60,"stroke":"#000","strokeDasharray":"3,3"}
+{"cmd":"line","x1":40,"y1":60,"x2":0,"y2":60,"stroke":"#000","strokeDasharray":"3,3"}
+{"cmd":"circle","cx":40,"cy":60,"r":4,"fill":"black"}
+{"cmd":"text","x":5,"y":62,"text":"Pm ($60)","fill":"black"}
+{"cmd":"text","x":40,"y":5,"text":"Qm (40)","fill":"black"}
+
+::: new_page(title="Visualizing Deadweight Loss")
+::: write_speak(location="left")
+Here is the tragedy of the monopoly.
+
+Look at the units between **Q=40** and **Q=80**.
+
+* **Consumers** value these units *more* than $20 (the blue line is above the red line).
+* **Producers** could make them for $20.
+
+These are **mutually beneficial trades** that simply *do not happen* because the monopolist restricts supply to keep prices high.
+::: draw
+{"cmd":"line","x1":0,"y1":0,"x2":0,"y2":100,"stroke":"#888"}
+{"cmd":"line","x1":0,"y1":0,"x2":100,"y2":0,"stroke":"#888"}
+{"cmd":"line","x1":0,"y1":100,"x2":100,"y2":0,"stroke":"#3b82f6","label":"D"}
+{"cmd":"line","x1":0,"y1":20,"x2":100,"y2":20,"stroke":"#ef4444","label":"MC"}
+{"cmd":"line","x1":40,"y1":0,"x2":40,"y2":60,"stroke":"#000","strokeDasharray":"3,3"}
+{"cmd":"line","x1":80,"y1":0,"x2":80,"y2":20,"stroke":"#000","strokeDasharray":"3,3"}
+
+::: wait(click=true)
+::: write_speak(location="left")
+This lost value is the **Deadweight Loss**. It is represented by the area of this triangle.
+
+It is value that has "vanished" from the economy—neither the consumer nor the monopolist gets it.
+::: draw
+{"cmd":"polygon","points":[[40,60],[40,20],[80,20]],"fill":"rgba(255, 165, 0, 0.5)","stroke":"orange"}
+{"cmd":"text","x":45,"y":35,"text":"DWL","fill":"#92400e","fontSize":18,"fontWeight":"bold"}
+
+::: new_page(title="Check Your Understanding")
+::: question
+Why does Deadweight Loss occur in a monopoly?
+
+* Because the monopolist charges a price equal to Marginal Cost.
+* Because the monopolist produces too much goods, wasting resources.
+
+* Because the monopolist produces less than the social optimum, preventing beneficial trades.
+
+* Because the Marginal Cost curve is downward sloping.
+
+::: message(level="info", text="Summary: Deadweight Loss is the wealth destroyed because a monopoly sets the price above marginal cost, causing quantity to fall below the efficient level.")

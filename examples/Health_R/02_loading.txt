@@ -1,0 +1,130 @@
+::: defaults(skin=playful)
+
+::: intro(text="Loading and exploring registry data", subtitle="Health + R · Lecture 2 of 10", enter=blur-in, duration=3500, speak="Loading and exploring registry data.")
+
+::: write_speak
+In Lecture 1 you met the three tables on paper. Person, patient registry, prescription registry. Today we actually open them.
+
+::: message(level=info, icon=info)
+A full Nordic prescription registry carries around 50 million rows. Our synthetic copy has 5,000 people. That is on purpose — laptops deserve mercy.
+
+::: new_page(title="The three tables, at a glance", transition=fade)
+
+::: mermaid
+erDiagram
+    person ||--o{ patient_registry : has
+    person ||--o{ prescription_registry : has
+    person {
+        int person_id PK
+        date birth_date
+        chr sex
+        chr region
+        date death_date
+    }
+    patient_registry {
+        int person_id FK
+        date admission_date
+        date discharge_date
+        chr icd10_main
+        chr icd10_secondary
+        chr ward
+    }
+    prescription_registry {
+        int person_id FK
+        date dispensing_date
+        chr atc_code
+        chr product_name
+        num ddd_dispensed
+    }
+
+::: write_speak
+Three tables, one key. Everything we do for the rest of the series hangs off `person_id`. Keep an eye on it.
+
+::: new_page(title="Opening the first file", transition=wipe-left)
+
+::: write_speak
+We start with the simplest table — one row per person. `readr::read_csv` is the friendly default: it gives you a tibble, guesses column types, and usually parses dates without complaint.
+
+::: r(auto_run=before, title="Loading person.csv")
+library(readr)                                # tidy CSV reader
+library(dplyr)                                # for glimpse and the pipe
+person <- read_csv("person.csv")              # one row per person
+person                                        # print the tibble header
+
+::: write_speak
+Notice how `read_csv` prints a little column-spec report. That is it telling you what it guessed. Ninety percent of the time it is right. The other ten percent is why we always look.
+
+::: message(level=info, icon=zap)
+Bigger data? `data.table::fread()` is a few times faster on large CSVs, and `arrow::read_parquet()` reads columnar files at near-memory speed. We will stick with `readr` today — but remember those names when your file crosses a gigabyte.
+
+::: new_page(title="First look: glimpse", transition=cross-dissolve)
+
+::: r(auto_run=before, title="A sideways view of person")
+person |> glimpse()                           # rotates the table so every column fits
+
+::: write_speak
+`glimpse` turns the table on its side so every column gets one line. You see the type, the first few values, and the total row count — all in one screen.
+
+::: write_speak
+`person_id` is an integer and our join key. `birth_date` is a proper date, not a string — good, `readr` caught it. `sex` and `region` are character. And `death_date`? Mostly NA, because most of our 5,000 people are still alive.
+
+::: r(auto_run=before, title="Any missing birth dates?")
+summary(person$death_date)                    # summary handles dates and NAs
+sum(is.na(person$death_date))                 # count the living
+
+::: write_speak
+`summary` is the lazy-but-useful tool: min, max, median, and — crucially — an NA count. In a registry, NA is never just noise. It almost always means something clinical.
+
+::: new_page(title="Table two: patient_registry", transition=iris)
+
+::: r(auto_run=before, title="Loading hospital contacts")
+patient_registry <- read_csv("patient_registry.csv")   # one row per admission or visit
+patient_registry |> glimpse()                          # survey the columns
+
+::: write_speak
+One row per hospital encounter, not one row per person. Someone with three admissions appears three times. That is the whole point of a registry — the longitudinal trail.
+
+::: message(level=warn, icon=alert)
+Two gotchas hide in this table. `discharge_date` is NA for outpatient visits — they arrived and left the same day, so there was no discharge to record. And `icd10_secondary` is a single string with diagnoses glued together by semicolons, like `"I10;E78.5"`. You will need to split it later.
+
+::: new_page(title="Table three: prescription_registry", transition=wipe-right)
+
+::: r(auto_run=before, title="Loading dispensings")
+prescription_registry <- read_csv("prescription_registry.csv")   # one row per pharmacy pickup
+prescription_registry |> glimpse()                               # peek at the columns
+
+::: write_speak
+Each row is one pharmacy visit. `atc_code` is the World Health Organization drug classifier — `A10BA02` is metformin, the drug we will hunt for all series. `ddd_dispensed` counts defined daily doses; it is our crude measure of how much drug actually changed hands.
+
+::: r(auto_run=before, title="How often does metformin appear?")
+prescription_registry |>
+  filter(atc_code == "A10BA02") |>            # keep only metformin rows
+  nrow()                                      # how many dispensings total
+
+::: write_speak
+That one number is a sanity check. If it came back as zero, either the dataset is broken or we typed the ATC code wrong. Always run cheap checks before expensive analysis.
+
+::: new_page(title="Check your intuition", transition=fade)
+
+::: multiple_choice
+In `patient_registry`, a row where `discharge_date` is NA most likely means what?
+* The encounter was an outpatient visit, so there was no discharge.
+- The patient is still in the hospital right now.
+- The data file is corrupted.
+- The patient died during the admission.
+
+::: celebrate(kind=confetti, bursts=2)
+::: sound(name=success)
+
+::: write_speak
+Exactly. NA here is not a bug — it is a category. Outpatient visits have an admission date but no discharge date, because they end the same day they begin.
+
+::: new_page(title="Where we are, where we go next", transition=slide-up)
+
+::: write_speak
+Three files are open. You have seen their shapes, their types, and their quiet lies about missingness. But right now each table lives alone. A person's story — diagnosis, admission, prescription, outcome — is still scattered across three spreadsheets.
+
+::: write_speak
+In Lecture 3 we stitch them together. Joins, `person_id`, and the first real epidemiological question: which patients with type 2 diabetes actually started metformin?
+
+::: xplainer_link(url="03_linking.txt", text="Next: Linking patients across tables")

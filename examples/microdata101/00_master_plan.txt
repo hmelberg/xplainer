@@ -1,0 +1,455 @@
+# microdata101 — masterplan for serien (5 leksjoner, norsk bokmål)
+
+*Denne filen er intern koordineringsreferanse, ikke en spillbar xplainer-leksjon.
+Alle fem underagenter skal lese denne først før de skriver sin egen leksjonsfil.*
+
+---
+
+## 1. Hva dette er
+
+En fem-leksjons xplainer-serie som lærer forskere, masterstudenter og analytikere
+å bruke **microdata.no** — Sikt/SSBs sikre fjernanalyseplattform for norske
+registermikrodata. Målgruppen har aldri åpnet verktøyet før.
+
+Serien ligger i `examples/microdata101/` ved siden av `hecon101/` og `Health_R/`
+og følger samme forfatterkonvensjoner (se `src/explain_prompt3.txt`).
+
+**Språk**: norsk bokmål. Alle filer skal ha `speech_lang="nb-NO"` i defaults-blokken.
+
+**Kompletterende**: serien overlapper ikke med `examples/microdata scripteditor.txt`,
+som allerede dekker skripteditorens fire hovedområder via en HTML/JS-overlay på en
+UI-skjermdump. Leksjon 1 her nevner UI-områdene kort, men fokuserer på å *bruke*
+plattformen, ikke å turistturere grensesnittet.
+
+---
+
+## 2. Den røde tråden
+
+Alle fem leksjonene bygger inkrementelt på ett forskningsspørsmål:
+
+> **"Hva forklarer lønna til 30-åringer i Norge?"**
+
+Hver leksjon utvider datasettet og analysen litt — som et ekte prosjekt. Dette gir
+underagentene en delt ryggmarg og holder tonen konkret. Den store avsløringen skjer
+i leksjon 5, når koeffisienten på `hoyutd` i regresjonsoutput viser hvor mange tusen
+kroner høyere lønn høyt utdannede 30-åringer har når man holder foreldrenes inntekt
+konstant.
+
+| # | Filnavn                  | Rolle i tråden                                                        |
+|---|--------------------------|------------------------------------------------------------------------|
+| 1 | `01_velkommen.txt`       | Rammer spørsmålet. Et 6-linjers første skript som teller 30-åringer.   |
+| 2 | `02_datasett.txt`        | Bygger arbeidspopulasjonen (født 1990, bosatt 2020). Intro tre dataformer. |
+| 3 | `03_variabler.txt`       | Deriverer alder, lager utdanningsdummyer, merger foreldres inntekt.    |
+| 4 | `04_beskrive.txt`        | Tabulerer lønn etter utdanning, histogram, hexbin, sankey.             |
+| 5 | `05_regresjon.txt`       | OLS, logit, panel. Returnerer til spørsmålet og svarer på det.         |
+
+---
+
+## 3. Låste variabelnavn (canon)
+
+**Alle leksjoner må bruke disse nøyaktige navnene i kodecellene.** Ingen
+underagent skal finne på nye aliaser. Hvis en leksjon trenger en hjelpevariabel
+som ikke står her, det er greit, men kjernenavnene er låst.
+
+### Databank og datasett
+
+```
+require no.ssb.fdb:12 as db
+create-dataset populasjon
+```
+
+### SSB-variabelnavn → aliaser brukt i skriptet
+
+| SSB-variabel                      | Alias i koden     | Hva den er                                  |
+|-----------------------------------|-------------------|---------------------------------------------|
+| `BEFOLKNING_FOEDSELS_AAR_MND`     | `faarmnd`         | Fødselsår og -måned (YYYYMM som heltall)    |
+| `BEFOLKNING_KJOENN`               | `kjonn`           | Kjønn (1 = mann, 2 = kvinne)                |
+| `BOSATT_KOMMUNE`                  | `kommune`         | Bostedskommune                              |
+| `INNTEKT_WLONN`                   | `lonn`            | Lønnsinntekt (akkumulert per år)            |
+| `INNTEKT_BER_BRFORM`              | `formue`          | Brutto finansformue                         |
+| `NUDB_BU`                         | `utdniv`          | Høyeste fullførte utdanning (NUS-kode)      |
+| `BEFOLKNING_FAR_FNR`              | `fnr_far`         | Fars personnummer                           |
+| `BEFOLKNING_MOR_FNR`              | `fnr_mor`         | Mors personnummer                           |
+| `BEFOLKNING_REGSTAT_FAMTYP`       | `famtype`         | Familietype (f.eks. '2.1.1' gifte m/barn)   |
+| `BEFOLKNING_REGSTAT_FAMNR`        | `famnr`           | Familienummer                               |
+| `SIVSTANDFDT_SIVSTAND`            | `sivstand`        | Sivil status (hendelsesvariabel)            |
+
+### Deriverte variabler (låst)
+
+```
+alder       = 2020 - int(faarmnd/100)          // fra leksjon 3
+hoyutd      = 1 if utdniv >= 6                  // høyere utdanning dummy
+mann        = 1 if kjonn == '1'                 // kjønnsdummy
+hoylonn     = 1 if lonn > medianlonn            // høytlønnsdummy (leksjon 5)
+inntekt_far = foreldre-merge (leksjon 3)
+inntekt_mor = foreldre-merge (leksjon 3)
+familieinnt = collapse (sum) lonn, by(famnr)    // familieinntekt
+```
+
+### Felles filtreringsbetingelse for kohorten
+
+```
+keep if alder == 30                  // den pedagogiske kohorten
+// Alternativt, der alderderivasjonen ennå ikke er gjort:
+keep if faarmnd >= 199001 & faarmnd < 199101
+```
+
+---
+
+## 4. Leksjonsspesifikasjoner
+
+### Leksjon 1 — `01_velkommen.txt` — *"Velkommen til microdata.no"*
+
+**Hook**: "Det finnes en datamaskin i Oslo som kjenner lønna, utdanninga og
+familien til hver eneste bosatte i Norge. Du skal få lov til å spørre den
+spørsmål — men den gir deg aldri rådata tilbake."
+
+**Innhold**:
+- Hvorfor plattformen finnes: lovgrunnlag (statistikkloven), hvorfor rådata
+  aldri forlater serveren, hvem som har tilgang.
+- Kort om de fire områdene i grensesnittet (verktøylinje, editor, variabelliste,
+  resultatområde). **Bare kort** — ikke dupliser `microdata scripteditor.txt`.
+  Bruk en `::: draw` med fire rektangler og etiketter i stedet for skjermdump.
+- Det første ekte skriptet (en `::: code` med `language=stata` eller lignende):
+  ```
+  require no.ssb.fdb:12 as db
+  create-dataset populasjon
+  import db/BEFOLKNING_FOEDSELS_AAR_MND 2020-01-01 as faarmnd
+  generate alder = 2020 - int(faarmnd/100)
+  keep if alder == 30
+  tabulate alder
+  ```
+  Forklar linje for linje med `::: write_speak` før og etter koden, eller bruk
+  inline-kommentarer med `//` på slutten av hver linje (microdata.no bruker `//`,
+  ikke `#`). Kommentarer kan leses av motoren hvis kodeblokken er `::: code`.
+- Konfidensialitetsgarantier i én tonet `::: message(level=info, icon=shield)`.
+- `::: multiple_choice`: "Hva er forskjellen på kommandovinduet og skriptvinduet?"
+- Synthesis som peker frem mot leksjon 2 (vi har nå en tom populasjon-dataset,
+  snart skal vi fylle den).
+- `::: xplainer_link(url="02_datasett.txt", text="Neste: Tre slags data — tverrsnitt, hendelse, panel")`
+
+**Kilder** å slå opp i:
+- `C:/Users/hansm/m2py/helper docs/brukermanual-no.txt` kapittel 1 (om brukergrensesnittet)
+- `C:/Users/hansm/m2py/examples/01_beskrivende_statistikk.txt` (mønster for første skript)
+- `C:/Users/hansm/m2py/command_help.js` (verifiser syntaks)
+- `C:/Users/hansm/claude/xplainer/examples/microdata scripteditor.txt` (for overlay-mønster, ikke innhold)
+
+---
+
+### Leksjon 2 — `02_datasett.txt` — *"Tre slags data: tverrsnitt, hendelse, panel"*
+
+**Hook**: "Samme person, samme spørsmål, tre forskjellige svar — alt avhenger av
+hvordan du ba om dataene."
+
+**Innhold**:
+- De tre dataformene. Bruk en `::: draw` eller `::: mermaid` for å vise én person
+  som blir representert ulikt: én dot (tverrsnitt), tre dotter med datoer (hendelse),
+  fire dotter i fire år (panel).
+- Utvid `populasjon`-datasettet fra leksjon 1 ved å importere `kjonn` og `kommune`
+  som tverrsnittsvariabler, og filtrere til 1990-kohorten bosatt i Norge.
+  Bruk de låste variabelnavnene.
+- Vis **side-eksempel** for hendelsesdata: `import-event db/SIVSTANDFDT_SIVSTAND 2010-01-01 to 2020-01-01 as sivstperiode`
+  som svar på spørsmålet "har denne personen blitt skilt?"
+- Vis **side-eksempel** for paneldata: `import-panel db/INNTEKT_WLONN 2017-01-01 2018-01-01 2019-01-01 2020-01-01`
+  som svar på spørsmålet "hvordan har lønna utviklet seg?"
+- `::: mermaid` for et ER-aktig diagram som viser `populasjon` knyttet til
+  hendelses- og paneldatasett via `PERSONID_1`.
+- Et `::: reveal`-øyeblikk: "Hvilken form trenger du for å svare på 'har personen
+  skiftet sivilstand?'" — svar: hendelse.
+- `::: multiple_choice`: koble tre spørsmål til riktig import-kommando.
+- `::: xplainer_link(url="03_variabler.txt", text="Neste: Derivere, omkode, koble")`
+
+**Kilder**:
+- `brukermanual-no.txt` kapittel 2 (oppretting og endring av datasett), særlig 2.1–2.5
+- `m2py/manual_scripts/01_paneldata.txt` (panelmønster)
+- `m2py/manual_scripts/09_collapse_sivstand.txt` (hendelsesmønster)
+- `m2py/examples/06_avansert_analyse.txt` (paneleksempel)
+- `m2py/command_help.js` for `import`, `import-event`, `import-panel` syntaks
+
+---
+
+### Leksjon 3 — `03_variabler.txt` — *"Derivering, omkoding, kobling"*
+
+**Hook**: "Ingen lønn, ingen utdanningsnivå, og faren din er bare et personnummer.
+Velkommen til rådata — la oss gjøre dem brukbare."
+
+**Innhold**:
+- `generate alder = 2020 - int(faarmnd/100)` — derivere alder fra YYYYMM.
+  Dette er en klassisk snubletråd: `faarmnd/100` gir deg året som flyttall, og
+  `int()` trunkerer. Forklar hvorfor det fungerer.
+- `generate hoyutd = 0` etterfulgt av `replace hoyutd = 1 if utdniv >= 6` for å
+  lage utdanningsdummyen. Eller vis `recode`-alternativet kort.
+- `import db/INNTEKT_WLONN 2020-01-01 as lonn` — nå har vi lønn i datasettet.
+- **Høydepunkt**: forelderkobling. Vis hvordan `BEFOLKNING_FAR_FNR` og `BEFOLKNING_MOR_FNR`
+  er personnummer, og hvordan man merger foreldrenes lønn inn via en `merge`-kjede:
+  ```
+  import db/BEFOLKNING_FAR_FNR 2020-01-01 as fnr_far
+  import db/BEFOLKNING_MOR_FNR 2020-01-01 as fnr_mor
+  create-dataset foreldreinntekt
+  import db/INNTEKT_WLONN 2020-01-01 as foreldrelonn
+  merge foreldrelonn into populasjon on PERSONID_1 = fnr_far
+  rename foreldrelonn inntekt_far
+  merge foreldrelonn into populasjon on PERSONID_1 = fnr_mor
+  rename foreldrelonn inntekt_mor
+  ```
+  (Verifiser den nøyaktige merge-syntaksen mot `manual_scripts/03_foreldre.txt`.)
+- `collapse (sum) lonn, by(famnr)` som eksempel på familienivåaggregering
+  — men *etter* at vi har merget familienummeret `famnr`.
+- `::: draw` som viser en "rad med data" som vokser nye kolonner etter hvert
+  som hver kommando kjører (en rektangel med "person" øverst, så `alder`, så
+  `hoyutd`, så `inntekt_far`, så `inntekt_mor`).
+- `::: mark(text="int(faarmnd/100)", effect=box, color=yellow)` på det aktuelle
+  `::: code` kodelinjeøyeblikket.
+- `::: message(level=warn, icon=warn)` om at merge på tvers av personnumre er
+  konfidensialitetsfølsomt — plattformen sjekker at du faktisk har rett tilgang.
+- `::: question` (kort svar): "Hvilken kommando bruker du for å hente foreldrenes
+  lønn inn i persondatasettet?" (svar: `merge`)
+- `::: xplainer_link(url="04_beskrive.txt", text="Neste: Se på dataene før du modellerer dem")`
+
+**Kilder**:
+- `brukermanual-no.txt` kapittel 3 (tilrettelegging av variabler) og seksjon 2.8 (merge/kobling)
+- `m2py/manual_scripts/03_foreldre.txt` (merge-mønster for foreldre)
+- `m2py/manual_scripts/04_familie.txt` (collapse etter familie)
+- `m2py/manual_scripts/11_variabler.txt` (generate/replace/recode-mønster)
+- `m2py/web_examples/06_familieanalyser/` (kataloger med familieeksempler)
+- `m2py/web_examples/07_jobb_inntekt/01_gruppere_inntekter_i_prosentiler_desiler_og_kvartiler.txt` for `quantile()`
+- `m2py/command_help.js` for `generate`, `replace`, `merge`, `collapse`, `recode`
+
+---
+
+### Leksjon 4 — `04_beskrive.txt` — *"Se på dataene før du modellerer dem"*
+
+**Hook**: "Du har datasettet. Du har lyst til å kjøre regresjon. Vent — se på
+dataene først, ellers finner du ting som ikke er der."
+
+**Innhold**:
+- `tabulate hoyutd` og `tabulate hoyutd kjonn, rowpct` — frekvens- og
+  krysstabeller.
+- `summarize lonn` og `summarize lonn if hoyutd == 1` — deskriptiv statistikk.
+- `histogram lonn, bin(30)` som `::: code`, fulgt av en `::: draw` som skisserer
+  hvordan histogrammet faktisk ser ut for norske 30-åringers lønn (høyre hale,
+  topp ved 350–500 tkr).
+- `hexbin lonn inntekt_far` — og forklaring på hvorfor plattformen *tvinger* deg
+  til hexbin i stedet for scatter (konfidensialitet: én prikk per person ville
+  avsløre individer).
+- `sankey fylke10 fylke20` eller `sankey kommune10 kommune20` — en flytdiagram
+  for regional mobilitet over 10 år.
+- `::: message(level=info, icon=shield)` som lister konfidensialitetsbeskyttelsene:
+  vinsorisering, celleundertrykking, minstepopulasjon 1000, støy i celletall.
+- `::: draw` som sammenligner rått vs. vinsorisert histogram (samme form, bare
+  halene kuttet).
+- `::: multiple_choice`: "Hvilken visualisering ville du valgt for å vise
+  sammenhengen mellom foreldrenes og barnas lønn på microdata.no?"
+  Riktig svar: hexbin (fordi scatter er blokkert). Distraktorene: scatter,
+  line plot, pie chart.
+- `::: xplainer_link(url="05_regresjon.txt", text="Neste: Regresjon — svaret på det vi spurte om")`
+
+**Kilder**:
+- `brukermanual-no.txt` kapittel 4 (hvordan gjøre seg kjent med variabler), alle underseksjoner
+- `m2py/examples/03_visualiseringer.txt` (kort oversikt over visualiseringer)
+- `m2py/manual_scripts/12_tabulate.txt`, `13_summarize.txt`, `14_histogram.txt`, `15_piechart.txt`, `16_sankey.txt`
+- `m2py/web_examples/03_deskriptiv_statistikk/` (tematiske eksempler)
+- `m2py/command_help.js` for `tabulate`, `summarize`, `histogram`, `hexbin`, `sankey`, `boxplot`
+
+---
+
+### Leksjon 5 — `05_regresjon.txt` — *"Regresjon: svaret på det vi spurte om"*
+
+**Hook**: "Nå vender vi tilbake til spørsmålet fra leksjon 1: hva forklarer lønna
+til 30-åringer? Tid for å svare."
+
+**Innhold**:
+- Hovedmodellen: `regress lonn hoyutd mann inntekt_far inntekt_mor` — full OLS med
+  fire forklaringsvariabler. Gå gjennom output: koeffisient på `hoyutd`, standard
+  feil, R², tolkning.
+- *Etter* at koden har kjørt, en `::: math`-blokk med den lineære
+  regresjonsligningen for å formalisere det man akkurat så. Aldri omvendt.
+- Diagnostikk: `regress-predict lonn hoyutd mann inntekt_far inntekt_mor, residuals(res) predicted(pred) cooksd(cook)`
+  etterfulgt av `histogram res` for å sjekke residualene.
+- Logit-alternativ for "høy lønn"-dummyen:
+  ```
+  generate hoylonn = 1 if lonn > 500000
+  replace hoylonn = 0 if lonn <= 500000
+  logit hoylonn hoyutd mann inntekt_far inntekt_mor
+  ```
+- Panel-variant: gjenbruk panelinntektsdatasettet fra leksjon 2 og kjør en
+  `regress-panel lonn alder hoyutd, fe` (fasteffekter over 4 år).
+- **Den store avsløringen**: `::: countdown(n=3)` → `::: reveal` → `::: celebrate`
+  med den estimerte koeffisienten på `hoyutd` — rundt 120 000 kr i forskjell (mock
+  tall, vi kjører ikke faktisk mot plattformen, men konsistent med norske
+  lønnsdata).
+- Synthesis: returner eksplisitt til spørsmålet fra leksjon 1 og svar på det.
+  Nevn hvor man kan gå videre (IV-regresjon for å ta hensyn til endogen utdanning,
+  Oaxaca-dekomponering for kjønnsforskjeller, mlogit for flere kategorier).
+- To `::: xplainer_link` til slutt: én tilbake til `01_velkommen.txt` for å
+  lukke sirkelen, og én til `microdata scripteditor.txt` som anbefalt oppfølger
+  om grensesnittet.
+
+**Kilder**:
+- `brukermanual-no.txt` kapittel 5 (avansert analyse), særlig 5.4, 5.7, 5.9
+- `m2py/manual_scripts/17_regresjon.txt` (kompletisk regresjonssuite)
+- `m2py/examples/05_regresjon.txt` (kort OLS-eksempel)
+- `m2py/web_examples/04_regresjonsanalyser/` (tematiske regresjonseksempler)
+- `m2py/command_help.js` for `regress`, `regress-predict`, `logit`, `regress-panel`, `hausman`
+
+---
+
+## 5. Lenkekjeden (xplainer_link)
+
+```
+01_velkommen   →  02_datasett
+02_datasett    →  03_variabler
+03_variabler   →  04_beskrive
+04_beskrive    →  05_regresjon
+05_regresjon   →  01_velkommen        (sirkel)
+05_regresjon   →  "../microdata scripteditor.txt"   (oppfølger)
+```
+
+Alle lenker skal være relative filnavn *uten* mappeprefiks (f.eks. `02_datasett.txt`,
+ikke `examples/microdata101/02_datasett.txt`). xplainer-motoren løser relative
+referanser mot lastingsstien (state.currentSourceUrl / document.baseURI).
+
+---
+
+## 6. Kontrakt for underagenter (harde regler)
+
+Hver underagent skriver *én* leksjonsfil og følger disse reglene uten unntak:
+
+### Språk og tone
+- **Norsk bokmål**, alt: overskrifter, narrasjon, kodekommentarer, ikonetiketter.
+- Top av filen: `::: defaults(skin=playful)` på linje 1, så `speech_lang="nb-NO"` som
+  en separat linje i samme blokk (se `microdata scripteditor.txt` linje 1–2 for
+  formatet).
+- Tonen skal matche `hecon101/02_grossman.txt`: direkte tiltale ("du", "vi"),
+  aktive verb, korte setninger (1–3 per `write_speak`-blokk), konkrete tall og
+  navn, tørr humor er OK, påtatt entusiasme er ikke.
+
+### Lengde
+- Målet er 5–7 minutters spilletid — ca. 25–40 blokker totalt.
+- Hvis du passerer 50 blokker, kutt. Hvis du har under 20, utvid med en
+  visualisering eller en test.
+
+### Blokkvariasjon (fra `explain_prompt3.txt` seksjon 3 og 8)
+- **Minst 6 distinkte blokktyper** per fil.
+- **Maks 3 `write_speak`-blokker på rad** uten å bytte modalitet.
+- **Minst én** `::: multiple_choice` eller `::: question` (forståelsessjekk).
+- **Minst én** visuell blokk: `::: draw`, `::: mermaid`, `::: image`, `::: math`, eller `::: code`.
+- **Minst én** `::: code` kodecelle (se Kodeceller under).
+- `::: intro` øverst (rett etter defaults), `::: xplainer_link` nederst.
+
+### Kodeceller
+- Bruk `::: code` for mikrodata-skript. xplainer har ikke Stata-kjøretid, så
+  dette er *mock*-kodeceller — de viser koden, de kjører den ikke.
+- Åpningssyntaks: `::: code` er tryggest. Hvis du vil prøve syntaksmerking, test
+  `::: code(language=stata)` men forvent at det kan falle tilbake til ingen
+  farging — det er greit.
+- Bruk **bare** de låste variabelnavnene fra seksjon 3 i denne filen. Ikke finn
+  på nye.
+- microdata.no bruker `//` for kommentarer, ikke `#`. Kommentarene dine skal
+  være på norsk.
+- Ikke finn på kommandoer som ikke finnes. Sjekk `C:/Users/hansm/m2py/command_help.js`
+  hvis du er usikker på om `foo-bar` finnes. De virkelige kommandoene inkluderer:
+  `require`, `create-dataset`, `import`, `import-event`, `import-panel`, `use`,
+  `generate`, `replace`, `recode`, `keep`, `drop`, `rename`, `merge`, `collapse`,
+  `aggregate`, `reshape-to-panel`, `reshape-from-panel`, `tabulate`, `summarize`,
+  `histogram`, `boxplot`, `barchart`, `piechart`, `hexbin`, `sankey`, `correlate`,
+  `anova`, `normaltest`, `regress`, `regress-predict`, `regress-panel`,
+  `regress-panel-predict`, `logit`, `logit-predict`, `probit`, `mlogit`,
+  `ivregress`, `oaxaca`, `ci`, `hausman`, `define-labels`, `assign-labels`,
+  `describe`, `help`, `clone-units`, `clone-dataset`.
+
+### Anti-mønstre å unngå (fra prompt3 seksjon 3)
+- Ti `write_speak` på rad uten modalitetsbytte.
+- `::: code`-blokk uten narrativ oppbygging før eller tolkning etter.
+- `::: math` *før* intuisjon er bygd — bygg alltid intuisjonen først, formalisér etter.
+- `::: multiple_choice` uten oppbygging — spørsmålet skal teste noe man akkurat har sett.
+- Avsluttning på "Det var alt!" eller en bar `xplainer_link`. Syntetisér først.
+- Finne på blokker som ikke finnes, neste blokker, wrappe outputet i triple
+  backticks, eller skrive prosa utenfor blokker.
+
+### Returnert output
+- Bare leksjonsfilens innhold, skrevet til den tiltenkte stien.
+- Ingen kommentarer, ingen `[Forfatterens notater]`, ingen trippel-backticks rundt
+  output. Rå xplainer-blokker fra første linje.
+
+---
+
+## 7. Kildepekere (fil- og seksjonshenvisninger)
+
+### Primærkilder (registerbrukermanualen og relaterte filer)
+- `C:/Users/hansm/m2py/helper docs/brukermanual-no.txt` — 5314 linjer, alt innhold, norsk
+- `C:/Users/hansm/m2py/helper docs/brukermanual-no (1).pdf` — samme, PDF (uleselig for agenter, men finnes)
+- `C:/Users/hansm/m2py/command_help.js` — JS-objekt med 123 kommandoer og deres syntaks (bruk til verifisering)
+- `C:/Users/hansm/m2py/variable_metadata.json` — metadata for SSB-variabler (bruk til å bekrefte variabelnavn)
+
+### Eksempelskript (gode å kopiere fra)
+- `C:/Users/hansm/m2py/examples/01_beskrivende_statistikk.txt` — første-skript-mønster
+- `C:/Users/hansm/m2py/examples/02_tabeller_og_kategorier.txt` — tabulering
+- `C:/Users/hansm/m2py/examples/03_visualiseringer.txt` — visualiseringer
+- `C:/Users/hansm/m2py/examples/04_aggregat_og_generate.txt` — generate og collapse
+- `C:/Users/hansm/m2py/examples/05_regresjon.txt` — kort OLS
+- `C:/Users/hansm/m2py/examples/06_avansert_analyse.txt` — panel og normaltest
+
+### Manualskript (dypere mønstre)
+- `C:/Users/hansm/m2py/manual_scripts/01_paneldata.txt` — komplett panelsetup for Oslo 18–39 år
+- `C:/Users/hansm/m2py/manual_scripts/02_datasett.txt` — dataset-operasjoner
+- `C:/Users/hansm/m2py/manual_scripts/03_foreldre.txt` — foreldrekobling via fnr_far/fnr_mor
+- `C:/Users/hansm/m2py/manual_scripts/04_familie.txt` — familienivåaggregering
+- `C:/Users/hansm/m2py/manual_scripts/09_collapse_sivstand.txt` — hendelses→tellings-aggregering
+- `C:/Users/hansm/m2py/manual_scripts/11_variabler.txt` — generate/replace-mønster
+- `C:/Users/hansm/m2py/manual_scripts/12_tabulate.txt` — tabulate-varianter
+- `C:/Users/hansm/m2py/manual_scripts/13_summarize.txt` — summarize-varianter
+- `C:/Users/hansm/m2py/manual_scripts/14_histogram.txt` — histogram-valg
+- `C:/Users/hansm/m2py/manual_scripts/16_sankey.txt` — sankey med filter
+- `C:/Users/hansm/m2py/manual_scripts/17_regresjon.txt` — full regresjonssuite (OLS, IV, logit, probit, panel)
+
+### Web-eksempler (tematiske mapper)
+- `C:/Users/hansm/m2py/web_examples/01_grunnleggende_operasjoner/` (12 filer)
+- `C:/Users/hansm/m2py/web_examples/02_sammensatte_operasjoner/` (5 filer, inkl. reshape)
+- `C:/Users/hansm/m2py/web_examples/03_deskriptiv_statistikk/` (6 filer)
+- `C:/Users/hansm/m2py/web_examples/04_regresjonsanalyser/` (11 filer, OLS→IV→logit→panel→DiD→RDD)
+- `C:/Users/hansm/m2py/web_examples/06_familieanalyser/` (9 filer, foreldre/familie/søsken)
+- `C:/Users/hansm/m2py/web_examples/07_jobb_inntekt/` (11 filer, lønnsdesiler, pendling, yrker)
+- `C:/Users/hansm/m2py/web_examples/08_regionalanalyser/` (10 filer, kommunemigrasjon)
+- `C:/Users/hansm/m2py/web_examples/09_utdanningsanalyser/` (8 filer, utdanningsløp)
+- `C:/Users/hansm/m2py/web_examples/10_sosial_ulikhet/` (2 filer, NEET og innvandrere)
+
+### xplainer-konvensjoner (referansefiler)
+- `C:/Users/hansm/claude/xplainer/src/explain_prompt3.txt` — **må leses i sin helhet** før du skriver
+- `C:/Users/hansm/claude/xplainer/examples/hecon101/02_grossman.txt` — tone- og strukturanker
+- `C:/Users/hansm/claude/xplainer/examples/hecon101/01_why_different.txt` — hook og lenkemønster
+- `C:/Users/hansm/claude/xplainer/examples/microdata scripteditor.txt` — norsk tone + overlay-mønster (*ikke* dupliser)
+
+---
+
+## 8. Glossar (norske termer sub-agentene skal bruke konsekvent)
+
+| Term                      | Betyr                                                        |
+|---------------------------|---------------------------------------------------------------|
+| databank                  | databasen man kobler til med `require` (f.eks. `no.ssb.fdb:12`) |
+| datasett                  | et brukers eget arbeidsdatasett, laget med `create-dataset`  |
+| kommandovinduet           | interaktivt vindu der du kjører enkeltkommandoer              |
+| skriptvinduet             | editor der du skriver og lagrer skript                        |
+| variabelbeskrivelser      | katalogen med metadata om SSB-variablene                      |
+| tverrsnittsdata           | øyeblikksbilde — én rad per person for en gitt dato           |
+| hendelsesdata             | tidslinje av hendelser — flere rader per person med datoer    |
+| paneldata                 | gjentatte målinger på faste tidspunkter — én rad per person×tid |
+| koble til databank        | `require`-kommandoen                                          |
+| opprette datasett         | `create-dataset`-kommandoen                                   |
+| hente variabler           | `import`, `import-event`, `import-panel`                      |
+| filtrere                  | `keep`, `drop`, `keep if`, `drop if`                          |
+| derivere                  | `generate` (lage ny variabel fra andre)                       |
+| omkode                    | `recode`, eller `replace ... if ...`                          |
+| koble / merge             | `merge` (flette to datasett på en nøkkel)                     |
+| aggregere                 | `collapse` (redusere til grupper — f.eks. til familienivå)    |
+| restrukturere             | `reshape-to-panel`, `reshape-from-panel`                      |
+| tabulere                  | `tabulate` (frekvens- og krysstabeller)                       |
+| oppsummere                | `summarize` (deskriptiv statistikk)                           |
+| regresjon                 | `regress` (OLS), `logit`, `probit`, `mlogit`                  |
+| panelregresjon            | `regress-panel` (fasteffekter, tilfeldige effekter)           |
+| konfidensialitetsgrenser  | vinsorisering, celleundertrykking, minstepopulasjon, støy    |
+
+---
+
+*Slutt på masterplanen. Hvis du er en underagent, gå nå til eget leksjonsprompt
+og begynn med å lese `explain_prompt3.txt` for blokkvokabularet.*

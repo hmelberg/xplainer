@@ -1,0 +1,49 @@
+::: title
+Using Active Table (external web component)
+
+::: defaults
+js_requirements = https://cdn.jsdelivr.net/npm/active-table@1.1.8/dist/activeTable.js
+
+::: write
+This example uses the external web component <strong>Active Table</strong> (https://activetable.io/docs/table/). The component is loaded via <code>js_requirements</code> in <code>::: defaults</code> (ES module URL). Any web component that ships an ESM build that registers the custom element on import can be loaded the same way.
+<ul>
+  <li><strong>data</strong>: JSON array of arrays — first row = header, rest = data. Type: <code>(string|number)[][]</code></li>
+  <li><strong>tableStyle</strong>: CSS-style object (e.g. width, borderRadius, boxShadow)</li>
+  <li>Other: overflow, cellStyle, defaultText, enterKeyMoveDown, etc.</li>
+</ul>
+We use <code>::: web_defaults</code> so that block body maps to the <code>data</code> attribute and we can write tables without <code>into="data"</code> every time.
+
+::: web_defaults
+active-table=data
+
+::: write
+First table: body is the JSON data (default <code>into</code> from web_defaults).
+
+::: comp active-table
+[["Planet", "Diameter (km)", "Mass (×10²⁴ kg)", "Moons"],
+["Earth", 12756, 5.97, 1],
+["Mars", 6792, 0.642, 2],
+["Jupiter", 142984, 1898, 79],
+["Saturn", 120536, 568, 82]]
+
+::: write
+Second table: same data with optional styling via kwargs. (tableStyle and overflow are JSON strings in the header.)
+
+::: comp active-table(tableStyle='{"width":"100%","borderRadius":"8px","boxShadow":"0 1px 3px rgba(0,0,0,0.12)"}', overflow='{"maxHeight":"240px"}')
+[["Planet", "Diameter", "Mass", "Moons", "Density"],
+["Earth", 12756, 5.97, 1, 5514],
+["Mars", 6792, 0.642, 2, 3934],
+["Jupiter", 142984, 1898, 79, 1326],
+["Saturn", 120536, 568, 82, 687],
+["Neptune", 49528, 102, 14, 1638]]
+
+::: write
+You can override the default body attribute with <code>into=...</code> if a component has multiple “content” attributes, or pass data only via kwargs and leave body empty.
+
+::: comp active-table(data='[["A","B","C"],[1,2,3],[4,5,6]]', tableStyle='{"width":"100%"}')
+
+::: write
+End of Active Table example.
+
+::: write
+<strong>Framework compatibility (summary)</strong>: The explainer supports external components well. Load the component via <code>::: defaults</code> with <code>js_requirements = &lt;ESM URL&gt;</code> (comma-separated for multiple). <code>js_requirements</code> uses dynamic <code>import()</code>, so the URL must be an ES module that side-effect-registers the custom element. <code>::: web_defaults</code> then lets body map to <code>data</code> so you can write <code>::: comp active-table</code> with a JSON body. Kwargs pass through as attributes. For components that only provide a classic script (IIFE/UMD), you still need to add a <code>&lt;script src="..."&gt;</code> in the page HTML.

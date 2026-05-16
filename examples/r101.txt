@@ -1,0 +1,102 @@
+::: defaults
+speech_lang="nb-NO"
+webr_result_location="left"
+speak_code_language="en-US"
+explain_code="all"
+
+::: names
+english: lang=en-US, voice=female
+
+:::title
+ Innføring i R - Smakebiter
+
+::: write_speak
+Denne videoen gir en smakebit på hvordan vi kan analysere helsedata ved hjelp av programmeringsspråket R.
+
+:::message
+Du kan når som helst stoppe videoen og prøve selv. Du kan endre koden (trykk Edit), kjøre koden på nytt (trykk Run) og se resultatet.
+
+
+::: write
+## 1) Hvordan last inn kommandoer, datafiler og gi det navn?
+
+:::r
+npr <- read.csv("https://raw.githubusercontent.com/hmelberg/health_data/refs/heads/main/npr.csv")  # leser inn NPR-data og gir det navnet npr
+head(npr)  ## Viser de 6 første radene av NPR-dataene
+
+::: write(effect="fade")
+Pilen betyr at vi gir navn til ting. Det kan tolkes som et likhetstegn (=), og man kan bruke det hvis man ønsker i stedet for en pil. 
+
+::: write_speak
+Vi kan ha mange datasett med ulike navn og jobbe med de samtidig.
+
+
+## 2) Hvordan se variablene og telle observasjoner?
+
+:::r(result_location="below")
+npr$PROSEDYRE1   ## Dollartegnet brukes for å velge en variabel fra et datasett
+
+:::r 
+mean(npr$FODSELSAAR)   ## mean() beregner gjennomsnittet av verdiene i kolonnen fødelsår
+
+:::r(result_location="below")
+dim(npr)  ## Viser antall rader og kolonner
+
+:::r
+names(npr)  ## Lister alle variabelnavn (kolonnenavn)
+
+:::r
+str(npr)  ## Viser datatype for hver variabel
+:::
+
+## 3) Hvordan lage nye variabler?
+
+I dette datasettet finnes ikke liggetid som ferdig kolonne.
+Vi beregner derfor liggetid fra `INNDATO` og `UTDATO`.
+:::r(silent=true)
+npr$INNDATO <- as.Date(npr$INNDATO)
+npr$UTDATO <- as.Date(npr$UTDATO)
+npr$ALDER_BEREGNET <- as.integer(format(npr$INNDATO, "%Y")) - npr$FODSELSAAR
+npr$LIGGETID <- as.numeric(npr$UTDATO - npr$INNDATO)
+
+
+:::r(result_location="below")
+npr$INNDATO <- as.Date(npr$INNDATO)     # Konverterer INNDATO til datoformat
+npr$UTDATO <- as.Date(npr$UTDATO)       # Konverterer UTDATO til datoformat
+npr$LIGGETID <- as.numeric(npr$UTDATO - npr$INNDATO)  # Beregner antall dager mellom innleggelse og utskrivelse
+
+summary(npr$LIGGETID)  ## Oppsummering av liggetid
+:::
+
+## 4) Hvordan lage et histogram?
+
+:::r
+hist(npr$ALDER_BEREGNET,                    # Variabelen vi viser fordeling for (alder ved innleggelse)
+     main = "Aldersfordeling ved innleggelse",  # Tittel over grafen
+     xlab = "Alder",                         # Tekst på x-aksen
+     col = "skyblue")                        # Farge på søylene i histogrammet
+
+:::
+## 5) Hvordan telle hvilke prosedyrer som er mest vanlig?
+
+:::r
+top10 <- head(sort(table(npr$PROSEDYRE1), decreasing=TRUE), 10)  ## Teller med table(), sorterer synkende, tar de 10 vanligste
+top10   ## Viser resultatet
+
+
+::: write(effect="fade")
+Vi bruker ((!english!))table() for å telle, og ((!english!))sort() for å sortere resultatet.
+
+:::r
+barplot(top10, names.arg = names(top10), horiz = TRUE, las = 1,
+        col = "steelblue", main = "Topp 10 prosedyrer", xlab = "Antall")
+
+::: write_speak
+## Oppsummering
+Du kan nå laste data (((!english!))read.csv), gi ting navn (<-), se variabler (((!english!))names/str), lage nye variabler (f.eks. npr$LIGGETID <- ...), telle med ((!english!))table(), sortere med ((!english!))order() og lage figurer (((!english!))hist, ((!english!))barplot).
+
+::: link
+xplainer.app#r102
+Neste leksjon: R med dplyr og ggplot2 (r102)
+:::
+

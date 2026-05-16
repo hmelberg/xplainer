@@ -1,0 +1,157 @@
+
+::: write_speak
+Imagine your government just eliminated doctor copayments for 12 to 16-year-olds. You want to know: did this policy actually increase doctor visits? 
+
+If you just compare their visits before and after the rule change, a random event—like a particularly bad flu season—could easily trick you into thinking the policy caused a spike in visits.
+
+::: write_speak
+To find the truth, we need a baseline. Enter the **Difference-in-Differences (DiD)** method. 
+
+Instead of just looking at the kids who got free visits, we compare them against a control group that didn't—like 17 to 18-year-olds. 
+
+::: write
+
+
+**The Parallel Trends Assumption:**
+The core assumption of DiD is that without the policy, both age groups would have followed the exact same trend in doctor visits over time.
+
+::: write_speak
+We calculate the change over time for the treated group, and then subtract the change over time for the control group. This "double subtraction" strips away background trends (like the flu) and leaves only the effect of the policy.
+
+Let's simulate this scenario in R. We'll generate a dataset with an ID, a Treatment group (12-16 year olds), a Time period (Before vs. After), and the Number of Visits.
+
+::: webr
+```r
+set.seed(123) # Set seed for reproducible random numbers
+
+n <- 1000 # Number of patients simulated
+age <- sample(12:18, n, replace = TRUE) # Assign random ages between 12 and 18
+treated <- ifelse(age <= 16, 1, 0) # 1 if 12-16 (Treatment), 0 if 17-18 (Control)
+
+# Simulate Before Period (Year 0)
+visits_pre <- rpois(n, lambda = 2) # Baseline: Poisson distribution averaging 2 visits
+
+# Simulate After Period (Year 1)
+# Let's say background visits drop by 0.5 for everyone (maybe a mild winter)
+# But the policy INCREASES visits by 1.5 for the treated group!
+visits_post <- visits_pre - 0.5 + (1.5 * treated) + rnorm(n, 0, 0.5) # Add noise
+
+# Combine into a dataframe format
+df <- data.frame(
+  id = rep(1:n, 2), # Duplicate IDs to represent two periods per person
+  treated = rep(treated, 2), # 1 if Treatment group, 0 if Control group
+  post = rep(c(0, 1), each = n), # 0 = Before policy, 1 = After policy
+  visits = c(visits_pre, visits_post) # Stack pre and post visits into one column
+)
+
+head(df) # Preview the generated data
+
+::: write
+
+
+**The Threat of Pre-existing Trends**
+If the treatment and control groups were already diverging, our simple DiD model will absorb that pre-existing trend and falsely attribute it to the policy. Our entire result becomes an illusion.
+
+::: write_speak
+To defend against this, modern econometricians don't just look at one "Before" period and one "After" period. They look at multiple years leading up to the policy to prove the groups were moving in lockstep. 
+
+This approach is called an **Event Study** or **Dynamic DiD**.
+
+::: write_speak
+Let's look at the mathematical engine under the hood of a standard DiD model before we expand it. The regression we ran earlier was solving this exact equation:
+
+::: write
+$$Visits_{it} = \beta_0 + \beta_1 \cdot Treated_i + \beta_2 \cdot Post_t + \beta_3 \cdot (Treated_i \times Post_t) + \epsilon_{it}$$
+
+::: write_speak
+Here is the cheat sheet for reading this equation:
+* $\beta_0$ is the baseline average for the control group.
+* $\beta_1$ is the baseline difference for the treated group.
+* $\beta_2$ captures the background shock affecting everyone over time.
+* **$\beta_3$ is the causal effect of our policy.**
+
+Now, let's build a more robust, multi-period dataset in R to see if we can prove our parallel trends assumption holds water.
+
+::: webr
+```r
+set.seed(42) # Ensure reproducible randomness
+n_patients <- 500 # Total patients
+periods <- 1:5 # We will track them over 5 years (Years 1 to 5)
+
+# Policy starts in Year 4. 
+# Years 1, 2, 3 are PRE-policy. Years 4, 5 are POST-policy.
+
+# Generate patient profiles
+patients <- data.frame(
+  id = 1:n_patients,
+  age = sample(12:18, n_patients, replace = TRUE)
+)
+patients$treated <- ifelse(patients$age <= 16, 1, 0) # 12-16 get treatment
+
+# Expand to a panel dataset (every patient seen in every period)
+# Using base R expand.grid to create all combinations of id and period
+panel_data <- expand.grid(id = 1:n_patients, period = periods)
+
+# Merge back the patient characteristics
+df <- merge(panel_data, patients, by = "id")
+
+# Simulate visits with a dynamic treatment effect
+# - Base visits: 2
+# - Time trend: increases by 0.2 per year for everyone
+# - Treatment effect: +1.5 visits, ONLY for treated group in Years 4 and 5
+df$visits <- 2 + 
+             (0.2 * df$period) + 
+             ifelse(df$treated == 1 & df$period >= 4, 1.5, 0) + 
+             rnorm(nrow(df), mean = 0, sd = 0.5) # Add random noise
+
+head(df) # Look at the structure of our new panel data
+
+::: write_speak
+We now have 5 years of data.
+To run an Event Study, we don't just use a single post variable. Instead, we create an interaction between the treatment status and every single year.
+
+This allows us to estimate a separate effect for Year 1, Year 2, Year 3, Year 4, and Year 5.
+
+::: write_speak
+In practice, we must omit one pre-treatment year to serve as our "baseline" or reference category (usually the year right before the policy, Year 3). Every other year's effect is measured relative to that baseline.
+
+Let's run the model using R's built-in lm() function, treating period as a categorical factor.
+
+# Convert period to a factor (categorical variable) so R calculates separate effects per year
+# We use relevel() to force Year 3 to be our baseline comparison year
+df$period_factor <- relevel(as.factor(df$period), ref = "3")
+
+# Run the Event Study Regression
+# We interact treated with the categorical period factor
+event_study_model <- lm(visits ~ treated * period_factor, data = df)
+
+# Look at the coefficients, specifically the 'treated:period_factor' rows
+summary(event_study_model)
+
+::: write_speak
+Take a close look at the treated:period_factor interaction terms in your output.
+
+For Years 1 and 2, the coefficients should be very close to zero, and likely not statistically significant (large p-values). This is a massive relief. It proves our parallel trends assumption holds! The treated and control groups had no meaningful differences in their trends prior to the policy.
+
+For Years 4 and 5, the coefficients should jump up to around 1.5 and be highly significant. This proves the policy had an immediate and sustained impact.
+
+::: write
+
+::: write_speak
+When you graph these coefficients, you get the classic Event Study plot. A flat line around zero before the policy, and a clear step or curve after the policy. It is the most visually convincing way to present causal inference.
+
+::: question
+Why do econometricians deliberately drop one pre-treatment period (like Year 3) from the Event Study regression model?
+
+To artificially inflate the statistical significance of the post-treatment effects.
+
+Because the data from the year right before a policy change is always corrupted by anticipation effects.
+
+To serve as a baseline reference point; all other period effects are measured relative to this specific year. [correct]
+
+R cannot handle regressions with more than four categorical time periods.
+
+::: write_speak
+
+Summary
+You have officially upgraded from basic correlation to sophisticated causal inference. By utilizing an Event Study, you didn't just calculate a Difference-in-Differences effect—you audited your own data to prove that the underlying assumptions were mathematically sound.

@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Explain App — Documentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2129;
+      --border: rgba(255,255,255,.1);
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --accent-soft: rgba(88,166,255,.15);
+      --code-bg: #21262d;
+      --radius: 8px;
+      --font-sans: 'DM Sans', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 16px;
+    }
+    .doc-wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+    .doc-header {
+      margin-bottom: 2.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .doc-header h1 {
+      margin: 0 0 0.25rem;
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .doc-header p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+    nav.toc {
+      margin-bottom: 2rem;
+      padding: 1rem 1.25rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    nav.toc .toc-title {
+      margin: 0 0 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+    nav.toc ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    nav.toc li { margin: 0.25rem 0; }
+    nav.toc a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    nav.toc a:hover { text-decoration: underline; }
+    .block-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    .block-table th, .block-table td { padding: 0.5rem 0.75rem; text-align: left; border: 1px solid var(--border); vertical-align: top; }
+    .block-table th { background: var(--surface); color: var(--text-muted); font-weight: 600; }
+    .block-table td:first-child { font-family: var(--font-mono); color: var(--accent); white-space: nowrap; }
+    .block-table .example { font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem; }
+    .block-table .example code { font-size: 0.9em; padding: 0.1em 0.3em; }
+    section.doc-section {
+      margin-bottom: 2.5rem;
+    }
+    section.doc-section h2 {
+      margin: 0 0 1rem;
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: var(--text);
+      scroll-margin-top: 1rem;
+    }
+    section.doc-section h3 {
+      margin: 1.25rem 0 0.5rem;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    section.doc-section p {
+      margin: 0 0 0.75rem;
+      color: var(--text);
+    }
+    section.doc-section ul {
+      margin: 0 0 1rem;
+      padding-left: 1.5rem;
+    }
+    section.doc-section li { margin: 0.35rem 0; }
+    code, .code-block {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+    }
+    code {
+      padding: 0.15em 0.4em;
+      background: var(--code-bg);
+      border-radius: 4px;
+      color: var(--accent);
+    }
+    .code-block {
+      display: block;
+      margin: 0.75rem 0;
+      padding: 1rem 1.25rem;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      overflow-x: auto;
+      font-size: 0.85rem;
+    }
+    .code-block.small { font-size: 0.8rem; padding: 0.6rem 0.9rem; }
+    .block-category { margin: 1.5rem 0 0.5rem; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+    .block-category:first-of-type { margin-top: 0; }
+    .block-detail-head { margin-top: 2rem; padding-top: 0.5rem; border-top: 1px solid var(--border); scroll-margin-top: 1rem; }
+    .block-detail-head:first-of-type { margin-top: 1rem; border-top: none; }
+    .kw-list { margin: 0.5rem 0 1rem; font-size: 0.9rem; }
+    .kw-list dt { font-family: var(--font-mono); color: var(--accent); margin-top: 0.4rem; }
+    .kw-list dd { margin-left: 1rem; margin-bottom: 0.25rem; color: var(--text-muted); }
+    .defaults-list { margin: 0.5rem 0; font-size: 0.88rem; }
+    .defaults-list dt { font-family: var(--font-mono); color: var(--accent); display: inline; }
+    .defaults-list dt::after { content: " "; }
+    .defaults-list dd { display: inline; margin: 0; color: var(--text-muted); }
+    .defaults-list dd::after { content: ""; display: block; }
+    .defaults-group { margin-bottom: 1.25rem; }
+    .defaults-group h4 { margin: 0 0 0.35rem; font-size: 0.95rem; color: var(--text-muted); }
+    .recap-box {
+      margin-top: 1rem;
+      padding: 1rem 1.25rem;
+      background: var(--accent-soft);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+    }
+    .recap-box strong { color: var(--accent); }
+    @media (min-width: 640px) {
+      .doc-wrap { padding: 2.5rem 2rem 5rem; }
+      .doc-header h1 { font-size: 2rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="doc-wrap">
+    <header class="doc-header">
+      <h1>The Explain App — Documentation</h1>
+      <p>What the app is, how to use the player and editor, and how to serve lessons from GitHub, Google Docs, or any URL.</p>
+    </header>
+    <section id="what-is" class="doc-section">
+      <h2>What is the Explain app?</h2>
+      <p>The Explain app is a <strong>lecture player</strong> that turns a simple text file into an interactive, narrated lesson. You write content using markdown and special blocks, and the app shows text, speaks it aloud, runs code, shows diagrams, and asks questions.</p>
+    </section>
+
+    <section id="blocks" class="doc-section">
+      <h2>Block types (quick reference)</h2>
+      <p>Lesson content is made of <strong>blocks</strong>. Each block starts with <code>:::</code> (three colons) followed by a block name, optionally with arguments in parentheses. The block body is everything after that until the next line that starts with <code>:::</code>. For narrated content, <strong>write_speak</strong> is the usual default (show and speak).</p>
+      <p><strong>Example:</strong></p>
+      <pre class="code-block"><code>::: write_speak
+This text is shown and spoken.
+
+::: wait(click=true)
+
+::: write
+This line is shown only (no speech).
+
+::: r 
+plot(1:10) # This line adds code and a plot to the presentation
+
+#The next line adds a multiple choice question
+::: question
+What is the meaning of life?
+- 41
+* 42
+- 42
+
+::: python
+print("Hello, world!")
+
+
+</code></pre>
+
+
+    <nav class="toc" aria-label="Contents">
+      <div class="toc-title">Contents</div>
+      <ul>
+        <li><a href="#what-is">What is the Explain app?</a></li>
+        <li><a href="#blocks">Block types (quick reference)</a></li>
+        <li><a href="#player">Player features</a></li>
+        <li><a href="#editor">The editor — what it does</a></li>
+        <li><a href="#loading">The editor — loading content</a></li>
+        <li><a href="#blocks-detail">Block types — examples and keywords</a></li>
+        <li><a href="#inline-tags">Inline tags in write/speak: (( )) and ((!))</a></li>
+        <li><a href="#defaults">Defaults</a></li>
+        <li><a href="#hash">Serving your app via URL hash</a></li>
+        <li><a href="#any-url">Serving — any URL</a></li>
+        <li><a href="#summary">Summary</a></li>
+      </ul>
+    </nav>
+
+
+
+
+      <p><strong>All block types</strong> (use each with a <code>:::</code> prefix, e.g. <code>::: write</code>):</p>
+      <ul>
+        <li><strong>Text:</strong> write, write_speak, speak</li>
+        <li><strong>Pacing &amp; structure:</strong> wait, new_page, title, defaults</li>
+        <li><strong>Callouts &amp; interactivity:</strong> message, question, multiple_choice, mark, mark_image, annotate_image, annotate_table</li>
+        <li><strong>Media &amp; embedding:</strong> image, img, table, math, html, video, youtube, pdf, link, accordion</li>
+        <li><strong>Web components:</strong> webcomponent (define), web (use)</li>
+        <li><strong>Code:</strong> pyodide, webr, js</li>
+        <li><strong>Diagrams &amp; drawing:</strong> draw, new_drawing, mermaid, p5, svg</li>
+        <li><strong>Other:</strong> dim, no_dim, xplainer_link</li>
+      </ul>
+      <p>Next we describe the <a href="#player">player</a> and <a href="#editor">editor</a>, then <a href="#blocks-detail">block types in detail</a>, and finally <a href="#inline-tags">inline tags</a> and other options.</p>
+    </section>
+
+    <section id="player" class="doc-section">
+      <h2>Player features</h2>
+      <p>When you're watching a lesson, the <strong>bottom bar</strong> gives you full playback control.</p>
+      <p><strong>Playback:</strong> Play and Pause, Rewind, Previous page, Next page. A progress bar and time display show where you are in the lesson.</p>
+      <p><strong>Speed:</strong> Choose 0.75×, 1×, 1.25×, 1.5×, or 2× for speech and pacing.</p>
+      <p><strong>Accessibility:</strong> CC for captions, Mute for turning off speech. Fullscreen for a distraction-free view.</p>
+      <p><strong>Edit:</strong> The pencil button opens the built-in editor so you can change the script or try your own content.</p>
+    </section>
+
+    <section id="editor" class="doc-section">
+      <h2>The editor — what it does</h2>
+      <p>The <strong>editor</strong> is where you write and load lesson scripts. Open it with the Edit (pencil) button in the bottom bar.</p>
+      <h3>Editor actions</h3>
+      <ul>
+        <li><strong>Play</strong> — Load the current text into the player and start from the beginning.</li>
+        <li><strong>Close</strong> — Hide the editor and return to the player.</li>
+        <li><strong>Help</strong> — Toggle a short reference for block syntax and common commands.</li>
+        <li><strong>Download</strong> — Save the current script as a .txt file to your computer.</li>
+        <li><strong>Save as app</strong> — Export a single HTML file that runs the app (scripts loaded from CDN). Great for offline or custom hosting.</li>
+      </ul>
+    </section>
+
+    <section id="loading" class="doc-section">
+      <h2>The editor — loading content</h2>
+      <p>You can get content into the editor in several ways.</p>
+      <p><strong>Load from URL:</strong> Paste a URL or a short identifier in the “URL or id…” field and click <strong>Load</strong>. The app fetches the file and puts it in the editor. You can then play it or edit it.</p>
+      <p><strong>Tutorial list:</strong> Use the dropdown next to Load to pick from a list of built-in or configured tutorials. Click the refresh button to reload the list.</p>
+      <p><strong>Upload:</strong> Click <strong>Upload</strong> to choose a .txt, .md, or .json file from your computer. The content appears in the editor and you can play or edit it.</p>
+    </section>
+
+    <section id="blocks-detail" class="doc-section">
+      <h2>Block types — overview and reference</h2>
+      <p>Blocks are written as <code>::: name</code> or <code>::: name(key="value", ...)</code>. The body is the lines after the header until the next <code>:::</code> line. The table below links to a detailed subsection for each block with <strong>all</strong> keywords and defaults.</p>
+
+      <table class="block-table">
+        <thead><tr><th>Block</th><th>Description</th><th>Details</th></tr></thead>
+        <tbody>
+          <tr><td><code>::: write</code></td><td>Show text only (no speech).</td><td><a href="#block-write">Keywords</a></td></tr>
+          <tr><td><code>::: write_speak</code></td><td>Show and speak; default for narration.</td><td><a href="#block-write_speak">Keywords</a></td></tr>
+          <tr><td><code>::: speak</code></td><td>Speak only; nothing shown.</td><td><a href="#block-speak">Keywords</a></td></tr>
+          <tr><td><code>::: wait</code></td><td>Pause until click or N seconds.</td><td><a href="#block-wait">Keywords</a></td></tr>
+          <tr><td><code>::: new_page</code></td><td>Start a new page/slide.</td><td><a href="#block-new_page">Keywords</a></td></tr>
+          <tr><td><code>::: title</code></td><td>Set page title.</td><td><a href="#block-title">Keywords</a></td></tr>
+          <tr><td><code>::: defaults</code></td><td>Set global options; body = key=value.</td><td><a href="#block-defaults">Keywords</a></td></tr>
+          <tr><td><code>::: message</code></td><td>Callout box.</td><td><a href="#block-message">Keywords</a></td></tr>
+          <tr><td><code>::: question</code></td><td>Prompt for an answer.</td><td><a href="#block-question">Keywords</a></td></tr>
+          <tr><td><code>::: multiple_choice</code></td><td>Question with choices (- wrong, * correct).</td><td><a href="#block-multiple_choice">Keywords</a></td></tr>
+          <tr><td><code>::: mark</code></td><td>Highlight text/code/table; omit text = last element.</td><td><a href="#block-mark">Keywords</a></td></tr>
+          <tr><td><code>::: mark_image</code> / <code>::: annotate_image</code></td><td>Highlight region on image.</td><td><a href="#block-mark_image">Keywords</a></td></tr>
+          <tr><td><code>::: annotate_table</code></td><td>Annotate last table.</td><td><a href="#block-annotate_table">Keywords</a></td></tr>
+          <tr><td><code>::: image</code> / <code>::: img</code></td><td>Show image.</td><td><a href="#block-image">Keywords</a></td></tr>
+          <tr><td><code>::: table</code></td><td>Markdown table.</td><td><a href="#block-table">Keywords</a></td></tr>
+          <tr><td><code>::: math</code></td><td>LaTeX math.</td><td><a href="#block-math">Keywords</a></td></tr>
+          <tr><td><code>::: html</code></td><td>Raw HTML.</td><td><a href="#block-html">Keywords</a></td></tr>
+          <tr><td><code>::: video</code></td><td>Video element.</td><td><a href="#block-video">Keywords</a></td></tr>
+          <tr><td><code>::: youtube</code></td><td>Embed YouTube.</td><td><a href="#block-youtube">Keywords</a></td></tr>
+          <tr><td><code>::: pdf</code></td><td>Embed PDF.</td><td><a href="#block-pdf">Keywords</a></td></tr>
+          <tr><td><code>::: link</code></td><td>Link button.</td><td><a href="#block-link">Keywords</a></td></tr>
+          <tr><td><code>::: accordion</code></td><td>Collapsible sections (## Title in body).</td><td><a href="#block-accordion">Keywords</a></td></tr>
+          <tr><td><code>::: webcomponent</code></td><td>Define a custom element (JS or Brython).</td><td><a href="#block-webcomponent">Keywords</a></td></tr>
+          <tr><td><code>::: comp</code> / <code>::: component</code></td><td>Use a web component by tag name.</td><td><a href="#block-comp">Keywords</a></td></tr>
+          <tr><td><code>::: pyodide</code> / <code>::: python</code></td><td>Python (WebAssembly).</td><td><a href="#block-pyodide">Keywords</a></td></tr>
+          <tr><td><code>::: webr</code> / <code>::: r</code></td><td>R in the browser.</td><td><a href="#block-webr">Keywords</a></td></tr>
+          <tr><td><code>::: js</code></td><td>JavaScript.</td><td><a href="#block-js">Keywords</a></td></tr>
+          <tr><td><code>::: draw</code></td><td>Simple drawing (circle, rect, line, text).</td><td><a href="#block-draw">Keywords</a></td></tr>
+          <tr><td><code>::: new_drawing</code></td><td>Fresh drawing canvas.</td><td><a href="#block-new_drawing">Keywords</a></td></tr>
+          <tr><td><code>::: mermaid</code></td><td>Mermaid diagram.</td><td><a href="#block-mermaid">Keywords</a></td></tr>
+          <tr><td><code>::: p5</code></td><td>p5.js sketch.</td><td><a href="#block-p5">Keywords</a></td></tr>
+          <tr><td><code>::: svg</code></td><td>Raw SVG.</td><td><a href="#block-svg">Keywords</a></td></tr>
+          <tr><td><code>::: dim</code></td><td>Dim previous content.</td><td><a href="#block-dim">Keywords</a></td></tr>
+          <tr><td><code>::: no_dim</code></td><td>Clear dimming.</td><td><a href="#block-no_dim">Keywords</a></td></tr>
+          <tr><td><code>::: xplainer_link</code></td><td>Load another explainer and play it.</td><td><a href="#block-xplainer_link">Keywords</a></td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="block-write" class="block-detail-head">::: write</h3>
+      <p>Show text only (no speech). Body = markdown.</p>
+      <p><strong>Example:</strong></p>
+      <pre class="code-block"><code>::: write
+Hello **world**.</code></pre>
+      <p><strong>Keywords and defaults:</strong></p>
+      <dl class="kw-list">
+        <dt>markdown</dt><dd>Body content (markdown).</dd>
+        <dt>split</dt><dd>If true, split by line/paragraph. Default: <code>write_split</code> (true).</dd>
+        <dt>split_mode</dt><dd>"line" | "paragraph". Default: <code>write_split_mode</code> ("line").</dd>
+        <dt>location</dt><dd>Column: "left" | "right".</dd>
+        <dt>write_effect</dt><dd>"typewriter" | "fade". Default: <code>write_effect</code> ("typewriter").</dd>
+        <dt>effect</dt><dd>Alias for write_effect.</dd>
+        <dt>list_speed_multiplier</dt><dd>Speed for list items. Default: <code>write_list_speed_multiplier</code> (0.7).</dd>
+      </dl>
+
+      <h3 id="block-write_speak" class="block-detail-head">::: write_speak</h3>
+      <p>Show and speak text; default for narrated content. Body = markdown.</p>
+      <p><strong>Example:</strong></p>
+      <pre class="code-block"><code>::: write_speak
+This is shown and spoken.</code></pre>
+      <p><strong>Keywords and defaults:</strong></p>
+      <dl class="kw-list">
+        <dt>markdown</dt><dd>Body content (markdown).</dd>
+        <dt>speak</dt><dd>Override spoken text (else derived from markdown).</dd>
+        <dt>write_speak_speak</dt><dd>"all" | "headlines". How much to speak. Default: <code>write_speak_speak</code> ("all").</dd>
+        <dt>split</dt><dd>Default: <code>write_split</code> (true).</dd>
+        <dt>split_mode</dt><dd>Default: <code>write_split_mode</code> ("line").</dd>
+        <dt>location</dt><dd>Column.</dd>
+        <dt>write_effect</dt><dd>Default: <code>write_effect</code> ("typewriter").</dd>
+        <dt>list_speed_multiplier</dt><dd>Default: <code>write_list_speed_multiplier</code> (0.7).</dd>
+      </dl>
+
+      <h3 id="block-speak" class="block-detail-head">::: speak</h3>
+      <p>Speak only; nothing shown on the board. Body = text to speak.</p>
+      <p><strong>Example:</strong></p>
+      <pre class="code-block"><code>::: speak
+Narration only.</code></pre>
+      <p><strong>Keywords and defaults:</strong></p>
+      <dl class="kw-list">
+        <dt>text</dt><dd>Body or keyword: text to speak.</dd>
+        <dt>speak_text</dt><dd>Alias for text.</dd>
+        <dt>location</dt><dd>Column for any visual placeholder ("left" | "right").</dd>
+      </dl>
+
+      <h3 id="block-wait" class="block-detail-head">::: wait</h3>
+      <p>Pause until user clicks or for N seconds.</p>
+      <p><strong>Example:</strong></p>
+      <pre class="code-block"><code>::: wait(click=true)
+::: wait(seconds=2)
+::: wait(label="Next")</code></pre>
+      <p><strong>Keywords and defaults:</strong></p>
+      <dl class="kw-list">
+        <dt>seconds</dt><dd>Wait this many seconds (then continue). If 0 or omitted, wait for click.</dd>
+        <dt>wait</dt><dd>Legacy: same as seconds (numeric).</dd>
+        <dt>label</dt><dd>Button text. Default: "Continue".</dd>
+        <dt>wait_label</dt><dd>Alias for label.</dd>
+        <dt>location</dt><dd>Where to show button: "left" | "right". Default: "right".</dd>
+      </dl>
+
+      <h3 id="block-new_page" class="block-detail-head">::: new_page</h3>
+      <p>Start a new page/slide. Body or <code>title</code> = page title.</p>
+      <p><strong>Keywords and defaults:</strong></p>
+      <dl class="kw-list">
+        <dt>title</dt><dd>Page title (or use body content).</dd>
+      </dl>
+
+      <h3 id="block-title" class="block-detail-head">::: title</h3>
+      <p>Set the current page title. Body or <code>title</code> = title text.</p>
+      <dl class="kw-list">
+        <dt>title</dt><dd>Title text (or body).</dd>
+        <dt>text</dt><dd>Alias.</dd>
+        <dt>markdown</dt><dd>Alias.</dd>
+        <dt>speak</dt><dd>Optional phrase to speak.</dd>
+      </dl>
+
+      <h3 id="block-defaults" class="block-detail-head">::: defaults</h3>
+      <p>Set global options. Use <code>::: defaults(key=value, ...)</code> and/or <code>key=value</code> lines in the body. Any key from <a href="#defaults">Defaults</a> applies.</p>
+      <pre class="code-block"><code>::: defaults(font_size_px=20)
+movie_wait_seconds=2</code></pre>
+
+      <h3 id="block-message" class="block-detail-head">::: message</h3>
+      <p>Callout box. Body = message text.</p>
+      <dl class="kw-list">
+        <dt>level</dt><dd>"note" | "info" | "warn" | "error". Default: "info".</dd>
+        <dt>text</dt><dd>Body or keyword.</dd>
+      </dl>
+
+      <h3 id="block-question" class="block-detail-head">::: question</h3>
+      <p>Prompt for an answer. Body: first line = question, next line(s) = answer or choices (<code>-</code> wrong, <code>*</code> correct).</p>
+      <dl class="kw-list">
+        <dt>question</dt><dd>Question text (or first line of body).</dd>
+        <dt>answer</dt><dd>Correct answer(s).</dd>
+        <dt>hint</dt><dd>Optional hint.</dd>
+        <dt>gif</dt><dd>Optional GIF (boolean or URL).</dd>
+        <dt>gif_src</dt><dd>GIF URL. Alias: gif_url.</dd>
+        <dt>font_size_px</dt><dd>Font size. Default: <code>font_size_px</code> (22).</dd>
+        <dt>pause_on_click</dt><dd>Default: from defaults.</dd>
+        <dt>wait_label</dt><dd>Continue button text. Alias: label.</dd>
+        <dt>location</dt><dd>"left" | "right".</dd>
+        <dt>click</dt><dd>Wait for click after answer.</dd>
+        <dt>muted</dt><dd>Mute speech for this block.</dd>
+        <dt>question_require_answer</dt><dd>Default: false.</dd>
+        <dt>question_wait_for_answer</dt><dd>Default: true.</dd>
+        <dt>question_show_answer</dt><dd>Default: true.</dd>
+        <dt>question_wait_after_answer</dt><dd>Default: false.</dd>
+        <dt>question_wait_seconds</dt><dd>Default: 0.5.</dd>
+      </dl>
+
+      <h3 id="block-multiple_choice" class="block-detail-head">::: multiple_choice</h3>
+      <p>Same as question; body uses <code>-</code> for wrong and <code>*</code> for correct. Same keywords as <code>::: question</code>.</p>
+
+      <h3 id="block-mark" class="block-detail-head">::: mark</h3>
+      <p>Highlight text, code, or table. If you omit <code>text</code>/<code>code_text</code>, the <strong>last element</strong> (last text block, code cell, or table) is targeted; you can highlight the whole element or use line/regex.</p>
+      <dl class="kw-list">
+        <dt>text</dt><dd>Substring to highlight (or body). Omit = target last element.</dd>
+        <dt>code_text</dt><dd>Alias for text (code/code_text used for code cells).</dd>
+        <dt>index</dt><dd>Which element (-1 = last). Default: -1.</dd>
+        <dt>id</dt><dd>Target by registered element id.</dd>
+        <dt>target</dt><dd>Override target type. Alias: type.</dd>
+        <dt>speak</dt><dd>Optional phrase spoken when marking.</dd>
+        <dt>color</dt><dd>Highlight color. Default: <code>mark_color</code> ("yellow").</dd>
+        <dt>mark_opacity</dt><dd>Default: <code>mark_opacity</code> (0.80).</dd>
+        <dt>effect</dt><dd>RoughNotation effect: "circle" | "underline" | "box" | etc. Default for whole element: "circle".</dd>
+        <dt>line</dt><dd>Code: single line number.</dd>
+        <dt>line_start</dt><dd>Code: start line.</dd>
+        <dt>line_end</dt><dd>Code: end line.</dd>
+        <dt>regex</dt><dd>Match by regex.</dd>
+        <dt>occurrence</dt><dd>Which occurrence (1-based).</dd>
+        <dt>all</dt><dd>Highlight all matches.</dd>
+        <dt>case_sensitive</dt><dd>Regex case sensitivity.</dd>
+        <dt>duration</dt><dd>How long highlight stays (seconds). Alias: seconds.</dd>
+        <dt>temporary</dt><dd>If true, highlight fades. Default: true.</dd>
+        <dt>permanent</dt><dd>If true, highlight stays. Default: false.</dd>
+      </dl>
+
+      <h3 id="block-mark_image" class="block-detail-head">::: mark_image / ::: annotate_image</h3>
+      <p>Draw a highlight (rect or circle) on the last image or the image with <code>id</code>/<code>index</code>. Optional label.</p>
+      <dl class="kw-list">
+        <dt>index</dt><dd>Which image (-1 = last). Default: -1.</dd>
+        <dt>id</dt><dd>Target image by id.</dd>
+        <dt>col</dt><dd>Grid column (with row) for position.</dd>
+        <dt>row</dt><dd>Grid row.</dd>
+        <dt>rect</dt><dd>Alternative position spec.</dd>
+        <dt>x</dt><dd>X position (%).</dd>
+        <dt>y</dt><dd>Y position (%).</dd>
+        <dt>w</dt><dd>Width (%). Alias: width.</dd>
+        <dt>h</dt><dd>Height (%). Alias: height.</dd>
+        <dt>where</dt><dd>Preset position. Alias: preset.</dd>
+        <dt>grid</dt><dd>Grid spec (e.g. "3x3"). Default: <code>image_mark_grid</code>.</dd>
+        <dt>pad</dt><dd>Padding (%). Alias: padding.</dd>
+        <dt>size</dt><dd>"small" | "medium" | "large". Default: <code>image_mark_size</code> ("medium").</dd>
+        <dt>shape</dt><dd>"rect" | "circle". Default: <code>image_mark_shape</code> ("rect").</dd>
+        <dt>text</dt><dd>Label text. Alias: label.</dd>
+        <dt>label_pos</dt><dd>"top" | "bottom" | "left" | "right" | "center". Default: <code>image_mark_label_pos</code> ("top").</dd>
+        <dt>label_offset</dt><dd>Pixels. Default: <code>image_mark_label_offset</code> (10). Alias: offset.</dd>
+        <dt>color</dt><dd>Fill/stroke color. Default: <code>image_mark_color</code> ("yellow").</dd>
+        <dt>opacity</dt><dd>Fill opacity. Alias: mark_opacity. Default: <code>image_mark_opacity</code> (0.24).</dd>
+        <dt>stroke_color</dt><dd>Border color. Alias: stroke.</dd>
+        <dt>stroke_width</dt><dd>Border width. Default: <code>image_mark_stroke_width</code> (2).</dd>
+        <dt>duration</dt><dd>How long (seconds). Alias: seconds. Default: <code>image_mark_duration</code> (1.4).</dd>
+        <dt>temporary</dt><dd>Default: true.</dd>
+        <dt>permanent</dt><dd>Default: false.</dd>
+        <dt>animate</dt><dd>Animate appearance. Default: <code>image_mark_animate</code> (true).</dd>
+        <dt>pulse</dt><dd>Pulsing effect.</dd>
+        <dt>speak</dt><dd>Optional phrase to speak.</dd>
+      </dl>
+
+      <h3 id="block-annotate_table" class="block-detail-head">::: annotate_table</h3>
+      <p>Annotate the last table (or table at <code>index</code>/<code>id</code>). Body or <code>text</code> = annotation text.</p>
+      <dl class="kw-list">
+        <dt>index</dt><dd>Which table (-1 = last). Default: -1.</dd>
+        <dt>id</dt><dd>Target by id.</dd>
+        <dt>text</dt><dd>Annotation text (or body).</dd>
+        <dt>temporary</dt><dd>Default: true.</dd>
+        <dt>permanent</dt><dd>Default: false.</dd>
+      </dl>
+
+      <h3 id="block-image" class="block-detail-head">::: image / ::: img</h3>
+      <p>Show an image. Use <code>::: mark_image</code> later to highlight regions. Body or <code>src</code> = URL.</p>
+      <dl class="kw-list">
+        <dt>src</dt><dd>Image URL (or body). Aliases: url, href.</dd>
+        <dt>id</dt><dd>Register element for mark_image.</dd>
+        <dt>caption</dt><dd>Caption below image.</dd>
+        <dt>width</dt><dd>Default: <code>image_width</code> ("100%").</dd>
+        <dt>height</dt><dd>Default: <code>image_height</code> ("auto").</dd>
+        <dt>image_max_height</dt><dd>Default: "72vh".</dd>
+        <dt>image_object_fit</dt><dd>Default: "contain".</dd>
+      </dl>
+
+      <h3 id="block-table" class="block-detail-head">::: table</h3>
+      <p>Markdown table. Body = table markdown.</p>
+      <dl class="kw-list">
+        <dt>title</dt><dd>Table caption.</dd>
+        <dt>highlight_row</dt><dd>1-based row to emphasize. Alias: highlight.</dd>
+        <dt>engine</dt><dd>"native". Default: "native".</dd>
+        <dt>headers</dt><dd>Parsed from body.</dd>
+        <dt>rows</dt><dd>Parsed from body.</dd>
+      </dl>
+
+      <h3 id="block-math" class="block-detail-head">::: math</h3>
+      <p>LaTeX math (inline or block). Body = LaTeX.</p>
+      <dl class="kw-list">
+        <dt>text</dt><dd>Body or keyword: LaTeX content.</dd>
+      </dl>
+
+      <h3 id="block-html" class="block-detail-head">::: html</h3>
+      <p>Raw HTML. Body = HTML. <code>id</code> for targeting from JS.</p>
+      <dl class="kw-list">
+        <dt>html</dt><dd>Body or keyword.</dd>
+        <dt>allow_html</dt><dd>Allow HTML in block. Default: true.</dd>
+        <dt>id</dt><dd>Register element.</dd>
+      </dl>
+
+      <h3 id="block-video" class="block-detail-head">::: video</h3>
+      <p>Video element. Body or <code>src</code> = URL.</p>
+      <dl class="kw-list">
+        <dt>src</dt><dd>Video URL (or body).</dd>
+      </dl>
+
+      <h3 id="block-youtube" class="block-detail-head">::: youtube</h3>
+      <p>Embed YouTube. Body or <code>src</code> = video URL or ID.</p>
+      <dl class="kw-list">
+        <dt>src</dt><dd>YouTube URL or video ID (or body).</dd>
+      </dl>
+
+      <h3 id="block-pdf" class="block-detail-head">::: pdf</h3>
+      <p>Embed PDF. Body or <code>src</code> = URL.</p>
+      <dl class="kw-list">
+        <dt>src</dt><dd>PDF URL (or body).</dd>
+      </dl>
+
+      <h3 id="block-link" class="block-detail-head">::: link</h3>
+      <p>Clickable link (anchor). Body: first line = URL, second line = link text. If the URL does not start with <code>http:</code>, <code>https:</code>, <code>/</code>, or <code>#</code>, <code>https://</code> is prepended.</p>
+      <dl class="kw-list">
+        <dt>url / href / src</dt><dd>Link URL. Or use body (first line).</dd>
+        <dt>text / title</dt><dd>Link label. Or use body (second line).</dd>
+      </dl>
+
+      <h3 id="block-accordion" class="block-detail-head">::: accordion</h3>
+      <p>Collapsible sections. Body: <code>## Title</code> per section, or use <code>title</code>/<code>markdown</code>/<code>text</code> for one panel.</p>
+      <dl class="kw-list">
+        <dt>title</dt><dd>Single panel title.</dd>
+        <dt>markdown</dt><dd>Single panel body (markdown).</dd>
+        <dt>text</dt><dd>Single panel body (plain).</dd>
+        <dt>open</dt><dd>If true, panel starts expanded.</dd>
+        <dt>items</dt><dd>Parsed from body: array of { title, markdown, open }.</dd>
+      </dl>
+
+      <h3 id="block-webcomponent" class="block-detail-head">::: webcomponent</h3>
+      <p>Define a custom element (web component) so you can use it later with <code>::: web</code>. The tag name must contain a hyphen (e.g. <code>my-card</code>). Definitions run when the lecture loads, before any <code>::: web</code> block.</p>
+      <p><strong>Two ways to define:</strong></p>
+      <ul>
+        <li><strong>Import by script:</strong> <code>::: webcomponent my-chart(script="https://example.com/my-chart.js")</code> — load the script; it must call <code>customElements.define('my-chart', ...)</code>.</li>
+        <li><strong>Inline code:</strong> Body = JavaScript or Brython that registers the element. Use <code>lang=js</code> (default) or <code>lang=brython</code>.</li>
+      </ul>
+      <p><strong>Example (Brython):</strong></p>
+      <pre class="code-block small"><code>::: webcomponent note-card(lang=brython)
+from browser import webcomponent, html
+
+class NoteCard:
+    def __init__(self):
+        self.attachShadow({'mode': 'open'})
+        self.shadow &lt;= html.DIV(Class='note-card') &lt;= (
+            html.DIV(Class='note-title', id='title'),
+            html.DIV(Class='note-body', id='body'),
+        )
+    def connectedCallback(self):
+        self.shadow.select('#title')[0].text = self.attrs.get('title') or ''
+        self.shadow.select('#body')[0].innerHTML = self.attrs.get('content') or ''
+webcomponent.define('note-card', NoteCard)</code></pre>
+      <p><strong>Keywords and defaults:</strong></p>
+      <dl class="kw-list">
+        <dt>script</dt><dd>URL of a script that defines the custom element. If set, body is ignored.</dd>
+        <dt>lang</dt><dd>Language for inline body: <code>js</code> (default) or <code>brython</code>.</dd>
+        <dt>shadow</dt><dd>Whether the component uses shadow DOM. Default: true.</dd>
+        <dt>body_attr</dt><dd>When set, block body is sent to this attribute by default (so you can write <code>::: comp TAG</code> without <code>into=</code>). Default: <code>content</code>.</dd>
+      </dl>
+
+      <h3 id="block-comp" class="block-detail-head">::: comp / ::: component</h3>
+      <p>Create an instance of a web component (custom element) that was defined with <code>::: webcomponent</code> or by a loaded script. Syntax: <code>::: comp TAG_NAME(key=value, ...)</code> or <code>::: component TAG_NAME(...)</code>. Optional body.</p>
+      <p><strong>Body behavior:</strong></p>
+      <ul>
+        <li>If you include <strong><code>into="attrname"</code></strong> (or <code>into=</code> for the default), the block body is set on that attribute and is not appended as children.</li>
+        <li>If you do <em>not</em> use <code>into</code> and the component was defined with <code>body_attr</code>, the block body is sent to that attribute.</li>
+        <li>Otherwise the block body is appended as DOM children (e.g. for the default slot).</li>
+      </ul>
+      <p><strong>Examples:</strong></p>
+      <pre class="code-block small"><code>::: comp note-card(title="First", into="content")
+This is the body — passed into the <code>content</code> attribute.</code></pre>
+      <pre class="code-block small"><code>::: comp note-card(title="Second")
+  &lt;p&gt;This paragraph is appended as a child (slot).&lt;/p&gt;</code></pre>
+      <p><strong>Keywords:</strong></p>
+      <dl class="kw-list">
+        <dt>tag</dt><dd>Set by parser from header: <code>::: comp TAG_NAME(...)</code>.</dd>
+        <dt>into</dt><dd>Reserved: attribute name that receives the block body. Use <code>into="attrname"</code> or <code>into=</code> (default <code>content</code>).</dd>
+        <dt>location</dt><dd>Column: "left" | "right".</dd>
+        <dt>speak</dt><dd>Optional phrase to speak.</dd>
+        <dt>Any other key=value</dt><dd>Set as attributes on the custom element.</dd>
+      </dl>
+
+      <h3 id="block-pyodide" class="block-detail-head">::: pyodide / ::: python</h3>
+      <p>Python (WebAssembly). Body = Python code.</p>
+      <dl class="kw-list">
+        <dt>code</dt><dd>Body or keyword.</dd>
+        <dt>show_code</dt><dd>Show code editor. Default: <code>pyodide_show_code</code> (true).</dd>
+        <dt>editable</dt><dd>Default: <code>pyodide_editable</code> (true).</dd>
+        <dt>auto_run</dt><dd>"before" | "after" | "block" | false. Default: <code>pyodide_auto_run</code> ("before").</dd>
+        <dt>silent</dt><dd>Run with no output. Default: false.</dd>
+        <dt>location</dt><dd>Default: <code>pyodide_location</code> ("left").</dd>
+        <dt>height</dt><dd>Default: <code>pyodide_height</code> ("auto").</dd>
+        <dt>wait_label</dt><dd>Continue button after run.</dd>
+        <dt>wait_location</dt><dd>Default: "right".</dd>
+        <dt>pyodide_clear_page</dt><dd>Default: false.</dd>
+        <dt>pyodide_wait_after</dt><dd>Default: true.</dd>
+        <dt>pyodide_auto_install</dt><dd>Default: true.</dd>
+        <dt>python_requirements</dt><dd>Default: "".</dd>
+      </dl>
+
+      <h3 id="block-webr" class="block-detail-head">::: webr / ::: r</h3>
+      <p>R in the browser. Body = R code. Same-style keywords as pyodide: <code>show_code</code>, <code>editable</code>, <code>auto_run</code>, <code>silent</code>, <code>location</code>, <code>height</code>, <code>wait_label</code>, <code>wait_location</code>. Defaults: <code>webr_show_code</code>, <code>webr_editable</code>, <code>webr_auto_run</code> ("before"), <code>webr_location</code> ("left"), <code>webr_height</code> ("auto"), <code>webr_clear_page</code>, <code>webr_wait_after</code>, <code>r_requirements</code>.</p>
+
+      <h3 id="block-js" class="block-detail-head">::: js</h3>
+      <p>JavaScript. Body = JS code.</p>
+      <dl class="kw-list">
+        <dt>code</dt><dd>Body or keyword.</dd>
+        <dt>show_code</dt><dd>Default: <code>js_show_code</code> (false).</dd>
+        <dt>editable</dt><dd>Default: <code>js_editable</code> (true).</dd>
+        <dt>auto_run</dt><dd>Default: <code>js_auto_run</code> (true).</dd>
+        <dt>silent</dt><dd>Run with no output.</dd>
+        <dt>location</dt><dd>Default: <code>js_location</code> ("left").</dd>
+        <dt>height</dt><dd>Default: <code>js_height</code> ("auto").</dd>
+        <dt>wait_label</dt><dd>Continue button.</dd>
+        <dt>wait_location</dt><dd>Default: "right".</dd>
+      </dl>
+
+      <h3 id="block-draw" class="block-detail-head">::: draw</h3>
+      <p>Simple drawing: circle, rect, line, text, ellipse, polygon, path. Body: one command per line with <code>stroke=</code>, <code>fill=</code>.</p>
+      <dl class="kw-list">
+        <dt>id</dt><dd>Register element.</dd>
+        <dt>footnote</dt><dd>Optional footnote.</dd>
+        <dt>pause_on_click</dt><dd>Pause after drawing.</dd>
+        <dt>draw_animate</dt><dd>Default: true.</dd>
+        <dt>draw_height_px</dt><dd>Default: 180.</dd>
+        <dt>draw_location</dt><dd>Default: "right".</dd>
+        <dt>draw_coords</dt><dd>Default: "svg".</dd>
+        <dt>stroke_width</dt><dd>Default: 1.0.</dd>
+        <dt>board_color</dt><dd>Default: "#0b1220".</dd>
+        <dt>draw_speed_sec_per_100</dt><dd>Default: 1.0.</dd>
+      </dl>
+
+      <h3 id="block-new_drawing" class="block-detail-head">::: new_drawing</h3>
+      <p>Start a fresh drawing (new canvas). No body. No keywords in parser.</p>
+
+      <h3 id="block-mermaid" class="block-detail-head">::: mermaid</h3>
+      <p>Mermaid diagram (flowchart, sequence, etc.). Body = Mermaid source.</p>
+      <dl class="kw-list">
+        <dt>code</dt><dd>Body or keyword.</dd>
+      </dl>
+
+      <h3 id="block-p5" class="block-detail-head">::: p5</h3>
+      <p>p5.js sketch (setup/draw). Body = p5 code.</p>
+      <dl class="kw-list">
+        <dt>code</dt><dd>Body or keyword.</dd>
+        <dt>id</dt><dd>Instance id (for mark/dim).</dd>
+        <dt>title</dt><dd>Optional title.</dd>
+        <dt>width</dt><dd>Default: <code>p5_width</code> ("100%").</dd>
+        <dt>height</dt><dd>Default: <code>p5_height</code> ("240px").</dd>
+        <dt>p5_location</dt><dd>Default: "right".</dd>
+        <dt>p5_autorun</dt><dd>Default: true.</dd>
+        <dt>p5_controls</dt><dd>Default: false.</dd>
+        <dt>p5_auto_resize</dt><dd>Default: true.</dd>
+        <dt>p5_clear_page</dt><dd>Default: false.</dd>
+        <dt>p5_wait_after</dt><dd>Default: false.</dd>
+      </dl>
+
+      <h3 id="block-svg" class="block-detail-head">::: svg</h3>
+      <p>Raw SVG. Body = SVG markup. <code>animate=true</code> reveals step-by-step.</p>
+      <dl class="kw-list">
+        <dt>svg</dt><dd>Body or keyword.</dd>
+        <dt>animate</dt><dd>Reveal animation. Default: <code>svg_animate</code> (true).</dd>
+        <dt>svg_wait_until_drawn</dt><dd>Default: true.</dd>
+        <dt>svg_base_delay</dt><dd>Default: 0.</dd>
+        <dt>svg_step_delay</dt><dd>Default: 650.</dd>
+        <dt>svg_min_dur</dt><dd>Default: 1100.</dd>
+        <dt>svg_reveal_text</dt><dd>Default: true.</dd>
+        <dt>svg_max_height</dt><dd>Default: "200px".</dd>
+      </dl>
+
+      <h3 id="block-dim" class="block-detail-head">::: dim</h3>
+      <p>Dim previous content so current step stands out. Omit index/indices/slice/range = keep only last element undimmed.</p>
+      <dl class="kw-list">
+        <dt>index</dt><dd>Which element(s) to keep undimmed (-1 = last). Or body.</dd>
+        <dt>indices</dt><dd>Array or comma list.</dd>
+        <dt>slice</dt><dd>Slice spec.</dd>
+        <dt>range</dt><dd>Range spec.</dd>
+        <dt>text</dt><dd>Parsed as index spec.</dd>
+        <dt>value</dt><dd>Parsed as index spec.</dd>
+        <dt>dim</dt><dd>Global default (defaults.dim).</dd>
+      </dl>
+
+      <h3 id="block-no_dim" class="block-detail-head">::: no_dim</h3>
+      <p>Clear dimming. Omit index/indices = undim all.</p>
+      <dl class="kw-list">
+        <dt>index</dt><dd>Which to undim. Or body.</dd>
+        <dt>indices</dt><dd>Array or list.</dd>
+        <dt>slice</dt><dd>Slice spec.</dd>
+        <dt>range</dt><dd>Range spec.</dd>
+        <dt>text</dt><dd>Parsed as index spec.</dd>
+        <dt>value</dt><dd>Parsed as index spec.</dd>
+      </dl>
+
+      <h3 id="block-xplainer_link" class="block-detail-head">::: xplainer_link</h3>
+      <p>Button that loads another explainer or tutorial into this player and starts playback.</p>
+      <dl class="kw-list">
+        <dt>url</dt><dd>Target lecture id or URL. Aliases: href, src. If it is a single word with no <code>/</code>, the player tries a local <code>.txt</code> file, then the default GitHub tutorials repo, then the local <code>examples</code> folders.</dd>
+        <dt>text</dt><dd>Button label. Alias: title. Default: "Open explainer" or the URL/id.</dd>
+      </dl>
+
+      <p>The editor <strong>Help</strong> button and the <code>examples</code> folder in the repo show full syntax and more examples.</p>
+    </section>
+
+    <section id="inline-tags" class="doc-section">
+      <h2>Inline tags in write/speak: (( )) and ((!))</h2>
+      <p>Inside <code>write_speak</code> (and in the spoken part of other text blocks), you can use <strong>double parentheses</strong> to control what is shown vs. spoken, change language or voice for a phrase, or apply fonts and styles. All of these features use the <code>(( ))</code> syntax; <code>((!name!))</code> is a special form for the next word only.</p>
+
+      <h3>Show / speak only: ((silent)), ((invisible)), ((skip))</h3>
+      <p>Wrapped content can be <em>write only</em>, <em>speak only</em>, or <em>neither</em>:</p>
+      <ul>
+        <li><code>((silent))...((/silent))</code> or <code>((s))...((/s))</code> — shown on the board only, not spoken.</li>
+        <li><code>((invisible))...((/invisible))</code> or <code>((i))...((/i))</code> — spoken only, not shown.</li>
+        <li><code>((skip))...((/skip))</code> or <code>((k))...((/k))</code> — neither shown nor spoken.</li>
+      </ul>
+      <p>Example: <code>See ((silent)) Figure 3 ((/silent)) for details.</code> — “Figure 3” appears on screen but is not read aloud.</p>
+
+      <h3>Stop writing or speaking: ((stop_write)), ((stop_speak))</h3>
+      <p>Single tokens (no closing tag):</p>
+      <ul>
+        <li><code>((stop_write))</code> — from this point on, nothing more is shown on the board for this block (speech continues).</li>
+        <li><code>((stop_speak))</code> — from this point on, nothing more is spoken (text continues to appear).</li>
+      </ul>
+
+      <h3>Change language, voice, or rate: ((say))...((/say))</h3>
+      <p>Use <code>((say <em>key=value</em>))</code>...<code>((/say))</code> to override speech options for the wrapped phrase. Supported arguments:</p>
+      <ul>
+        <li><code>speech_lang</code> or <code>lang</code> — e.g. <code>lang="en-GB"</code>, <code>lang="nb-NO"</code>.</li>
+        <li><code>speech_voice</code> or <code>voice</code> — voice name or male/female.</li>
+        <li><code>speech_rate</code> or <code>rate</code> — number (e.g. 0.8 for slower, 1.2 for faster).</li>
+      </ul>
+      <p>Example: <code>((say lang="en-GB" rate=0.9))This sentence uses British English and a slower rate.((/say))</code></p>
+
+      <h3>Apply a style preset (fonts, colors, voice): ((use name))...((/use))</h3>
+      <p><code>((use presetName))</code>...<code>((/use))</code> applies a named preset to the wrapped content. Presets are defined in <code>::: defaults</code> under <code>speech_tags</code>, <code>inline_presets</code>, or <code>styles</code>. They can set:</p>
+      <ul>
+        <li><strong>Text style:</strong> <code>color</code>, <code>background</code>, <code>font_family</code> / <code>font</code>, <code>font_size</code> / <code>size</code>, <code>font_weight</code> / <code>weight</code>, <code>font_style</code>, <code>text_decoration</code>.</li>
+        <li><strong>Speech:</strong> <code>speech_lang</code> / <code>lang</code>, <code>speech_voice</code> / <code>voice</code>, <code>speech_rate</code> / <code>rate</code>.</li>
+      </ul>
+      <p>Example: define a preset in defaults with a different font and colour, then <code>((use emphasis))</code>...<code>((/use))</code> to apply it to a phrase.</p>
+
+      <h3>Style the next word only: ((!name!))</h3>
+      <p><code>((!presetName!))</code> applies a named preset to the <strong>next word only</strong> (no closing tag). Same preset options as <code>((use))</code> (fonts, colors, language, voice, rate). Example: <code>The key term is ((!highlight!)) important here.</code> — the word “important” gets the preset named <code>highlight</code>.</p>
+    </section>
+
+    <section id="defaults" class="doc-section">
+      <h2>Defaults</h2>
+      <p>Set global options with <code>::: defaults(key=value, ...)</code> and/or <code>key=value</code> lines in the body. Below are all default keys and their initial values (from <code>explain_defaults.js</code>).</p>
+      <div class="defaults-group"><h4>Appearance and layout</h4><dl class="defaults-list"><dt>font_size_px</dt><dd>22</dd><dt>font_scale</dt><dd>1.0</dd><dt>layout_split</dt><dd>100</dd><dt>board_color</dt><dd>"#0b1220"</dd><dt>dim</dt><dd>false</dd><dt>svg_text_font_size</dt><dd>9</dd></dl></div>
+      <div class="defaults-group"><h4>Text / write</h4><dl class="defaults-list"><dt>write_speed_chars_per_sec</dt><dd>38</dd><dt>write_animate</dt><dd>true</dd><dt>write_effect</dt><dd>"typewriter"</dd><dt>write_split</dt><dd>true</dd><dt>write_split_mode</dt><dd>"line"</dd><dt>write_gap</dt><dd>"12px"</dd><dt>write_list_speed_multiplier</dt><dd>0.7</dd><dt>write_appear_speed</dt><dd>0.6</dd><dt>typewriter_cps</dt><dd>16</dd><dt>typewriter_min_line_ms</dt><dd>320</dd><dt>typewriter_mask_pad_px</dt><dd>3</dd><dt>typewriter_list_pad_px</dt><dd>20</dd></dl></div>
+      <div class="defaults-group"><h4>Speech</h4><dl class="defaults-list"><dt>speech_lang</dt><dd>"en-US"</dd><dt>speech_voice</dt><dd>"male"</dd><dt>speech_rate</dt><dd>1</dd><dt>speak_code_language</dt><dd>"same"</dd><dt>write_speak_speak</dt><dd>"all"</dd></dl></div>
+      <div class="defaults-group"><h4>Pacing</h4><dl class="defaults-list"><dt>wait_seconds</dt><dd>2</dd><dt>element_gap_seconds</dt><dd>0.2</dd><dt>execution_mode</dt><dd>"movie"</dd><dt>movie_wait_seconds</dt><dd>2</dd><dt>pause_on_click</dt><dd>true</dd></dl></div>
+      <div class="defaults-group"><h4>Drawing</h4><dl class="defaults-list"><dt>draw_speed_sec_per_100</dt><dd>1.0</dd><dt>draw_animate</dt><dd>true</dd><dt>draw_height_px</dt><dd>180</dd><dt>draw_location</dt><dd>"right"</dd><dt>draw_coords</dt><dd>"svg"</dd><dt>stroke_width</dt><dd>1.0</dd><dt>draw_stroke_alpha</dt><dd>0.85</dd></dl></div>
+      <div class="defaults-group"><h4>Code (shared)</h4><dl class="defaults-list"><dt>code_new_page</dt><dd>false</dd><dt>code_max_lines</dt><dd>100</dd><dt>code_silent</dt><dd>false</dd><dt>code_output_wide</dt><dd>false</dd><dt>code_output_max_height</dt><dd>240</dd><dt>explain_code</dt><dd>true</dd></dl></div>
+      <div class="defaults-group"><h4>WebR (R)</h4><dl class="defaults-list"><dt>webr_show_code</dt><dd>true</dd><dt>webr_editable</dt><dd>true</dd><dt>webr_auto_run</dt><dd>"before"</dd><dt>webr_location</dt><dd>"left"</dd><dt>webr_result_location</dt><dd>"inside"</dd><dt>webr_height</dt><dd>"auto"</dd><dt>webr_clear_page</dt><dd>false</dd><dt>webr_wait_after</dt><dd>true</dd><dt>r_requirements</dt><dd>""</dd></dl></div>
+      <div class="defaults-group"><h4>Pyodide (Python)</h4><dl class="defaults-list"><dt>pyodide_show_code</dt><dd>true</dd><dt>pyodide_editable</dt><dd>true</dd><dt>pyodide_auto_run</dt><dd>"before"</dd><dt>pyodide_location</dt><dd>"left"</dd><dt>pyodide_result_location</dt><dd>"inside"</dd><dt>pyodide_height</dt><dd>"auto"</dd><dt>pyodide_clear_page</dt><dd>false</dd><dt>pyodide_wait_after</dt><dd>true</dd><dt>pyodide_auto_install</dt><dd>true</dd><dt>pyodide_preload</dt><dd>false</dd><dt>python_requirements</dt><dd>""</dd></dl></div>
+      <div class="defaults-group"><h4>JavaScript</h4><dl class="defaults-list"><dt>js_show_code</dt><dd>false</dd><dt>js_editable</dt><dd>true</dd><dt>js_auto_run</dt><dd>true</dd><dt>js_location</dt><dd>"left"</dd><dt>js_result_location</dt><dd>"inside"</dd><dt>js_height</dt><dd>"auto"</dd><dt>js_clear_page</dt><dd>false</dd><dt>js_wait_after</dt><dd>true</dd><dt>js_requirements</dt><dd>""</dd></dl></div>
+      <div class="defaults-group"><h4>p5</h4><dl class="defaults-list"><dt>p5_width</dt><dd>"100%"</dd><dt>p5_height</dt><dd>"240px"</dd><dt>p5_location</dt><dd>"right"</dd><dt>p5_autorun</dt><dd>true</dd><dt>p5_controls</dt><dd>false</dd><dt>p5_auto_resize</dt><dd>true</dd><dt>p5_clear_page</dt><dd>false</dd><dt>p5_wait_after</dt><dd>false</dd></dl></div>
+      <div class="defaults-group"><h4>SVG</h4><dl class="defaults-list"><dt>svg_animate</dt><dd>true</dd><dt>svg_wait_until_drawn</dt><dd>true</dd><dt>svg_base_delay</dt><dd>0</dd><dt>svg_step_delay</dt><dd>650</dd><dt>svg_min_dur</dt><dd>1100</dd><dt>svg_dur_per_100px</dt><dd>350</dd><dt>svg_reveal_text</dt><dd>true</dd><dt>svg_max_height</dt><dd>"200px"</dd></dl></div>
+      <div class="defaults-group"><h4>Questions</h4><dl class="defaults-list"><dt>question_require_answer</dt><dd>false</dd><dt>question_wait_for_answer</dt><dd>true</dd><dt>question_single_line</dt><dd>true</dd><dt>question_show_answer</dt><dd>true</dd><dt>question_wait_after_answer</dt><dd>false</dd><dt>question_wait_seconds</dt><dd>0.5</dd></dl></div>
+      <div class="defaults-group"><h4>Mark / highlight</h4><dl class="defaults-list"><dt>mark_color</dt><dd>"yellow"</dd><dt>mark_opacity</dt><dd>0.80</dd></dl></div>
+      <div class="defaults-group"><h4>Images</h4><dl class="defaults-list"><dt>image_width</dt><dd>"100%"</dd><dt>image_max_width</dt><dd>"100%"</dd><dt>image_height</dt><dd>"auto"</dd><dt>image_max_height</dt><dd>"72vh"</dd><dt>image_object_fit</dt><dd>"contain"</dd><dt>image_border_radius</dt><dd>"8px"</dd><dt>image_block_width</dt><dd>"100%"</dd><dt>image_block_max_width</dt><dd>"100%"</dd><dt>image_mark_color</dt><dd>"yellow"</dd><dt>image_mark_opacity</dt><dd>0.24</dd><dt>image_mark_stroke_width</dt><dd>2</dd><dt>image_mark_duration</dt><dd>1.4</dd><dt>image_mark_shape</dt><dd>"rect"</dd><dt>image_mark_animate</dt><dd>true</dd><dt>image_mark_label_pos</dt><dd>"top"</dd><dt>image_mark_label_offset</dt><dd>10</dd><dt>image_mark_size</dt><dd>"medium"</dd></dl></div>
+      <div class="defaults-group"><h4>Output (code results)</h4><dl class="defaults-list"><dt>output_bg</dt><dd>"#dbe4ee"</dd><dt>output_fg</dt><dd>"#111827"</dd><dt>output_border</dt><dd>"rgba(15,23,42,.20)"</dd><dt>output_wide</dt><dd>false</dd></dl></div>
+      <div class="defaults-group"><h4>Other</h4><dl class="defaults-list"><dt>allow_html</dt><dd>false</dd></dl></div>
+    </section>
+
+    <section id="hash" class="doc-section">
+      <h2>Serving your app via URL hash</h2>
+      <p>You don't have to use the editor every time. You can open a <strong>specific lesson directly</strong> by adding a hash to the app URL. The app supports three prefixes.</p>
+      <p><strong>GitHub:</strong> Use <code>#github-</code> followed by either a full GitHub file URL or a path like <code>owner/repo/branch/path/to/file.txt</code>. The app loads the raw file from GitHub.</p>
+      <p class="code-block">xplainer.app/#github-username/repo/main/lessons/intro.txt</p>
+      <p><strong>Google Docs:</strong> Use <code>#gdoc-</code> followed by the document ID or the full Google Docs sharing URL. The app exports the doc as plain text and loads it. The document must be shared so that “Anyone with the link” can view.</p>
+      <p class="code-block">xplainer.app/#gdoc-17ljz_ftXbM-tsPOe0vnNpQRp52gCEntapeXvc3KW9bw</p>
+    </section>
+
+    <section id="any-url" class="doc-section">
+      <h2>Serving — any URL</h2>
+      <p><strong>Any URL:</strong> Use <code>#url-</code> followed by the full URL of a text or markdown file. The app fetches that URL and loads the content. Best for plain text or markdown; HTML pages may need the target to be set up for export as text.</p>
+      <p class="code-block">xplainer.app/#url-https://example.com/lecture.txt</p>
+      <p>So you can host lessons on GitHub, write them in Google Docs, or put them on any server — and share a single link that opens the app with that lesson already loaded.</p>
+    </section>
+
+    <section id="summary" class="doc-section">
+      <h2>Summary</h2>
+      <p>The Explain app is a lecture player that turns text scripts into narrated, interactive lessons. Use the <strong>player</strong> to watch and control playback; use the <strong>editor</strong> to write, load, download, and save scripts. Serve lessons by sharing links with <code>#github-</code>, <code>#gdoc-</code>, or <code>#url-</code> so the app loads your content automatically.</p>
+      <div class="recap-box">
+        <strong>Recap</strong>
+        <ul style="margin: 0.5rem 0 0; padding-left: 1.25rem;">
+          <li><strong>Player:</strong> play/pause, progress, speed, fullscreen, captions, mute, edit.</li>
+          <li><strong>Editor:</strong> Play, Close, Help, Download, Save as app; Load from URL, list, Upload.</li>
+          <li><strong>Serving:</strong> #github-path-or-url, #gdoc-doc-id-or-url, #url-any-https-url.</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

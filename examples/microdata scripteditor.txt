@@ -1,0 +1,146 @@
+::: defaults
+speech_lang="nb-NO"
+
+::: html
+<div style="font-size: 30px; font-weight: 700; margin-bottom: 10px;">
+  Skripteditoren i microdata
+</div>
+<div id="micro-overlay-root" style="position: relative; display: inline-block; width: 100%; max-width: 980px;">
+  <img
+    src="https://microdata.no/manual/assets/images/image110-afa0f2333340ba9ea087ba79b6e4f81b.png"
+    style="display: block; width: 100%; border-radius: 8px;"
+    alt="Skripteditor i microdata.no"
+  />
+  <div
+    id="micro-overlay-box"
+    style="
+      position: absolute;
+      top: 5%;
+      left: 2%;
+      width: 35%;
+      height: 10%;
+      border: 3px solid rgba(255, 59, 48, 0.95);
+      background: rgba(255, 59, 48, 0.16);
+      border-radius: 7px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.45) inset, 0 0 18px rgba(255, 59, 48, 0.55);
+      pointer-events: none;
+      transition: top 450ms ease, left 450ms ease, width 450ms ease, height 450ms ease;
+      animation: microPulse 2.4s ease-in-out infinite;
+    "
+  ></div>
+  <div
+    id="micro-overlay-label"
+    style="
+      position: absolute;
+      top: 2%;
+      left: 2%;
+      background: rgba(255, 59, 48, 0.95);
+      color: #fff;
+      padding: 3px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 5px;
+      pointer-events: none;
+      transition: top 450ms ease, left 450ms ease, background-color 450ms ease;
+    "
+  >
+    1. Verktøylinje
+  </div>
+</div>
+
+::: js(silent=true)
+(function () {
+  const root = document.getElementById("micro-overlay-root");
+  const img = root ? root.querySelector("img") : null;
+  const presets = {
+    toolbar: { top: "2.5%", left: "2%",  width: "35%", height: "10%", label: "1. Verktøylinje",      labelTop: "0.6%",  labelLeft: "2%",   color: "rgba(255, 59, 48, 0.95)" },
+    editor:  { top: "20%",  left: "2%",  width: "46%", height: "52%", label: "2. Editor (kodefelt)",  labelTop: "16%",   labelLeft: "2%",   color: "rgba(30, 144, 255, 0.95)" },
+    output:  { top: "19%",  left: "61%", width: "34%", height: "57%", label: "3. Resultat / Output",  labelTop: "15%",   labelLeft: "61%",  color: "rgba(245, 158, 11, 0.95)" },
+    run:     { top: "82%",  left: "70%", width: "27%", height: "11%", label: "4. Kjør-knapper",       labelTop: "77.5%", labelLeft: "70%",  color: "rgba(46, 213, 115, 0.95)" }
+  };
+
+  if (!document.getElementById("micro-overlay-style")) {
+    const style = document.createElement("style");
+    style.id = "micro-overlay-style";
+    style.textContent = `
+      @keyframes microPulse {
+        0%, 100% { transform: scale(1); opacity: 0.92; }
+        50% { transform: scale(1.01); opacity: 1; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  window.setMicroOverlay = function (key) {
+    const cfg = presets[key];
+    if (!cfg) return;
+    const box = document.getElementById("micro-overlay-box");
+    const label = document.getElementById("micro-overlay-label");
+    if (!box || !label) return;
+    box.style.top = cfg.top;
+    box.style.left = cfg.left;
+    box.style.width = cfg.width;
+    box.style.height = cfg.height;
+    box.style.borderColor = cfg.color;
+    box.style.background = cfg.color.replace("0.95", "0.16");
+    box.style.boxShadow = `0 0 0 1px rgba(255,255,255,0.45) inset, 0 0 18px ${cfg.color.replace("0.95", "0.5")}`;
+    label.textContent = cfg.label;
+    label.style.top = cfg.labelTop;
+    label.style.left = cfg.labelLeft;
+    label.style.background = cfg.color;
+  };
+
+  function fitMicroOverlayToContainer() {
+    if (!root || !img) return;
+    const parent = root.parentElement;
+    if (!parent) return;
+    const parentW = parent.clientWidth || 0;
+    if (!parentW) return;
+    const natW = img.naturalWidth || 16;
+    const natH = img.naturalHeight || 9;
+    const ratio = natW / natH;
+    const maxH = Math.min(window.innerHeight * 0.74, 700);
+    let w = Math.min(parentW, 980);
+    let h = w / ratio;
+    if (h > maxH) {
+      h = maxH;
+      w = h * ratio;
+    }
+    root.style.width = `${Math.max(280, Math.floor(w))}px`;
+  }
+
+  if (img) {
+    if (img.complete) fitMicroOverlayToContainer();
+    img.addEventListener("load", fitMicroOverlayToContainer);
+  }
+  window.addEventListener("resize", fitMicroOverlayToContainer);
+})();
+window.setMicroOverlay("toolbar");
+
+::: speak
+Her ser du skripteditoren i microdata. Vi går gjennom de viktigste områdene i bildet, ett for ett.
+
+::: js(silent=true)
+window.setMicroOverlay("toolbar");
+
+::: speak
+Først verktøylinjen. Når du trykker på symbolet i hjørnet, får du flere valg. Her håndterer du skriptfiler, for eksempel kan du velge nytt skript, og åpne eller lagre et skript.  
+
+::: js(silent=true)
+window.setMicroOverlay("editor");
+
+::: speak
+Dette er selve kodeområdet. Her skriver og redigerer du kommandoene dine.
+
+::: js(silent=true)
+window.setMicroOverlay("output");
+
+::: speak
+Her er resultatområdet. Når du kjører kode, vises tabeller, meldinger og eventuelle feil her.
+
+::: js(silent=true)
+window.setMicroOverlay("run");
+
+::: speak
+Nederst til høyre ligger kjør-knappene. "Kjør" kjører hele skriptet og du ser ting i resultatområdet. Det er denne knappen du vanligvis vil bruke for å kjøre skriptet ditt. Den siste knappen - Send til kommandolinjen - kjører skriptet og sender resultatet til kommandområdet.
+

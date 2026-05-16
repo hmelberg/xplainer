@@ -1,0 +1,107 @@
+::: defaults(skin=playful)
+
+::: intro(text="Cost-Effectiveness Analysis", subtitle="hecon101 · Lecture 8 of 10", enter=blur-in, duration=3500, speak="Cost-effectiveness analysis. The arithmetic of health economics.")
+
+::: new_page(title="From ethics to arithmetic", transition=wipe-left)
+
+::: write_speak
+Lecture 7 gave us the ethics; this lecture gives us the arithmetic. One number decides more drug approvals in Europe than any other: the ICER.
+
+::: new_page(title="What's a QALY?", transition=fade)
+
+::: write(effect=fade)
+**QALY = Quality-Adjusted Life Year**
+
+A year of life, weighted by health-related quality.
+
+Scale: **0 = dead**, **1 = perfect health**.
+
+A year spent at quality 0.5 → **0.5 QALYs**.
+
+::: draw(size=420, animate=true)
+line(40, 260, 400, 260), speak="Horizontal axis: years of life."
+line(40, 260, 40, 40), speak="Vertical axis: quality of life, from zero at the bottom to one at the top."
+text(220, 285, "years"), speak=""
+text(20, 150, "Q"), speak=""
+rect(60, 160, 120, 100), speak="Without treatment: four years lived at roughly half quality. That's two QALYs."
+text(80, 215, "no tx: 2 QALYs"), speak=""
+rect(200, 100, 180, 160), speak="With Sovaldi: six years at roughly eighty percent quality. That's almost five QALYs."
+text(220, 185, "with tx: 4.8 QALYs"), speak=""
+text(220, 30, "gain = 2.8 QALYs"), speak="The difference, two-point-eight QALYs, is the health gain we're paying for."
+
+::: new_page(title="The ICER formula", transition=cross-dissolve)
+
+::: write_speak
+The incremental cost-effectiveness ratio asks one thing: how much extra cash buys one extra QALY?
+
+::: math
+\text{ICER} = \frac{C_B - C_A}{Q_B - Q_A}
+
+::: message(level=info, icon=lightbulb)
+Read it as "euros per QALY gained". Lower = better value.
+
+::: new_page(title="Sovaldi by the numbers", transition=wipe-right)
+
+::: table
+| Option        | Cost     | QALYs |
+| ------------- | -------- | ----- |
+| Old treatment | €10,000  | 4     |
+| Sovaldi       | €60,000  | 9     |
+| **Δ (extra)** | **€50,000** | **5** |
+| **ICER**      | **€10,000 / QALY** |   |
+
+::: write_speak
+Fifty thousand extra euros buys five extra QALYs, so Sovaldi costs about ten thousand euros per QALY gained. Now we compare that number to a threshold.
+
+::: new_page(title="Compare to the threshold", transition=fade)
+
+::: write_speak
+At €10,000 per QALY, Sovaldi sits well below the €30,000 per QALY reference threshold. By pure CEA logic, it's a no-brainer.
+
+::: new_page(title="The cost-effectiveness plane", transition=iris)
+
+::: svg(animate=true, wait_until_drawn=true)
+<svg viewBox="0 0 420 360" xmlns="http://www.w3.org/2000/svg">
+  <line x1="40" y1="180" x2="400" y2="180" stroke="black" stroke-width="2" data-step="1"/>
+  <line x1="210" y1="20" x2="210" y2="340" stroke="black" stroke-width="2" data-step="1"/>
+  <text x="385" y="200" font-size="12" data-step="1">+ΔQALY</text>
+  <text x="45" y="200" font-size="12" data-step="1">−ΔQALY</text>
+  <text x="220" y="30" font-size="12" data-step="1">+ΔCost</text>
+  <text x="220" y="335" font-size="12" data-step="1">−ΔCost</text>
+  <text x="90" y="90" font-size="13" fill="#a00" data-step="2">NW: more €, less health</text>
+  <text x="240" y="90" font-size="13" fill="#c60" data-step="3">NE: tradeoff (CEA lives here)</text>
+  <text x="90" y="270" font-size="13" fill="#060" data-step="4">SW: tradeoff (save €, lose QALYs)</text>
+  <text x="240" y="270" font-size="13" fill="#060" data-step="5">SE: DOMINANT — cheaper & better</text>
+  <text x="100" y="110" font-size="11" fill="#a00" data-step="2">(dominated)</text>
+  <circle cx="310" cy="110" r="7" fill="#c60" data-step="6"/>
+  <text x="260" y="135" font-size="12" fill="#c60" data-step="6">Sovaldi: costs more,</text>
+  <text x="260" y="150" font-size="12" fill="#c60" data-step="6">but cheap per QALY</text>
+</svg>
+
+::: write_speak
+Sovaldi lands in the northeast quadrant — more expensive, but enough extra QALYs to stay under the threshold line. That's the quadrant where CEA actually has a job to do.
+
+::: message(level=warn, icon=alert)
+CEA tells you "per-patient" efficiency. It does NOT tell you "can we afford it for 200,000 patients" — that's Budget Impact Analysis, coming in Lecture 9.
+
+::: new_page(title="Your turn", transition=slide-up)
+
+::: multiple_choice
+Treatment A costs €5,000 more and adds 0.2 QALYs versus Treatment B. Its ICER is...
+* €25,000 / QALY
+- €1,000 / QALY
+- €4,800 / QALY
+
+::: celebrate(kind=confetti, bursts=2)
+
+::: sound(name=success)
+
+::: write_speak
+Five thousand divided by zero-point-two equals twenty-five thousand euros per QALY — still just under the €30,000 threshold. You just ran a cost-effectiveness analysis.
+
+::: new_page(title="Wrapping up", transition=fade)
+
+::: write_speak
+The QALY gives health a unit; the ICER gives that unit a price tag. Next lecture: who actually sits in the room using these numbers to approve or refuse a drug.
+
+::: xplainer_link(url="09_decisions.txt", text="Next: Decision-making — thresholds, BIA, MCDA")

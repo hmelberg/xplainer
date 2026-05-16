@@ -1,0 +1,47 @@
+
+::: write_speak
+# What Is a Derivative?
+Think of it as "instant change."
+
+::: write
+Key idea:
+- slope at a point
+
+::: wait(click=true)
+
+::: write_speak
+If position is s(t), then velocity is s'(t).
+
+::: pyodide(editable=true, title="Try it")
+nums = [1, 2, 3, 4]
+print(sum(nums) / len(nums))
+
+::: question
+What is the average?
+- 2.0
+* 2.5
+- 3.0
+
+
+::: write_speak
+Let’s visualize a parabola.
+
+::: draw(height=160)
+M 10 140 L 70 40 L 130 140
+
+::: p5(height="220px")
+let t = 0;
+function setup(){ createCanvas(280, 160); }
+function draw(){
+  background(15);
+  stroke(96,165,250);
+  noFill();
+  beginShape();
+  for (let x=0; x<width; x++){
+    let y = 0.02*(x-140)*(x-140) + 20 + 10*sin(t);
+    vertex(x, y);
+  }
+  endShape();
+  t += 0.03;
+}
+

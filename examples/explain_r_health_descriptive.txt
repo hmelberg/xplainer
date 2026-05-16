@@ -1,0 +1,154 @@
+::: defaults(write_effect="typewriter", write_speed_chars_per_sec=40)
+
+::: write_speak
+# Health Data with R
+Imagine you are handed a massive database of hospital records. How do you turn those thousands of rows into a clear picture of public health?
+
+::: write_speak
+Today we explore:
+* **Descriptive Analysis** (The big picture)
+* **Units of Analysis** (People vs. Events)
+* **Data Integrity** (Missing values)
+* **Stratification** (Deep dives)
+
+::: wait(click=true)
+
+::: new_page(title="1. Descriptive Analysis")
+
+::: write_speak
+Lets start by counting the number of admissions.
+
+::: write
+### Total Admissions
+In R, we can use `nrow()` to get a quick tally.
+
+::: webr(title="Counting Records")
+# Simulated hospital data
+admissions <- data.frame(
+  id = 1:6,
+  patient_id = c(101, 102, 101, 103, 104, 102),
+  sex = c("F", "M", "F", "F", "M", "M"),
+  age = c(25, 40, 25, 80, NA, 42)
+)
+print(admissions)
+print(paste("Total Admissions:", nrow(admissions)))
+
+::: write_speak
+We see 6 admissions. But look closely—patient 101 appears twice. This leads us to a crucial distinction.
+
+::: question
+If one person visits the hospital three times, how many admissions is that?
+- 1
+* 3 
+- It depends on their age
+
+::: wait(click=true)
+
+::: new_page(title="2. Unit of Analysis")
+
+::: write_speak
+Are we counting **hospitalizations** or **patients**? If we want to know if more females than males use the hospital, we should count unique individuals.
+
+::: write
+### Unique Patient Count
+We use `unique()` or `distinct()` to avoid overcounting frequent flyers.
+
+::: webr(title="Unique Patients by Sex")
+library(dplyr)
+patients <- admissions %>% 
+  distinct(patient_id, .keep_all = TRUE)
+
+table(patients$sex)
+
+::: annotate(target="code", code_text="distinct(patient_id", color="blue")
+This ensures each person is only counted once.
+
+::: wait(click=true)
+
+::: new_page(title="3. The Problem of Missing Data")
+
+::: write_speak
+Real health data is messy. If a record is missing an age or sex, it can bias our statistics.
+
+::: write
+### Handling NAs
+Missing values (`NA`) can "break" calculations like `mean()`.
+
+::: table(title="Sample with Missing Values")
+| Patient | Age | Sex |
+| :--- | :--- | :--- |
+| 104 | NA | M |
+| 105 | 30 | NA |
+
+::: write_speak
+If we calculate the average age without handling that `NA`, R might return `NA` as the result. We have to decide: do we drop them or impute them?
+
+::: question
+Why is it risky to simply delete all records with missing age?
+* It's too much work
+* It might delete a specific group (e.g., emergency arrivals) ✅
+* R will crash
+
+::: wait(click=true)
+
+::: new_page(title="4. Stratified Analysis")
+
+::: write_speak
+A single average often hides the truth. Stratification means breaking the data into groups, like age brackets, to see different patterns.
+
+::: draw(height=160)
+line(10,10,10,90) stroke="#888"
+line(10,10,90,10) stroke="#888"
+rect(15,10,20,30) fill="teal"
+rect(40,10,20,70) fill="orange"
+rect(65,10,20,50) fill="teal"
+text(15,5,"0-18")
+text(40,5,"19-64")
+text(65,5,"65+")
+
+::: write_speak
+In R, we use `group_by()` and `summarize()` to compare these strata.
+
+::: webr(title="Admissions by Age Group")
+admissions %>%
+  mutate(age_group = ifelse(age < 60, "Under 60", "60+")) %>%
+  group_by(age_group) %>%
+  tally()
+
+::: wait(click=true)
+
+::: new_page(title="5. Top Diagnoses")
+
+::: write_speak
+Finally, we look at the "Why." Diagnoses are usually coded (like ICD-10). We want to find the most frequent causes of admission.
+
+::: write
+### Frequency Table
+The `count()` function is your best friend here.
+
+::: table(title="Common Diagnoses")
+| Rank | ICD-10 Code | Description |
+| :--- | :--- | :--- |
+| 1 | J45 | Asthma |
+| 2 | I10 | Hypertension |
+| 3 | E11 | Type 2 Diabetes |
+
+::: write_speak
+Which diagnosis is the biggest burden on the system? We sort our results to find out.
+
+::: question
+Which R function would you use to organize your diagnosis list from highest to lowest?
+* `filter()`
+* `arrange(desc(n))` ✅
+* `select()`
+
+::: write
+### Summary
+* **Admissions** = Total rows.
+* **Patients** = Unique IDs.
+* **Missing Data** = Potential for bias.
+* **Stratification** = Comparing groups.
+* **Diagnoses** = Identifying the "Why."
+
+::: write_speak
+Great start! Would you like me to generate a specific practice dataset for you to try these R commands yourself?

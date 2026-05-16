@@ -1,0 +1,100 @@
+::: defaults(skin=playful)
+
+::: intro(text="Equity vs Efficiency", subtitle="hecon101 · Lecture 7 of 10", enter=blur-in, duration=3500, speak="Equity versus efficiency. When the cheapest QALY is not the right QALY.")
+
+::: new_page(title="A harder question", transition=fade)
+
+::: write_speak
+We've spent six lectures asking "what is efficient?" Now ask a harder question: even when something is efficient, is it right?
+
+::: new_page(title="Two ethical frames", transition=wipe-left)
+
+::: write
+Economists and philosophers have argued about this for centuries. Two frames dominate the debate.
+
+::: table
+| Frame        | Goal                          | Priority                    | Classic thinker |
+| ------------ | ----------------------------- | --------------------------- | --------------- |
+| Utilitarian  | Maximize total QALYs          | Cheapest cost per QALY wins | Jeremy Bentham  |
+| Rawlsian     | Maximize the worst-off        | The sickest go first        | John Rawls      |
+
+::: write
+Utilitarianism sums up all the good and picks whatever adds the biggest pile. Rawls argues you should judge a society by how it treats its most vulnerable member, not by the total.
+
+::: new_page(title="Horizontal vs vertical equity", transition=cross-dissolve)
+
+::: write
+## Two flavors of fairness
+
+**Horizontal equity** — equal treatment for equal need.
+*Two 60-year-olds with the same heart disease should get the same stent.*
+
+**Vertical equity** — appropriate differentiation by unequal need.
+*A 40-year-old with young children and a 90-year-old in hospice have different priority.*
+
+::: write
+Horizontal equity is the easy half: treat equals equally. Vertical equity is where it gets messy — how *much* more should a sicker patient get, and measured how?
+
+::: new_page(title="The orphan drug tension", transition=wipe-right)
+
+::: message(level=warn, icon=pill)
+**Zolgensma** is a one-dose gene therapy for spinal muscular atrophy, a rare disease that kills babies in infancy. It costs **€2 million per dose**. The ICER is around **€400,000 per QALY** — roughly thirteen times the UK reference threshold. The NHS covered it anyway. **Why?**
+
+::: write_speak
+Cost-effectiveness analysis says no, and equity says yes. The UK picked equity — a rare, severe, pediatric disease is exactly where the Rawlsian frame speaks loudest.
+
+::: new_page(title="Seeing the tradeoff", transition=fade)
+
+::: draw(size=420, animate=true)
+line(40, 360, 400, 360), speak="Horizontal axis: how much we spend."
+line(40, 360, 40, 40), speak="Vertical axis: outcomes, measured two ways."
+line(40, 340, 380, 80), speak="The utilitarian line climbs fast — every euro buys the cheapest QALY on the shelf."
+text(260, 80, "max total QALYs"), speak=""
+line(40, 320, 380, 200), speak="The Rawlsian line is flatter — it spends on the worst-off first, even when they're expensive."
+text(260, 200, "max worst-off QALYs"), speak=""
+circle(260, 140, 8), speak="Here the two frames cross. Left of the crossover they agree; right of it, they pull apart."
+
+::: write
+Left of the crossover, helping the sickest is also cheap — both frames agree. Right of the crossover, the frames pull apart, and somebody has to choose.
+
+::: new_page(title="Sovaldi and the queue", transition=slide-up)
+
+::: write_speak
+Early Sovaldi rollouts forced the question: who gets the first doses when the budget caps supply? Sickest first, youngest first, or parents first — each frame picks a different queue.
+
+::: message(level=info, icon=clock)
+**France 2014:** reserved Sovaldi for patients with advanced fibrosis (F2+). **Sickest first.** **UK NHS:** phased rollout by severity plus age. **US Medicaid (several states):** fibrosis-stage rationing, which triggered lawsuits. Three countries, three queues, one drug.
+
+::: new_page(title="Check your intuition", transition=iris)
+
+::: write
+Drug A adds QALYs at **€50,000 each** for a rare disease. Drug B adds QALYs at **€20,000 each** for a common disease. A strict utilitarian would...
+
+::: multiple_choice
+Pick the utilitarian answer.
+* fund the common disease first — it buys more QALYs per euro
+- fund the rare disease first — rarity deserves priority
+- fund both equally — fairness means a 50/50 split
+
+::: celebrate(kind=confetti, bursts=2)
+
+::: sound(name=success)
+
+::: write_speak
+The utilitarian picks whichever euro buys the most health, regardless of who gets it. A Rawlsian would flip that answer; a pragmatic health system usually mixes both.
+
+::: new_page(title="Wrap-up", transition=fade)
+
+::: write
+## What to remember
+- **Utilitarian** (Bentham): maximize total QALYs — follow the cheapest-per-QALY
+- **Rawlsian** (Rawls): maximize the worst-off — the sickest go first
+- **Horizontal equity**: equal treatment for equal need
+- **Vertical equity**: appropriate differentiation by unequal need
+- **Zolgensma**: €400,000/QALY, covered anyway — equity beat CEA
+- **Sovaldi**: limited supply forces an explicit queue; the frame decides the order
+
+::: write_speak
+Efficiency and equity are two different answers to the same question. Next we learn how to compute the efficiency side properly — the QALY, the ICER, and the arithmetic of cost-effectiveness.
+
+::: xplainer_link(url="08_cea.txt", text="Next: Cost-effectiveness analysis — the QALY and the ICER")

@@ -1,0 +1,102 @@
+::: defaults(skin=playful)
+
+::: intro(text="Demand for Health Care", subtitle="hecon101 · Lecture 3 of 10", enter=blur-in, duration=3500, speak="Demand for health care. How much does price actually matter?")
+
+::: new_page(title="From health to health care", transition=fade)
+
+::: write_speak
+Lecture 2 said demand for health care is *derived* from demand for health. This lecture asks the follow-up: how responsive is that demand to price?
+
+::: new_page(title="The biggest experiment ever run on you", transition=wipe-left)
+
+::: write
+## The RAND Health Insurance Experiment
+- 1974–1982, funded by the US government
+- **2,750 families**, randomly assigned
+- Goal: does cost-sharing change how much care people use?
+
+::: mermaid
+flowchart LR
+    A[2,750 families] --> B[Free care]
+    A --> C[25% coshare]
+    A --> D[50% coshare]
+    A --> E[95% coshare]
+    A --> F[HMO arm]
+    B --> G[How much care used?]
+    C --> G
+    D --> G
+    E --> G
+    F --> G
+
+::: write_speak
+Families were randomized to five insurance arms, from fully free to nearly full cost-sharing. Then RAND watched them get sick for up to five years.
+
+::: new_page(title="What RAND found", transition=cross-dissolve)
+
+::: table
+| Plan        | Patient pays | Relative spending |
+| ----------- | ------------ | ----------------- |
+| Free        | 0%           | 1.00              |
+| 25% coshare | 25%          | 0.87              |
+| 50% coshare | 50%          | 0.82              |
+| 95% coshare | 95%          | 0.69              |
+
+::: write
+When people paid nothing, they used the most care. When they paid almost everything, they used about 30% less. No surprise — but *how much* less is the interesting part.
+
+::: new_page(title="Putting a number on it", transition=fade)
+
+::: math
+\varepsilon = \frac{\%\,\Delta Q}{\%\,\Delta P} \approx -0.2
+
+::: write
+**Translation:** a 10% price increase reduces demand by about 2%. That is *inelastic* — the same ballpark as cigarettes, gasoline, and electricity.
+
+::: new_page(title="Why so unresponsive?", transition=wipe-right)
+
+::: write
+## Why health care demand is inelastic
+- **Urgency** — you don't price-shop during a heart attack.
+- **Expert recommendation** — the doctor says "you need this", and you mostly say yes.
+- **Insurance buffering** — the insurer pays most of the bill anyway.
+- **No substitutes** — there is no generic version of "not dying".
+
+::: message(level=info, icon=pill)
+**Sovaldi flashback.** Sovaldi has no cheaper substitute and no price competition. Its demand is close to *perfectly inelastic* — which is exactly why pricing at €60,000 was rational for Gilead.
+
+::: new_page(title="A modern confirmation", transition=slide-up)
+
+::: write_speak
+In 2008 Oregon ran a Medicaid lottery and randomly gave coverage to some uninsured adults. Winners used about 30% more care than losers — mostly ER and outpatient visits — confirming RAND's direction a generation later.
+
+::: new_page(title="Check your intuition", transition=iris)
+
+::: write
+An elasticity of **-0.2** means a 20% price increase will reduce demand by approximately…
+
+::: multiple_choice
+Pick the closest answer.
+- 20%
+* 4%
+- 200%
+- nothing at all
+
+::: celebrate(kind=confetti, bursts=2)
+::: sound(name=success)
+
+::: write_speak
+Four percent. Multiply the 20% price change by the elasticity of 0.2, and you get a demand drop of about one-fifth the price change.
+
+::: new_page(title="Wrap-up", transition=fade)
+
+::: write
+## What to remember
+- RAND HIE: elasticity of demand for health care ≈ **-0.2**
+- Demand is *inelastic* — price nudges it, but does not shove it
+- Oregon HIE (2008) confirmed the same direction with a natural experiment
+- Which means: price signals alone cannot control health spending
+
+::: write_speak
+If patients barely flinch at price, the interesting action happens elsewhere — in how insurance is designed. That is exactly where we go next.
+
+::: xplainer_link(url="04_insurance.txt", text="Next: Insurance and moral hazard")

@@ -1,0 +1,16 @@
+::: defaults(
+  start_title=Autostart demo,
+  start_image=https://picsum.photos/800/400,
+  autostart=true
+)
+:::
+
+::: wait
+::: write_speak
+With **autostart=true**, the engine ran from the start until the first **::: wait**. So you saw the title and image appear immediately, then it paused here. Click play to continue.
+:::
+
+::: wait
+::: write_speak
+You can use **start_title**, **start_image**, and **start_html** in the **::: defaults** block. Set **autostart=true** to run until the first wait automatically.
+:::

@@ -1,0 +1,171 @@
+::: new_page(title="The Explain App — Presentation")
+
+::: write_speak
+Welcome. This presentation explains the Explain app: what it is, how to use the player and editor, and how you can serve your lessons from GitHub, Google Docs, or any URL.
+:::
+
+::: wait(click=true)
+
+::: write
+### What is the Explain app?
+:::
+
+::: write_speak
+The Explain app is a **lecture player** that turns a simple text file into an interactive, narrated lesson. You write content using markdown and special blocks — like the ones you're seeing now — and the app shows text, speaks it aloud, runs code, shows diagrams, and asks questions.
+:::
+
+::: write_speak
+It follows a "Say it, Show it, Use it" approach: you explain, you show examples, and the learner can try code and answer questions right in the browser.
+:::
+
+::: wait(click=true)
+
+::: write
+### Player features
+:::
+
+::: write_speak
+When you're watching a lesson, the **bottom bar** gives you full playback control.
+:::
+
+::: write
+**Playback:** Play and Pause, Rewind, Previous page, Next page. A progress bar and time display show where you are in the lesson.
+:::
+
+::: write
+**Speed:** Choose 0.75x, 1x, 1.25x, 1.5x, or 2x for speech and pacing.
+:::
+
+::: write
+**Accessibility:** CC for captions, Mute for turning off speech. Fullscreen for a distraction-free view.
+:::
+
+::: write
+**Edit:** The pencil button opens the built-in editor so you can change the script or try your own content.
+:::
+
+::: wait(click=true)
+
+::: write
+### The editor — what it does
+:::
+
+::: write_speak
+The **editor** is where you write and load lesson scripts. Open it with the Edit (pencil) button in the bottom bar.
+:::
+
+::: write
+**Editor actions:**
+* **Play** — Load the current text into the player and start from the beginning.
+* **Close** — Hide the editor and return to the player.
+* **Help** — Toggle a short reference for block syntax and common commands.
+* **Download** — Save the current script as a .txt file to your computer.
+* **Save as app** — Export a single HTML file that runs the app (scripts loaded from CDN). Great for offline or custom hosting.
+:::
+
+::: wait(click=true)
+
+::: write
+### The editor — loading content
+:::
+
+::: write_speak
+You can get content into the editor in several ways.
+:::
+
+::: write
+**Load from URL:** Paste a URL or a short identifier in the "URL or id…" field and click **Load**. The app fetches the file and puts it in the editor. You can then play it or edit it.
+:::
+
+::: write
+**Tutorial list:** Use the dropdown next to Load to pick from a list of built-in or configured tutorials. Click the refresh button to reload the list.
+:::
+
+::: write
+**Upload:** Click **Upload** to choose a .txt, .md, or .json file from your computer. The content appears in the editor and you can play or edit it.
+:::
+
+::: wait(click=true)
+
+::: write
+### Serving your app via URL hash
+:::
+
+::: write_speak
+You don't have to use the editor every time. You can open a **specific lesson directly** by adding a hash to the app URL. The app supports three prefixes.
+:::
+
+::: write
+**GitHub:** Use **#github-** followed by either a full GitHub file URL or a path like owner/repo/branch/path/to/file.txt. The app loads the raw file from GitHub.
+:::
+
+::: write
+Example: yoursite.com/app/#github-username/repo/main/lessons/intro.txt
+:::
+
+::: write
+**Google Docs:** Use **#gdoc-** followed by the document ID or the full Google Docs sharing URL. The app exports the doc as plain text and loads it. The document must be shared so that "Anyone with the link" can view.
+:::
+
+::: write
+Example: yoursite.com/app/#gdoc-17ljz_ftXbM-tsPOe0vnNpQRp52gCEntapeXvc3KW9bw
+:::
+
+::: wait(click=true)
+
+::: write
+### Serving — any URL
+:::
+
+::: write
+**Any URL:** Use **#url-** followed by the full URL of a text or markdown file. The app fetches that URL and loads the content. Best for plain text or markdown; HTML pages may need the target to be set up for export as text.
+:::
+
+::: write
+Example: yoursite.com/app/#url-https://example.com/lecture.txt
+:::
+
+::: write_speak
+So you can host lessons on GitHub, write them in Google Docs, or put them on any server — and share a single link that opens the app with that lesson already loaded.
+:::
+
+::: wait(click=true)
+
+::: write
+### Block types (quick reference)
+:::
+
+::: write_speak
+Lesson content is made of **blocks**. Each block starts with three colons and a name, optionally with arguments in parentheses. Content follows until the next block.
+:::
+
+::: write
+**Text:** `::: write` (show only), `::: write_speak` (show and speak), `::: speak` (speak only). **Pacing:** `::: wait(click=true)` or `::: wait(seconds=2)`. **Structure:** `::: new_page(title="...")`, `::: title`, `::: defaults(...)`.
+:::
+
+::: write
+**Media:** `::: image`, `::: draw`, `::: table`, `::: math`, `::: html`, `::: pdf`, `::: video`, `::: youtube`. **Code:** `::: pyodide` (Python), `::: webr` (R), `::: js` (JavaScript). **Interactivity:** `::: question`, `::: message(level="info")`, `::: mark` for highlighting. **Diagrams:** `::: draw`, `::: mermaid`, `::: p5`, `::: svg`.
+:::
+
+::: write
+The editor Help button and the examples in the repo show full syntax.
+:::
+
+::: wait(click=true)
+
+::: write
+### Summary
+:::
+
+::: write_speak
+The Explain app is a lecture player that turns text scripts into narrated, interactive lessons. Use the **player** to watch and control playback; use the **editor** to write, load, download, and save scripts. Serve lessons by sharing links with **#github-**, **#gdoc-**, or **#url-** so the app loads your content automatically. Thanks for watching.
+:::
+
+::: write
+**Recap**
+* **Player:** play/pause, progress, speed, fullscreen, captions, mute, edit.
+* **Editor:** Play, Close, Help, Download, Save as app; Load from URL, list, Upload.
+* **Serving:** #github-path-or-url, #gdoc-doc-id-or-url, #url-any-https-url.
+:::
+
+::: wait(click=true)

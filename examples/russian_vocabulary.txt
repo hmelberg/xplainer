@@ -1,0 +1,183 @@
+::: defaults(skin=playful)
+
+::: intro(text="Russian Vocabulary", subtitle="Essential words for beginners", enter=blur-in, duration=3500, speak="Russian vocabulary. Essential words for beginners.")
+
+::: new_page(title="Welcome", transition=fade)
+
+::: write_speak
+Welcome to **Russian Vocabulary**! We will learn some of the most useful everyday Russian words, organized by category.
+
+Each flashcard shows the **Russian word** on the front. Try to recall the English meaning, then flip the card to check.
+
+::: wait(seconds=1)
+
+::: write_speak
+Use **Drill to mastery** to activate spaced repetition. Log in with a name and the app will remember which words you struggle with — across sessions.
+
+::: wait(seconds=1.5)
+
+::: new_page(title="Greetings", transition=wipe-left)
+
+::: write_speak
+Let's start with basic **greetings**. These are the first words you will need in any conversation.
+
+::: flashcard(speak_front=true, speak_back=true, lang_front=ru-RU, lang_back=en-GB, intro="Greetings (6 cards)")
+Привет
+Hello / Hi
+---
+Здравствуйте
+Hello (formal)
+---
+До свидания
+Goodbye
+---
+Пока
+Bye (informal)
+---
+Спасибо
+Thank you
+---
+Пожалуйста
+Please / You're welcome
+
+::: wait(seconds=1)
+
+::: new_page(title="People", transition=cross-dissolve)
+
+::: write_speak
+Next up: words for **people and family**. Russian nouns have grammatical gender — masculine, feminine, or neuter — but don't worry about that yet. Just learn the meanings.
+
+::: flashcard(speak_front=true, speak_back=true, lang_front=ru-RU, lang_back=en-GB, intro="People & family (8 cards)")
+Человек
+Person
+---
+Мужчина
+Man
+---
+Женщина
+Woman
+---
+Ребёнок
+Child
+---
+Друг
+Friend
+---
+Мама
+Mom
+---
+Папа
+Dad
+---
+Семья
+Family
+
+::: wait(seconds=1)
+
+::: new_page(title="Food & Drink", transition=iris)
+
+::: write_speak
+Time for **food and drink**. Russian cuisine is hearty — and so is the vocabulary.
+
+::: flashcard(speak_front=true, speak_back=true, lang_front=ru-RU, lang_back=en-GB, intro="Food & drink (8 cards)")
+Хлеб
+Bread
+---
+Вода
+Water
+---
+Молоко
+Milk
+---
+Чай
+Tea
+---
+Кофе
+Coffee
+---
+Суп
+Soup
+---
+Мясо
+Meat
+---
+Сыр
+Cheese
+
+::: wait(seconds=1)
+
+::: new_page(title="Everyday words", transition=slide-up)
+
+::: write_speak
+These are **everyday words** that appear constantly in conversation. Knowing these unlocks a lot of comprehension.
+
+::: flashcard(speak_front=true, speak_back=true, lang_front=ru-RU, lang_back=en-GB, intro="Everyday words (8 cards)")
+Да
+Yes
+---
+Нет
+No
+---
+Хорошо
+Good / OK
+---
+Плохо
+Bad
+---
+Большой
+Big
+---
+Маленький
+Small
+---
+Новый
+New
+---
+Старый
+Old
+
+::: wait(seconds=1)
+
+::: new_page(title="Places", transition=wipe-right)
+
+::: write_speak
+Finally, some **places** you might need to find or talk about when visiting Russia.
+
+::: flashcard(speak_front=true, speak_back=true, lang_front=ru-RU, lang_back=en-GB, intro="Places (6 cards)")
+Дом
+House / Home
+---
+Город
+City
+---
+Улица
+Street
+---
+Магазин
+Shop / Store
+---
+Аэропорт
+Airport
+---
+Вокзал
+Train station
+
+::: wait(seconds=1)
+
+::: new_page(title="Summary", transition=fade)
+
+::: write_speak
+You have just practiced **36 essential Russian words** across five categories: greetings, people, food, everyday words, and places.
+
+::: wait(seconds=0.5)
+
+::: write_speak
+Come back and use **Drill to mastery** regularly. The spaced repetition system will focus on the words you find hardest, so each session gets more efficient.
+
+::: celebrate(kind=confetti, bursts=3)
+::: sound(name=success)
+
+::: wait(seconds=2)
+
+::: write_speak
+**Удачи!** *(Good luck!)*

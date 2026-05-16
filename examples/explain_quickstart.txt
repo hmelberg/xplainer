@@ -1,0 +1,40 @@
+::: title
+Explain app — Quick start
+
+::: write_speak
+The Explain app turns a text file into an interactive, narrated presentation. You write blocks; the app shows text, speaks it, runs code, and can ask questions.
+
+::: write(effect="fade")
+**Blocks** — Each block starts with ::: and a name. The body is the lines until the next ::: . For narration use **write_speak** (show and speak). Other common blocks: write, speak, wait, message, question, table, link, r, python.
+
+::: r
+plot(1:10)
+
+::: r
+x <- 1:5
+mean(x)
+
+
+::: multiple_choice
+What is the meaning of life?
+- 41
+* 42
+- 43
+
+
+::: write_speak
+**Player** — Bottom bar: play/pause, rewind, speed, captions, mute, fullscreen. The pencil button opens the **editor**.
+
+::: write
+**Editor** — Play (run script), Close, Help (opens full documentation), Download, Save as app. Load content: paste URL and click Load, use the tutorial list, or Upload a .txt/.md file.
+
+
+::: write
+**Open a lesson you have stored using a link** — If you have a txt file in github or google doc or another url, you can open it in the player using the url: xplainer.app#gdoc-documentId  or xplainer.app#git-url to file or xplainer.app#url-THE URL TO YOUR TXT FILE
+
+
+::: message(level="info")
+For full block reference and options, click **Help** in the editor to open the documentation.
+
+:::python
+print("Hello world!")

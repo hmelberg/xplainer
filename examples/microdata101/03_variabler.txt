@@ -1,0 +1,160 @@
+::: defaults(skin=playful)
+speech_lang="nb-NO"
+
+::: intro(text="Derivering, omkoding, kobling", subtitle="microdata101 · Leksjon 3 av 5", enter=blur-in, duration=3500, speak="Derivering, omkoding, kobling. Fra rådata til analyseklare variabler.")
+
+::: new_page(title="Rådata er ikke klare data", transition=fade)
+
+::: write_speak
+Ingen lønn, ingen utdanningsnivå, og faren din er bare et personnummer. Velkommen til rådata — la oss gjøre dem brukbare.
+
+::: write_speak
+I leksjon 2 bygde vi populasjonen av 30-åringer. Nå skal vi gjøre dem analyseklare — én kolonne om gangen.
+
+::: new_page(title="Derivere alder", transition=cross-dissolve)
+
+::: write_speak
+SSB lagrer fødsel som YYYYMM i én kolonne. 199003 betyr mars 1990. Vi vil ha et tall i år, ikke en sekssifret kode.
+
+::: code
+// Åpner populasjonen fra leksjon 2
+use populasjon
+
+// Alder i 2020 fra fødselsår og -måned
+generate alder = 2020 - int(faarmnd/100)
+
+summarize alder
+
+::: mark(text="int(faarmnd/100)", effect=box, color=yellow)
+
+::: write_speak
+Trikset: 199003 delt på 100 blir 1990,03. int() kapper desimalene og etterlater 1990. 2020 minus 1990 gir 30. Én linje, hele kohorten på plass.
+
+::: new_page(title="Omkode utdanning", transition=wipe-left)
+
+::: write_speak
+SSBs NUDB_BU holder høyeste fullførte utdanning som en NUS-kode. 0 er førskole, 1 til 2 barneskole, 3 til 4 videregående, 5 til 7 høyere utdanning, 8 er doktorgrad.
+
+::: write_speak
+Vi trenger ikke alle nyansene. Vi vil bare vite: har du høyere utdanning, ja eller nei? Én binær dummy.
+
+::: code
+// Henter utdanningsnivå fra NUDB
+import db/NUDB_BU 2020-01-01 as utdniv
+
+// Bygger en null-én dummy for høyere utdanning
+generate hoyutd = 0
+replace hoyutd = 1 if utdniv >= '6'
+
+tabulate hoyutd
+
+::: message(level=info, icon=info)
+NUS-kodene lagres som tekst på microdata.no, så vi sammenligner mot '6' i fnuttemerker — ikke tallet 6.
+
+::: write_speak
+Resultatet er en kolonne som er 1 for hver 30-åring med bachelor eller mer, og 0 for alle andre. Klart til å bli forklaringsvariabel i en regresjon.
+
+::: new_page(title="Lønn i huset", transition=wipe-left)
+
+::: write_speak
+Nå henter vi lønn — på samme referansedato som resten av populasjonen, 1. januar 2020. Datoer må matche, ellers sammenligner du epler og pærer.
+
+::: code
+// Lønnsinntekt per 2020
+import db/INNTEKT_WLONN 2020-01-01 as lonn
+
+summarize lonn
+
+::: write_speak
+En rad per person, ett lønnstall per rad. Greit. Men det interessante spørsmålet er: hva med foreldrene deres?
+
+::: new_page(title="Den magiske koblingen — foreldre", transition=iris)
+
+::: write_speak
+Dette er funksjonen som gjør microdata.no unik. Du har personnummeret til far og mor. Du vil ha lønna deres. Plattformen lar deg koble to datasett på tvers av personer — via en nøkkelkolonne.
+
+::: message(level=warn, icon=shield)
+Denne koblingen er et privilegert oppslag. Plattformen sjekker at prosjektet ditt faktisk har rett til å hente foreldrenes data før den lar mergen gå gjennom.
+
+::: write_speak
+Oppskriften: først henter vi fars og mors personnummer inn i populasjonen. Så bygger vi et sideliggende foreldredatasett med lønn. Til slutt merger vi inn — én gang for far, én gang for mor.
+
+::: code
+// Legger foreldrenes personnummer på hver 30-åring
+use populasjon
+import db/BEFOLKNING_FAR_FNR 2020-01-01 as fnr_far
+import db/BEFOLKNING_MOR_FNR 2020-01-01 as fnr_mor
+
+// Bygger et foreldredatasett med to lønnskolonner — én for far, én for mor
+create-dataset foreldredata
+import db/INNTEKT_WLONN 2020-01-01 as inntekt_far
+clone-variables inntekt_far -> inntekt_mor
+
+// Tilbake til populasjonen og merger inn — samme kommando, to nøkler
+use populasjon
+merge inntekt_far into populasjon on fnr_far
+merge inntekt_mor into populasjon on fnr_mor
+
+summarize inntekt_far inntekt_mor
+
+::: mark(text="on fnr_far", effect=box, color=yellow)
+
+::: write_speak
+Magien ligger i on-leddet. Du sier: bruk fnr_far-kolonnen i populasjonen som oppslag mot PERSONID_1 i foreldredatasettet. Plattformen gjør resten.
+
+::: new_page(title="Én rad som vokser nye kolonner", transition=fade)
+
+::: draw(size=520, animate=true)
+text(260, 30, "En 30-åring blir til en rad med fem variabler")
+rect(60, 70, 100, 50), speak="Vi starter med én rad — bare personnummeret fra populasjonen."
+text(110, 100, "PERSONID_1")
+rect(170, 70, 70, 50), speak="Generate alder legger til den første kolonnen."
+text(205, 100, "alder")
+rect(250, 70, 70, 50), speak="Replace bygger dummyen for høyere utdanning."
+text(285, 100, "hoyutd")
+rect(330, 70, 70, 50), speak="Import lønn henter personens egen lønn."
+text(365, 100, "lonn")
+rect(170, 140, 110, 50), speak="Merge på fars personnummer legger til fars inntekt."
+text(225, 170, "inntekt_far")
+rect(290, 140, 110, 50), speak="Og én merge til, denne gangen på mors personnummer."
+text(345, 170, "inntekt_mor")
+text(230, 230, "fem variabler, én rad, klart for analyse")
+
+::: write_speak
+Fem kolonner per 30-åring: alder, utdanningsdummy, egen lønn, fars inntekt, mors inntekt. Datasettet er analyseklart.
+
+::: new_page(title="Bonus: familieaggregering", transition=fade)
+
+::: write_speak
+Merge beveger seg sidelengs — ut til et annet datasett. Collapse beveger seg oppover — fra individer til familier eller kommuner. Samme verktøy, motsatt retning.
+
+::: code
+// Klon først så vi ikke ødelegger individdatasettet
+clone-dataset populasjon familiedata
+use familiedata
+
+// Summer lønn per familienummer — radene blir familier, ikke personer
+collapse (sum) lonn, by(famnr)
+rename lonn familieinnt
+
+summarize familieinnt
+
+::: write_speak
+Etter collapse har datasettet én rad per familie. Nyttig når spørsmålet er om husholdningen, ikke om personen. I hovedanalysen vår holder vi oss til individdatasettet.
+
+::: new_page(title="Sjekk", transition=fade)
+
+::: question
+Hvilken kommando bruker du for å hente foreldrenes lønn inn i persondatasettet?
+merge
+
+::: celebrate(kind=confetti, bursts=2)
+
+::: sound(name=success)
+
+::: new_page(title="Hva vi har nå", transition=slide-up)
+
+::: write_speak
+Vi har nå de fem kolonnene vi trenger: alder, utdanning, egen lønn, mors lønn, fars lønn. Neste leksjon: før vi kjører en regresjon, ser vi først på fordelingene. Du tabulerer før du modellerer.
+
+::: xplainer_link(url="04_beskrive.txt", text="Neste: Se på dataene før du modellerer dem")

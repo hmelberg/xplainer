@@ -1,0 +1,219 @@
+::: new_page(title="Explain block examples")
+
+::: defaults(font_size_px=20)
+movie_wait_seconds=2
+:::
+
+::: write
+## This is a **write** block
+Text is shown only (no speech). Use for headings, lists, or static content.
+:::
+::: mark(text="only", speak="marking only")
+
+::: write_speak
+## This is a **write_speak** block
+Text is shown and spoken. Good for narrated slides.
+:::
+
+::: speak
+This is a **speak** block: only speech, nothing written on the board.
+:::
+
+::: message(level="note")
+**message** – A short callout. Use level="note", "info", "warn", or "error".
+:::
+
+::: math
+E = mc^2
+:::
+
+::: table
+| Level   | Unit    | Use case        |
+|---------|---------|-----------------|
+| Event   | Visit   | Workload, costs |
+| Person  | Patient | Prevalence      |
+
+::: mark(text="Visit", speak="Marking visits")
+
+::: question
+What is 2 + 2?
+4
+
+::: question
+What is the meaning of life?
+- 41
+* 42
+- 43
+:::
+
+::: question(question="Short-answer with keyword?", answer="Yes", hint="Optional hint")
+:::
+
+::: multiple_choice
+Same as question with choices; first line = question, then - or * lines.
+* Correct option
+- Wrong
+:::
+
+::: accordion
+## What is event-level data?
+Each row is one **hospital admission**. The same patient can appear many times.
+
+## What is person-level analysis?
+You count each **person** at most once, so heavy users don't dominate.
+
+## When do I use which?
+Use **event-level** for workload; use **person-level** for prevalence.
+:::
+
+::: accordion(title="Single panel", open=true)
+**FAQ:** Use one line for title and content in args, or many `## Title` sections in the body.
+
+
+::: webr
+# Base R: simple scatter
+x <- 1:10
+y <- x^2 + rnorm(10, 0, 2)
+plot(x, y, pch = 19, col = "steelblue", main = "Y vs X")
+abline(lm(y ~ x), lty = 2, col = "red")
+
+
+::: mark("plot")
+
+::: webr(silent=true)
+# Silent block: runs in background, no output
+z <- 100
+:::
+
+::: pyodide
+# Python in the browser (WebAssembly)
+x = [1, 2, 3, 4, 5]
+print("Mean:", sum(x) / len(x))
+:::
+:::mark
+
+::: js
+// JavaScript block (runs in browser)
+console.log("Hello from JS");
+[1,2,3].reduce((a,b) => a+b, 0);
+:::
+
+::: html
+<p>Raw <strong>HTML</strong> block. Use for custom markup.</p>
+
+::: mark
+
+::: write_speak(speak="You can override the spoken text with the speak= keyword.")
+## Blocks with keywords
+Many blocks accept **keyword** arguments to change behaviour.
+:::
+
+::: message(level="warn")
+**message(level="warn")** – Use level="note", "info", "warn", or "error".
+:::
+
+::: html(id="counter-demo")
+<div class="counter-wrap" style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+  <button type="button" id="counter-minus" style="padding:0.4rem 0.8rem;font-size:1.1rem;">−</button>
+  <span id="counter-value" style="min-width:2rem;text-align:center;font-weight:bold;">0</span>
+  <button type="button" id="counter-plus" style="padding:0.4rem 0.8rem;font-size:1.1rem;">+</button>
+</div>
+:::
+
+::: js(show_code=false, silent=true)
+(function () {
+  var el = document.getElementById("counter-value");
+  var minus = document.getElementById("counter-minus");
+  var plus = document.getElementById("counter-plus");
+  if (!el || !minus || !plus) return;
+  var n = 0;
+  function update() { el.textContent = n; }
+  minus.addEventListener("click", function () { n = Math.max(0, n - 1); update(); });
+  plus.addEventListener("click", function () { n += 1; update(); });
+  update();
+})();
+:::
+
+::: write_speak
+**Counter** – HTML provides the structure (buttons + display), JS wires up the logic. Use **id** so JS can find the elements.
+:::
+
+::: svg(animate=true, speak="Demand and supply with animate=true")
+<svg viewBox="0 0 220 160" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="arr" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#888"/></marker></defs>
+  <path d="M20 20 L200 140" fill="none" stroke="#c00" stroke-width="2" marker-end="url(#arr)"/>
+  <path d="M20 140 L200 20" fill="none" stroke="#06c" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="20" y1="80" x2="200" y2="80" stroke="#888" stroke-width="1" stroke-dasharray="4 2"/>
+  <line x1="110" y1="20" x2="110" y2="140" stroke="#888" stroke-width="1" stroke-dasharray="4 2"/>
+  <circle cx="110" cy="80" r="5" fill="#080"/>
+  <text x="205" y="145" font-size="12" fill="#888">Q</text>
+  <text x="115" y="18" font-size="12" fill="#888">P</text>
+  <text x="70" y="35" font-size="11" fill="#c00">D</text>
+  <text x="145" y="35" font-size="11" fill="#06c">S</text>
+</svg>
+:::
+
+::: table(highlight_row=1, title="Table with keywords")
+| Keyword   | Example           | Use |
+|-----------|-------------------|-----|
+| highlight_row | table(highlight_row=1) | Emphasize one row |
+| title     | table(title="My table") | Caption above table |
+:::
+
+::: wait(seconds=1)
+:::
+
+::: mark(color="green", speak="mark with color=green")
+:::
+
+::: mermaid
+graph LR
+  A[Event data] --> B[Count rows]
+  A --> C[Count people]
+  B --> D[Workload]
+  C --> E[Prevalence]
+:::
+
+::: p5
+function setup() { createCanvas(200, 100); }
+function draw() { background(30); ellipse(mouseX, 50, 40, 40); }
+:::
+
+::: draw
+circle(50, 50, 30) stroke=steelblue
+rect(10, 80, 40, 25) fill=rgba(255,200,0,0.3)
+text(50, 20, "Draw block")
+:::
+
+::: svg
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="50" cy="50" r="40" fill="none" stroke="steelblue" stroke-width="2"/>
+  <text x="50" y="55" text-anchor="middle" fill="white" font-size="12">SVG</text>
+</svg>
+:::
+
+::: pdf(src="https://example.com/doc.pdf")
+:::
+
+
+
+
+::: dim(index=-1)
+:::
+
+::: no_dim
+:::
+
+::: annotate_table(text="This cell is important")
+:::
+
+::: wait(click=true)
+:::
+
+::: wait(label="Continue when ready")
+:::
+
+::: xplainer_link
+https://example.com
+Open explainer
+:::

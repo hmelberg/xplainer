@@ -1,0 +1,168 @@
+::: new_page(title=Introduction to Difference-in-Differences)
+::: write_speak
+# Introduction to Difference-in-Differences
+
+How do we know if a new policy actually *caused* the change we see in the data? Difference-in-differences is one of the most widely used methods in applied econometrics to answer exactly that.
+:::
+::: write_speak
+We'll see the main idea with a simple example, then the setup, the key assumption, and how to run it in practice. By the end you'll know what DiD estimates and when it's valid.
+:::
+::: wait(label=Continue, click=true)
+
+::: new_page(title=The question DiD answers)
+::: write_speak
+Suppose a state raises the minimum wage. Employment might fall, stay flat, or rise. We observe employment before and after the change — but the economy is always moving. How do we separate the *effect of the policy* from everything else?
+:::
+::: write_speak
+Difference-in-differences uses a **control group** that did not get the policy. We compare the *change over time* in the treated group to the *change over time* in the control group. The "difference in differences" is our estimate of the causal effect.
+:::
+::: message
+**In one sentence:** DiD = (change in outcome for treated) − (change in outcome for control).
+:::
+::: wait(label=Next, click=true)
+
+::: new_page(title=The 2×2 setup)
+::: write
+## The 2×2 table
+:::
+::: write_speak
+Think of two groups — **treated** and **control** — and two time periods — **before** and **after** the policy. We have four average outcomes. This table is the backbone of DiD.
+:::
+::: table
+| | Before | After | Change |
+| --- | --- | --- | --- |
+| **Treated** | $Y_{T,Before}$ | $Y_{T,After}$ | $\Delta T$ |
+| **Control** | $Y_{C,Before}$ | $Y_{C,After}$ | $\Delta C$ |
+| **DiD** | | | $\Delta T - \Delta C$ |
+:::
+::: write_speak
+The first difference is *over time* in each group. The second difference is *between* those two changes. Hence: difference-in-differences.
+:::
+::: question
+In the 2×2 DiD setup, what does the "first difference" refer to?
+* The change in the outcome over time within a group
+The change between treated and control in one period
+The average outcome in the after period
+:::
+::: wait(label=Continue, click=true)
+
+::: new_page(title=Visualising DiD)
+::: write
+## A picture of DiD
+:::
+::: write_speak
+On the left we have the *before* period; on the right, *after*. The treated group is one line; the control group is another. The DiD is the difference between how much the treated line moved and how much the control line moved.
+:::
+::: draw(title=Outcomes over time: treated vs control)
+new_drawing
+line(15,75,50,75) speak="Control group, before period: outcome level here."
+line(50,75,85,55) speak="Control group, after: outcome falls a bit."
+line(15,55,50,55) speak="Treated group, before: lower than control."
+line(50,55,85,35) speak="Treated group, after: falls more than control."
+text(25,78,"Before") 
+text(75,78,"After")
+text(12,75,"Control") 
+text(12,55,"Treated")
+text(50,50,"DiD = extra drop for treated")
+:::
+::: write_speak
+The parallel-trends assumption says: in the absence of the policy, the two lines would have moved in parallel. So any *extra* movement of the treated group we attribute to the policy.
+:::
+::: wait(label=Next, click=true)
+
+::: new_page(title=The parallel trends assumption)
+::: write
+## The key assumption: parallel trends
+:::
+::: write_speak
+DiD is valid only if, *without* the treatment, the treated and control groups would have had the same trend. We can't test this directly — we never see the counterfactual — but we can check pre-treatment trends if we have more than two periods.
+:::
+::: mermaid
+flowchart LR
+  A[Same trend if no treatment] --> B[DiD identifies causal effect]
+  C[Different trends] --> D[DiD is biased]
+  subgraph Assumption
+  A
+  end
+:::
+::: write_speak
+When might it fail? If the policy is targeted at struggling regions, or if other shocks hit treated and control differently. Always ask: would the two groups have evolved in parallel absent the policy?
+:::
+::: wait(label=Continue, click=true)
+
+::: new_page(title=The regression formulation)
+::: write
+## DiD as a regression
+:::
+::: write_speak
+In practice we usually run a regression. We have a **Post** dummy (1 after the policy), a **Treat** dummy (1 for the treated group), and their interaction. The coefficient on the interaction is the DiD estimator.
+:::
+::: math
+Y_{it} = \beta_0 + \beta_1 \text{Post}_t + \beta_2 \text{Treat}_i + \beta_3 (\text{Post}_t \times \text{Treat}_i) + \varepsilon_{it}
+:::
+::: write_speak
+Here, $\beta_3$ is the average causal effect of the treatment on the treated. Post captures common time effects; Treat captures fixed differences between groups; the interaction is the policy effect.
+:::
+::: question
+In the regression $Y = \beta_0 + \beta_1 \text{Post} + \beta_2 \text{Treat} + \beta_3 (\text{Post} \times \text{Treat}) + \varepsilon$, which coefficient is the DiD estimator?
+* β₃ (the interaction term)
+β₁ (Post)
+β₂ (Treat)
+:::
+::: wait(label=Next, click=true)
+
+::: new_page(title=Example in R)
+::: write
+## A minimal DiD example in R
+:::
+::: write_speak
+We'll create a tiny fake dataset: two groups, two periods. The true effect is 2. Then we'll run the DiD regression and recover it.
+:::
+::: webr(auto_run=after, title=DiD regression example)
+# Simulate DiD data: 2 groups, 2 periods
+n <- 50
+Post  <- rep(c(0, 1), each = n)            # 0 = before, 1 = after policy
+Treat <- rep(c(0, 1), times = n)          # 0 = control, 1 = treated group
+Y <- 10 + 1*Post + 0.5*Treat + 2*(Post*Treat) + rnorm(2*n, 0, 0.5)  # true DiD effect = 2
+did_data <- data.frame(Y, Post, Treat, DiD = Post * Treat)  # interaction = our key regressor
+fit <- lm(Y ~ Post + Treat + DiD, data = did_data)         # DiD coefficient is the causal estimate
+summary(fit)
+:::
+::: write_speak
+The coefficient on **DiD** (the Post×Treat interaction) should be close to 2. That's our difference-in-differences estimate. In real applications you'd use robust or clustered standard errors.
+:::
+::: wait(label=Continue, click=true)
+
+::: new_page(title=Summary and caveats)
+::: write
+## Summary
+:::
+::: write_speak
+Difference-in-differences compares the change over time in a treated group to the change in a control group. The key assumption is parallel trends. We estimate it with a regression of the outcome on Post, Treat, and their interaction; the interaction coefficient is the DiD estimator.
+:::
+::: write_speak
+Important caveats: check pre-trends when you have more periods; think about who is in the control group; use appropriate standard errors (e.g. clustered at the unit or group level). DiD is a workhorse — but only when the setup and assumptions fit your question.
+:::
+::: question
+Why do we need a control group in DiD?
+* To subtract off the change that would have happened anyway (common trends)
+To increase sample size
+To ensure we have variation in the treatment
+:::
+::: wait(label=Next, click=true)
+
+::: new_page(title=Further reading)
+::: write
+## Suggested further sources
+:::
+::: write_speak
+To go deeper, see the following. Angrist and Pischke's *Mostly Harmless Econometrics* has a clear chapter on DiD. The MIT lecture and the NBER paper below cover theory and practice, including staggered adoption and robust inference.
+:::
+::: xplainer_link
+https://www.mostlyharmlesseconometrics.com/
+Mostly Harmless Econometrics (book)
+::: write
+- **Video:** Search "difference in differences econometrics" on YouTube for short lectures (e.g. MIT OpenCourseWare, Ben Lambert).
+- **Papers:** "Difference-in-Differences with Multiple Time Periods" (Roth & Sant'Anna, NBER) for modern extensions.
+:::
+::: wait(label=End, click=true)

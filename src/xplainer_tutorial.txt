@@ -1,0 +1,267 @@
+::: defaults
+speech_lang=en-US
+font_size_px=20
+movie_wait_seconds=1.5
+
+::: title
+The Explain App — Tutorial
+
+::: write_speak
+This tutorial is the Explain app documentation in presentation form. You will see how each command is written as text and then how it looks when the player runs it.
+
+::: write_speak
+The Explain app is a **lecture player** that turns a simple text file into an interactive, narrated lesson. You write content using markdown and special blocks; the app shows text, speaks it aloud, runs code, shows diagrams, and can ask questions.
+
+
+## How blocks work
+
+::: write_speak
+Lesson content is made of **blocks**. Each block starts with three colons and a name, like ::: write_speak. The block **body** is everything after that until the next line that starts with ::: .
+
+::: write
+In your script you write:
+
+<pre>::: write_speak<br>This sentence is shown and spoken.<br>:::</pre>
+
+The first line is the block **header**; the lines in between are the **body**. The next ::: starts a new block or ends the current one.
+:::
+
+::: write_speak
+For narrated content, **write_speak** is the usual choice: the text appears on the board and is read aloud.
+
+
+## ::: write — text only (no speech)
+
+::: write
+To show text **without** speech, use **::: write**. In the script:
+
+<pre>::: write<br>Hello **world**. This is markdown: *italic*, lists, and so on.<br>:::</pre>
+
+When the player runs it, you see:
+:::
+
+::: write
+Hello **world**. This is markdown: *italic*, lists, and so on.
+:::
+
+
+## ::: write_speak — show and speak
+
+::: write_speak
+To show and speak at the same time, use **::: write_speak**. It is the default for narration. The same block we use here to explain is the one you write in your script.
+:::
+
+::: write
+Example script:
+
+<pre>::: write_speak<br>Your narrated sentence appears and is read aloud.<br>:::</pre>
+
+Result: the text appears on the board and the app speaks it.
+:::
+
+
+## ::: speak — speech only
+
+::: write
+**::: speak** plays speech without showing any text on the board. Useful for voice-over or short cues.
+:::
+
+::: speak
+This was a speak block: you heard it but nothing was written on the board.
+:::
+
+
+## ::: wait — pause for click or time
+
+::: write
+**::: wait** pauses playback. You can wait for a click or for a number of seconds. In the script:
+
+<pre>::: wait(label="Next")<br>::: wait(seconds=2)<br>:::</pre>
+
+Next we show a short wait so you see the button.
+:::
+
+::: wait(label="Continue")
+
+
+## ::: title — set the page title
+
+::: write
+**::: title** sets the title shown at the top of the current page. Body or **title=** keyword.
+:::
+
+::: title
+Explain block reference
+
+
+## ::: message — callout box
+
+::: write
+**::: message** shows a callout box. Body = message text. Optional **level**: note, info, warn, error. Script:
+
+<pre>::: message(level="info")<br>Use this for tips or short notices.<br>:::</pre>
+
+Result:
+:::
+
+::: message(level="info")
+Use this for tips or short notices.
+:::
+
+
+## ::: link — clickable link
+
+::: write
+**::: link** creates a clickable link. Body: **first line** = URL, **second line** = link text. If the URL does not start with http or https, the app adds https://. Script:
+
+<pre>::: link<br>https://example.com<br>Open example.com<br>:::</pre>
+
+Result:
+:::
+
+::: link
+https://example.com
+Open example.com
+:::
+
+
+## ::: table — markdown table
+
+::: write
+**::: table** shows a markdown table. Body = the table in markdown (pipes and dashes). Script:
+
+<pre>::: table<br>| A   | B   |<br>|-----|-----|<br>| 1   | 2   |<br>| 3   | 4   |<br>:::</pre>
+
+Result:
+:::
+
+::: table
+| A   | B   |
+|-----|-----|
+| 1   | 2   |
+| 3   | 4   |
+:::
+
+
+## ::: html — raw HTML
+
+::: write
+**::: html** inserts raw HTML. Useful for custom layout or styling. Script:
+
+<pre>::: html<br>&lt;p style="color: steelblue;"&gt;This paragraph is &lt;strong&gt;blue&lt;/strong&gt;.&lt;/p&gt;<br>:::</pre>
+
+Result:
+:::
+
+::: html
+<p style="color: steelblue;">This paragraph is <strong>blue</strong>.</p>
+:::
+
+
+## ::: math — LaTeX math
+
+::: write
+**::: math** shows LaTeX math. Body = LaTeX (inline or block). Script:
+
+<pre>::: math<br>E = mc^2<br>:::</pre>
+
+Result:
+:::
+
+::: math
+E = mc^2
+:::
+
+
+## ::: r / ::: webr — R in the browser
+
+::: write_speak
+**::: r** or **::: webr** runs R code in the browser. The body is R code. You can set **r_requirements** in defaults to preload packages. Script:
+
+<pre>::: r<br>x &lt;- 1:5<br>mean(x)<br>:::</pre>
+
+Result:
+:::
+
+::: r
+x <- 1:5
+mean(x)
+:::
+
+
+## ::: question and ::: multiple_choice
+
+::: write
+**::: question** prompts for an answer. First line = question, next line(s) = correct answer or choices. Use **-** for wrong and **\*** for correct in multiple choice. Script:
+
+<pre>::: multiple_choice<br>What is 2 + 2?<br>- 3<br>* 4<br>- 5<br>:::</pre>
+
+Result:
+:::
+
+::: multiple_choice
+What is 2 + 2?
+- 3
+* 4
+- 5
+:::
+
+
+## ::: accordion — collapsible sections
+
+::: write
+**::: accordion** shows collapsible sections. In the body use **## Title** for each section; the lines under it are the content. Script:
+
+<pre>::: accordion<br>## First panel<br>Content for the first panel.<br><br>## Second panel<br>Content for the second panel.<br>:::</pre>
+
+Result:
+:::
+
+::: accordion
+## First panel
+Content for the first panel.
+
+## Second panel
+Content for the second panel.
+:::
+
+
+::: new_page(title="Serving lessons")
+
+## Serving lessons — URL hash
+
+::: write_speak
+You can open a **specific lesson** by adding a hash to the app URL. Three prefixes are supported.
+:::
+
+::: write
+**#github-** — Load from GitHub. Use a path like owner/repo/branch/path/to/file.txt or a full raw file URL.
+
+**#gdoc-** — Load from Google Docs. Use the document ID or full share URL. The doc must be shared so anyone with the link can view.
+
+**#url-** — Load from any URL. Use #url- followed by the full URL of a text or markdown file.
+:::
+
+::: write
+Examples:
+
+- xplainer.app#github-username/repo/main/lessons/intro.txt  
+- xplainer.app#gdoc-17ljz_ftXbM-tsPOe0vnNpQRp52gCEntapeXvc3KW9bw  
+- xplainer.app#url-https://example.com/lecture.txt
+:::
+
+
+## Summary
+
+::: write_speak
+The Explain app turns a text script into a narrated, interactive lesson. Use **::: write** for text only, **::: write_speak** for show and speak, **::: speak** for voice only. Use **::: wait** to pause, **::: message** for callouts, **::: link** for links, **::: table** for tables, **::: r** or **::: webr** for R code, **::: question** or **::: multiple_choice** for questions, and **::: accordion** for collapsible sections.
+:::
+
+::: write_speak
+Open the **editor** with the pencil button to write or edit scripts. Use **Play** to run the current script. Serve lessons by sharing links with #github-, #gdoc-, or #url- so the app loads your content automatically.
+:::
+
+::: link
+https://github.com/hmelberg/xplainer
+Explain app on GitHub
+:::

@@ -1,0 +1,68 @@
+::: write_speak
+
+# Instrumental Variables (IV)
+
+Have you ever tried to measure the effect of one thing on another, only to realize your data is "messy" because of hidden factors? In econometrics, we call this <BOX>Endogeneity</BOX>.
+::: wait(click=true)
+::: write_speak
+Imagine we want to see if **Education** () causes higher **Earnings** ().
+The problem? Things like "Natural Ability" affect both. If we ignore this, our results are biased.
+::: message(level="note")
+Endogeneity occurs when an explanatory variable is correlated with the error term .
+
+
+
+::: wait(click=true)
+::: write_speak
+An **Instrumental Variable** () is a tool that helps us isolate the "clean" variation in .
+To be a valid instrument,  must satisfy two golden rules:
+
+1. **Relevance**:  must be correlated with .
+2. **Exclusion**:  must NOT be correlated with the error term .
+:::
+
+::: wait(click=true)
+::: pyodide(silent=true)
+import numpy as np
+import pandas as pd
+
+# Simulating endogenous data
+
+np.random.seed(42)
+n = 100
+ability = np.random.normal(0, 1, n)
+instrument = np.random.normal(0, 1, n)
+education = 0.5 * instrument + 0.8 * ability + np.random.normal(0, 0.1, n)
+earnings = 2.0 * education + 1.5 * ability + np.random.normal(0, 0.1, n)
+::: write_speak
+Let's look at the <UNDERLINE>Two-Stage Least Squares</UNDERLINE> (2SLS) method.
+First, we use the instrument to predict education, stripping away the influence of "ability."
+::: pyodide(editable=true, title="2SLS Step 1: Proving Relevance")
+import statsmodels.api as sm
+
+# Stage 1: Regress X on Z
+
+X = sm.add_constant(instrument)
+model_s1 = sm.OLS(education, X).fit()
+print("Stage 1 R-squared:", model_s1.rsquared)
+::: wait(click=true)
+::: write_speak
+Now, we take those <CIRCLE>predicted values</CIRCLE> and use them to estimate the final effect on earnings.
+Because the predicted values only move when the instrument moves, the "ability" bias is gone!
+::: pyodide(editable=true, title="2SLS Step 2: The Clean Estimate")
+
+# Stage 2: Regress Y on predicted X
+
+pred_education = model_s1.predict(X)
+X_s2 = sm.add_constant(pred_education)
+model_s2 = sm.OLS(earnings, X_s2).fit()
+print(model_s2.summary())
+::: wait(click=true)
+::: question
+If an instrument  is directly related to the error term , which assumption is violated?
+Relevance
+Exclusion Restriction ✅
+Linearty
+Multicollinearity
+::: write_speak
+Would you like me to generate a specific example, such as using "Distance to College" as an instrument for "Educational Attainment"?

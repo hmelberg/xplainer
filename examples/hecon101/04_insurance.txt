@@ -1,0 +1,72 @@
+::: defaults(skin=playful)
+
+::: intro(text="Insurance and moral hazard", subtitle="hecon101 · Lecture 4 of 10", enter=blur-in, duration=3500, speak="Insurance, and the problem of moral hazard.")
+
+::: new_page(title="From Lecture 3 to here", transition=fade)
+
+::: write_speak
+Lecture 3 showed demand is inelastic but not zero. Insurance amplifies that problem: once the bill is someone else's, how much more will I use?
+
+::: new_page(title="Why buy insurance at all?", transition=wipe-left)
+
+::: write
+**Three reasons people pay premiums:**
+
+- **Risk aversion** — one €60,000 bill hurts far more than 100 tiny ones.
+- **Diminishing marginal utility of income** — the last euro you own is worth more than the first.
+- **Peace of mind** — you sleep better knowing the worst case is bounded.
+
+::: new_page(title="Risk pooling, visualized", transition=cross-dissolve)
+
+::: draw(size=460, animate=true)
+text(230, 30, "100 people. 1 hospital bill of €60,000."), speak="One hundred people. One unlucky person with a sixty-thousand-euro hospital bill."
+rect(40, 60, 400, 70), speak="Without insurance: one person pays sixty thousand, ninety-nine pay zero."
+text(240, 100, "Uninsured: 1 × €60,000  |  99 × €0")
+rect(40, 160, 400, 70), speak="With insurance: each pays six hundred euros, and nobody is wiped out."
+text(240, 200, "Insured: 100 × €600 = €60,000")
+text(240, 280, "Same total. Very different sleep quality."), speak="Same total cost. Very different sleep quality."
+
+::: new_page(title="The catch: moral hazard", transition=slide-up)
+
+::: write
+**Moral hazard** — two flavors:
+
+- **Ex-ante**: *"I exercise less because I know the insurer pays if I get sick."*
+  (Harder to detect, smaller in practice.)
+- **Ex-post**: *"I visit the ER because the copay is €10 and the alternative is my couch."*
+  (Easier to measure, larger effect.)
+
+::: new_page(title="Evidence: Oregon HIE", transition=fade)
+
+::: write_speak
+Oregon's Medicaid lottery winners used 40% more outpatient visits and 30% more ER visits than losers. Not because they were sicker — because care was free at the point of use.
+
+::: new_page(title="Cost-sharing: the insurer's toolbox", transition=wipe-right)
+
+::: table
+| Tool | How it works | What problem it targets |
+| --- | --- | --- |
+| Deductible (€500) | You pay the first €500 each year before insurance kicks in. | Small, discretionary claims. |
+| Coinsurance (20%) | You pay a fixed share of every bill, uncapped until OOP max. | Keeps you price-aware on big bills. |
+| Copay (€10) | Flat fee per visit or prescription, insurer pays the rest. | Everyday overuse (ER, GP visits). |
+
+::: message(level=warn)
+Cost-sharing is nearly useless against Sovaldi's €60,000 price. Hit your €5,000 out-of-pocket maximum in one pharmacy trip. Moral hazard controls that work for ER visits collapse for high-cost drugs.
+
+::: new_page(title="Check your intuition", transition=iris)
+
+::: multiple_choice
+Which of these is ex-ante moral hazard?
+- Going to the ER because the copay is only €10.
+* Skipping your flu shot because the insurer will pay if you get pneumonia.
+- Shopping around for the cheapest MRI scan.
+
+::: celebrate(kind=confetti, bursts=2)
+::: sound(name=success)
+
+::: new_page(title="Wrapping up", transition=cross-dissolve)
+
+::: write_speak
+Insurance exists because we hate risk, but it quietly changes how much care we use. Cost-sharing patches the small leaks — and leaves the big ones, like Sovaldi, wide open.
+
+::: xplainer_link(url="05_adverse_selection.txt", text="Next: Adverse selection and market failure")

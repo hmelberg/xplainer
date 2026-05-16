@@ -1,0 +1,142 @@
+::: defaults(skin=playful)
+
+::: intro(text="Measuring drug exposure", subtitle="Health + R · Lecture 6 of 10", enter=blur-in, duration=3500, speak="Measuring drug exposure from prescriptions.")
+
+::: write_speak
+A patient picks up a 90-day metformin supply on March 1. Are they "on metformin" on April 15? On June 1? On August 3? Every answer is defensible — and every answer will show up differently in your rate ratio.
+
+::: write_speak
+In Lecture 5 we built Table 1 and described the cohort. Now we attach an exposure variable to those same people. The raw material is messy: one row per pharmacy pickup, not one row per "on drug" interval. Our job this lecture is to bridge that gap.
+
+::: new_page(title="ATC: how drugs get coded", transition=wipe-left)
+
+::: write
+The ATC hierarchy (Anatomical Therapeutic Chemical)
+
+- **A** — alimentary tract and metabolism
+- **A10** — drugs used in diabetes
+- **A10B** — blood glucose lowering drugs, excluding insulins
+- **A10BA** — biguanides
+- **A10BA02** — metformin
+
+::: speak
+ATC is a tree. Each extra character narrows the branch. A10BA02 is the leaf for metformin — and it is the same five characters in Oslo, Helsinki, or Reykjavik. That is why registries love it.
+
+::: message(level=info, icon=pill)
+**DDD — Defined Daily Doses.** Each ATC code has a WHO-assigned DDD: the assumed average maintenance dose per day for an adult. For metformin that is 2 grams. DDDs let you compare exposure across products, strengths, and units without doing the arithmetic yourself. We will not go deep today — just know that `ddd_dispensed` in our table already does the unit conversion for you.
+
+::: new_page(title="First fill per person", transition=fade)
+
+::: write_speak
+The simplest exposure variable is a yes-or-no: did this person ever pick up metformin, and if so, when first? Three lines of dplyr.
+
+::: r(auto_run=before, title="First metformin fill per person")
+library(dplyr)
+
+first_metformin <- prescription_registry |>
+  filter(atc_code == "A10BA02") |>             # keep only metformin rows
+  group_by(person_id) |>                       # one group per patient
+  summarise(first_fill = min(dispensing_date))  # earliest pharmacy pickup
+
+first_metformin  # one row per ever-user, with their first-fill date
+
+::: write_speak
+That is already a usable variable for many questions: "ever used metformin" and "age at first fill". But it throws away everything about continuation. A patient who filled once in 2014 and never again looks identical to a patient who has filled every month for nine years.
+
+::: new_page(title="The gap-based episode trick", transition=wipe-right)
+
+::: write_speak
+Here is the standard fix. Sort every person's fills by date. Walk down the list. If the next fill arrives within N days of the previous one, call it the same episode. If the gap is longer than N, the person came off the drug and then restarted — that is a new episode. The choice of N is yours; 30 days is a common default.
+
+::: draw(size=520, animate=true)
+line(40, 160, 480, 160), speak="Here is a timeline for one patient across one year."
+text(40, 185, "Jan"), speak="January."
+text(240, 185, "Jun"), speak="June."
+text(460, 185, "Dec"), speak="December."
+line(55, 150, 55, 170), speak="First fill, early January."
+line(85, 150, 85, 170), speak="Another fill, three weeks later — still within thirty days."
+line(130, 150, 130, 170), speak="Another, a month after that — gap is over thirty days, so a new episode is about to start."
+line(175, 150, 175, 170), speak="Another fill, within thirty days of the last one."
+line(400, 150, 400, 170), speak="Then nothing until late autumn — clearly a third episode."
+line(440, 150, 440, 170), speak="And one more refill close behind it."
+rect(55, 120, 45, 18), speak="Episode one: the first two fills."
+rect(130, 120, 60, 18), speak="Episode two: the spring cluster."
+rect(400, 120, 55, 18), speak="Episode three: the autumn restart."
+
+::: write_speak
+The drawing shows the whole move. Ticks are dispensings, bars are episodes, and the gap rule decides where one bar ends and the next begins.
+
+::: r(auto_run=before, title="Building episodes with a 30-day gap rule")
+library(dplyr)
+
+episodes <- prescription_registry |>
+  filter(atc_code == "A10BA02") |>                    # metformin only
+  arrange(person_id, dispensing_date) |>              # chronological order per person
+  group_by(person_id) |>
+  mutate(
+    prev_date  = lag(dispensing_date),                # previous fill for this person
+    gap_days   = as.numeric(dispensing_date - prev_date),
+    new_episode = is.na(gap_days) | gap_days > 30,    # first fill, or gap too long
+    episode_id = cumsum(new_episode)                  # running counter within person
+  ) |>
+  ungroup()
+
+episodes |> select(person_id, dispensing_date, gap_days, episode_id)
+
+::: write_speak
+Two tricks here. `lag()` looks one row back within the group, which is why we sorted first. And `cumsum()` on a logical vector is a classic R idiom — every `TRUE` bumps the episode counter, every `FALSE` keeps it. Three lines of mutate do what would take a for-loop in most other languages.
+
+::: new_page(title="Attaching exposure to the cohort", transition=cross-dissolve)
+
+::: write_speak
+Now the payoff. Remember the cohort from Lecture 4 — adults with a first E11 diagnosis between 2012 and 2020, each with an index date. Let us join the first-fill dates back onto it and ask: what share started metformin within 90 days of diagnosis?
+
+::: r(auto_run=before, title="Share of cohort starting metformin within 90 days")
+library(dplyr)
+
+cohort_with_exposure <- cohort |>
+  left_join(first_metformin, by = "person_id") |>           # bring in first_fill (NA if never)
+  mutate(
+    days_to_first_fill = as.numeric(first_fill - index_date),
+    started_within_90  = !is.na(days_to_first_fill) &
+                         days_to_first_fill >= 0 &
+                         days_to_first_fill <= 90
+  )
+
+cohort_with_exposure |>
+  summarise(
+    n            = n(),
+    n_starters   = sum(started_within_90),
+    pct_starters = mean(started_within_90) * 100
+  )
+
+::: write_speak
+In our synthetic cohort, about 62% of people start metformin within 90 days of their first E11 diagnosis. That single number is already a clinically interesting descriptor — it is the kind of thing reviewers love in a cohort description.
+
+::: new_page(title="Check your episode counting", transition=iris)
+
+::: multiple_choice
+Patient X has metformin fills on Jan 1, Jan 20, Mar 5, Mar 25, and Aug 10. Under a 30-day gap rule, how many exposure episodes does this patient have?
+- 1
+- 2
+* 3
+- 5
+
+::: celebrate(kind=confetti, bursts=2)
+::: sound(name=success)
+
+::: write_speak
+The answer is three. Jan 1 to Jan 20 is a 19-day gap — same episode. Jan 20 to Mar 5 is 44 days — too long, new episode. Mar 5 to Mar 25 is 20 days — same as that second episode. Then Mar 25 to Aug 10 is 138 days — clearly a third episode. The gap rule is boring, mechanical, and reproducible, which is exactly what you want from an exposure definition.
+
+::: message(level=warn, icon=scales)
+Your rate ratio will move as you change the gap threshold. Seven days, thirty days, and ninety days give three different answers to "how many person-years on metformin" — and therefore three different rate ratios. Pre-specify your gap in the protocol, then run a sensitivity analysis with a different one.
+
+::: new_page(title="Coming back to the start", transition=slide-up)
+
+::: write_speak
+We started with one patient and the question "are they on metformin on April 15?". We now have three answers, and they are all defensible: ever-user, first-fill date, and gap-based episode. Pick one on purpose, write down the gap threshold, and your analysis is reproducible.
+
+::: write_speak
+Exposure sorted. Next up: the other half of the rate ratio. How do we turn a wall of ICD-10 codes into an outcome variable — and what do we do when the diagnosis we care about lives in the secondary codes?
+
+::: xplainer_link(url="07_outcomes.txt", text="Next: Outcomes in patient registries")

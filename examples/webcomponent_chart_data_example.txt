@@ -1,0 +1,63 @@
+::: title
+comp-chart-data: CSV to chart (line, bar, pie, doughnut)
+
+::: write
+The <strong>comp-chart-data</strong> component turns CSV (or semicolon-delimited) block body into a chart via <strong>comp-chart</strong>. Set <code>web_defaults: comp-chart-data=content</code> so the block body is passed as the <code>content</code> attribute. You can also use shorthand block types: <code>::: chart-line</code>, <code>::: chart-bar</code>, <code>::: chart-pie</code>, etc. (any <code>chart-NAME</code> is treated as <code>::: comp comp-chart-data(type=NAME)</code> with the same kwargs). Kwargs: <code>type</code> (line, bar, pie, doughnut, …), <code>delimiter</code> (default <code>,</code>), <code>header</code> (default true), <code>legend_position</code>, <code>options</code> (JSON string merged into chart options). Legend defaults to the right.
+
+::: web_defaults
+comp-chart-data=content
+
+::: write
+Bar chart from CSV (first column = labels, other columns = series). Same as <code>::: chart-bar</code>:
+
+::: chart-bar
+Month, Sales, Costs
+Jan, 40, 25
+Feb, 50, 30
+Mar, 60, 35
+Apr, 70, 40
+
+::: write
+Line chart, same data (shorthand <code>::: chart-line</code>):
+
+::: chart-line
+Month, Sales, Costs
+Jan, 40, 25
+Feb, 50, 30
+Mar, 60, 35
+Apr, 70, 40
+
+::: write
+Pie chart (first column = labels, second column = values; other columns ignored):
+
+::: chart-pie
+Region, Value
+North, 30
+South, 50
+East, 12
+West, 8
+
+::: write
+Semicolon delimiter and legend on top:
+
+::: comp comp-chart-data(delimiter=;, legend_position=top)
+A;B;C
+10;20;15
+
+::: write
+No header row (<code>header=false</code>); labels become "Series 1", "Series 2", …:
+
+::: comp comp-chart-data(type=bar, header=false)
+Q1, 22, 18
+Q2, 28, 24
+Q3, 31, 27
+Q4, 35, 30
+
+::: write
+Override options via <code>options</code> (JSON string):
+
+::: comp comp-chart-data(type=bar, options={"scales":{"y":{"beginAtZero":true}}})
+X, Y
+a, 5
+b, 12
+c, 8

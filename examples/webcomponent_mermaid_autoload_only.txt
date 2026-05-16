@@ -1,0 +1,17 @@
+::: title
+Mermaid via auto-load only (no ::: webcomponent block)
+
+::: web_defaults
+comp-mermaid=content
+
+::: write
+This example does <strong>not</strong> use <code>::: webcomponent</code>. We only use <code>::: comp comp-mermaid</code>. The player should auto-load <code>components/comp-mermaid.js</code> when it sees the first <code>::: comp comp-mermaid</code>. If you see a diagram below, auto-load works. If you see nothing, auto-load or script path failed.
+
+::: comp comp-mermaid
+flowchart LR
+  X --> Y
+  Y --> Z
+  Z --> X
+
+::: write
+End of auto-load-only test.

@@ -1,0 +1,369 @@
+::: new_page(title="How to answer patientlevel questions with event level data?")
+
+
+::: 
+A question one might ask when we have some hospital data is this: **Do females go more often to hospital than males?** To answer this, consider the following sample:
+
+
+::: webr(show_code=false)
+# Loading a sample registry dataset
+hospital_data <- data.frame(
+  patient_id = c(1, 2, 2, 2, 3, 4, 4, 5, 6, 6),
+  sex =        c("F", "M", "M", "M", "F", "F", "F", "M", "F", "F"),
+  diagnosis = c("Flu", "Heart", "Heart", "Heart", "Flu", "Injury", "Injury", "Flu", "Heart", "Heart")
+)
+hospital_data
+
+:::
+It may sound like a trivial question. We have a column for `sex` and a column for `admission_id`. Let's try to answer it immediately using the data we have.
+
+::: write
+### 1. The Event-Level
+First, we will simply count every row in the dataset. This is the event level approach.
+
+::: webr
+# Counting admissions (rows) by sex
+table(hospital_data$sex) # This counts every single row as a unique event
+:::
+
+::: write_speak
+Looking at those results, it might seem like females use the hospital more (6 admissions vs 4 for males). But look closer at the `patient_id` column. 
+
+Patient #2 (Male) appears 3 times. Patient #6 (Female) appears 2 times. We aren't counting people; we are counting how many admissions we have for different genders.
+:::
+
+::: write
+### 2. Person-Level Counting
+Now, let's identify **unique** patients. We want to know how many individual humans with at least one admission are in each category.
+
+::: webr
+library(dplyr)
+
+# Counting unique patients by sex
+hospital_data %>%
+  group_by(sex) %>%
+  summarise(unique_patients = n_distinct(patient_id)) # n_distinct counts unique IDs only
+:::
+
+::: write_speak
+The numbers changed! In this specific slice, we went from **6 vs 4 admissions** to **4 female patients vs 2 male patients** with at least one admission. The difference shrank once we looked at people instead of rows.
+:::
+
+::: write
+### 3. What Just Happened?
+
+| Analysis Level   | Unit               | Focus                                   |
+|------------------|--------------------|-----------------------------------------|
+| **Event-Level**  | Hospital Admission | Beds, staffing, costs per visit        |
+| **Person-Level** | Individual Patient | Prevalence, risk, health equity        |
+
+::: write_speak
+If you treat registry data as "one person per row" by default, you are giving "heavy users" a louder voice in your statistics.
+:::
+
+::: question
+If a researcher calculates the average age of all *admissions* in 2023, and one 90-year-old patient was admitted 50 times that year, how will this affect the result?
+- It will pull the average age upward, making the "typical patient" seem older than they actually are.
+- It will have no effect because the patient is only one person.
+- It will pull the average age downward.
+
+::: write
+### 4. Disease Prevalence: The "Ever/Never" Rule
+Let's apply this to a specific question: **How many people have a circulatory disease?**
+
+::: write_speak
+If we just count rows where the diagnosis is "Heart," we overcount the people who are frequently hospitalized for their condition. To find the true prevalence, we use the **Ever/Never** approach: Did this patient *ever* have a circulatory admission?
+:::
+
+::: webr
+# The WRONG way: Counting rows
+circ_rows <- sum(hospital_data$diagnosis == "Heart") # Returns 5
+
+# The RIGHT way: Patient-level summary
+prevalence <- hospital_data %>%
+  group_by(patient_id) %>%
+  summarise(has_circulatory = any(diagnosis == "Heart")) %>% # Checks if "Heart" appears at least once for that ID
+  summarise(total_people = sum(has_circulatory)) # Returns 2
+
+print(prevalence)
+:::
+
+::: write_speak
+Disease prevalence is a property of **people**, not a property of **events**.
+:::
+
+::: write
+### 5. Why Averages are Dangerous
+Consider the "Average Age" of a patient. If frequent users are generally older, an event-level average will be skewed high.
+
+::: draw
+[IMAGE: A bar chart showing one tall bar for 'Event Average' and a shorter bar for 'Person Average', illustrating the skew caused by repeat visitors.]
+:::
+
+::: write_speak
+Always ask yourself: **What does this average represent?** Is it the average person walking through the door, or the average person living in the community?
+:::
+
+::: write
+### 6. When is Event-Level Analysis Useful?
+We haven't spent this time telling you that event-level counting is "wrong." It’s just often used for the wrong question. 
+
+**Use Event-Level when you care about:**
+* Hospital workload and bed occupancy.
+* Budgeting for procedures (e.g., how many X-rays did we perform?).
+* Analyzing readmission patterns.
+
+**Use Person-Level when you care about:**
+* Disease incidence and prevalence.
+* Public health outcomes.
+* Risk prediction for individuals.
+:::
+
+::: write
+### 7. The Concept Toolbox
+To switch between these perspectives, we usually use these three strategies:
+1.  **First Admission:** Keep only the very first row for each patient.
+2.  **Ever/Never Indicators:** Create a True/False flag for each person.
+3.  **Counts per Patient:** Summarize the data so each row represents one person and a column tells us how many times they visited.
+:::
+
+::: write_speak
+Most patients in a registry have a single admission. However, a small "long-tail" of patients has dozens. These "heavy users" dominate the data rows but represent a tiny fraction of the population.
+:::
+
+::: write
+### 8. Creating a "First Admission Only" Dataset
+Often we want **one row per person**, keeping only their first known admission. In real registries we would use the admission date; here we will treat the **first row we see for each patient** as their first admission, just to show the mechanics.
+:::
+
+::: webr
+library(dplyr)
+
+# Step 1: Count how many admissions each patient has
+patient_counts <- hospital_data %>%
+  group_by(patient_id, sex) %>%          # Group by patient (and keep sex so we don't lose it)
+  summarise(n_admissions = n(), .groups = "drop")
+
+patient_counts                            # One row per patient, with a count of admissions
+
+# Step 2: Create a dataset with only the first admission per patient
+# (In real data, you would arrange() by admission date before slicing.)
+hospital_first <- hospital_data %>%
+  arrange(patient_id) %>%                # Ensure rows are ordered by patient
+  group_by(patient_id) %>%               # Work within each patient
+  slice(1) %>%                           # Keep the first row for each patient_id
+  ungroup()
+
+hospital_first                            # One row per person (first observed admission)
+:::
+
+::: write
+### 9. Who Uses the Hospital Most? A Simple Concentration Curve
+We can now ask: **What percentage of patients account for what percentage of admissions?** This is a simple "concentration curve" that shows how uneven hospital use can be.
+:::
+
+::: webr
+library(dplyr)
+
+# Step 1: Count admissions per patient
+admissions_per_patient <- hospital_data %>%
+  group_by(patient_id) %>%
+  summarise(n_admissions = n(), .groups = "drop")
+
+admissions_per_patient                    # One row per patient with their number of admissions
+
+# Step 2: Sort patients from fewest to most admissions
+admissions_sorted <- admissions_per_patient %>%
+  arrange(n_admissions)
+
+admissions_sorted
+
+# Step 3: Compute cumulative shares of patients and admissions
+total_patients   <- nrow(admissions_sorted)
+total_admissions <- sum(admissions_sorted$n_admissions)
+
+concentration_tbl <- admissions_sorted %>%
+  mutate(
+    cum_patients   = cumsum(rep(1, n())) / total_patients,          # Cumulative share of patients
+    cum_admissions = cumsum(n_admissions) / total_admissions        # Cumulative share of admissions
+  )
+
+concentration_tbl                           # Table for the concentration curve
+:::
+
+::: webr
+library(ggplot2)
+
+# Step 4: Plot the concentration curve
+ggplot(concentration_tbl,
+       aes(x = cum_patients, y = cum_admissions)) +
+  geom_line(color = "steelblue", size = 1.1) +                         # The concentration curve
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +         # Line of equality (everyone uses equally)
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1)) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(
+    title = "Concentration of Hospital Admissions",
+    x = "Cumulative share of patients",
+    y = "Cumulative share of admissions"
+  ) +
+  theme_minimal()
+:::
+
+::: question
+Which of the following research questions REQUIRES a person-level analysis?
+- How many nurses do we need to staff the Emergency Department on Tuesdays?
+- What percentage of the population will develop Type 2 Diabetes by age 60?
+- How many surgical masks were used in the operating theater this month?
+
+::: write_speak
+### Summary: The Habit to Build
+Before you write a single line of R code, identify two things:
+1.  **Unit of Analysis:** Am I talking about people or visits?
+2.  **Estimand:** What exactly am I trying to estimate?
+
+Many registry mistakes come from answering the wrong question perfectly. 
+
+In our next session, we’ll tackle the "Time" problem: **Who is a 'new' patient, and how far back do we need to look to be sure?**
+:::
+
+::: new_page(title="How to answer patientlevel questions with event level data?")
+
+
+::: 
+A question one might ask when we have some hospital data is this: **Do females go more often to hospital than males?** To answer this, consider the following sample:
+
+
+::: webr(show_code=false)
+# Loading a sample registry dataset
+hospital_data <- data.frame(
+  patient_id = c(1, 2, 2, 2, 3, 4, 4, 5, 6, 6),
+  sex =        c("F", "M", "M", "M", "F", "F", "F", "M", "F", "F"),
+  diagnosis = c("Flu", "Heart", "Heart", "Heart", "Flu", "Injury", "Injury", "Flu", "Heart", "Heart")
+)
+hospital_data
+
+:::
+It may sound like a trivial question. We have a column for `sex` and a column for `admission_id`. Let's try to answer it immediately using the data we have.
+
+::: write
+### 1. The Event-Level
+First, we will simply count every row in the dataset. This is the event level approach.
+
+::: webr
+# Counting admissions (rows) by sex
+table(hospital_data$sex) # This counts every single row as a unique event
+:::
+
+::: write_speak
+Looking at those results, it might seem like females use the hospital more (6 admissions vs 4 for males). But look closer at the `patient_id` column. 
+
+Patient #2 (Male) appears 3 times. Patient #6 (Female) appears 2 times. We aren't counting people; we are counting how many admissions we have for different genders.
+
+::: write
+### 2. Person-Level Counting
+Now, let's identify **unique** patients. We want to know how many individual humans with at least one admission are in each category.
+
+::: webr
+library(dplyr)
+
+# Counting unique patients by sex
+hospital_data %>%
+  group_by(sex) %>%
+  summarise(unique_patients = n_distinct(patient_id)) # n_distinct counts unique IDs only
+:::
+
+::: write_speak
+The numbers changed! In this specific slice, we actually have an equal number of male and female patients (3 each), even though the "event count" made it look like females were more common. 
+
+
+::: write
+### 3. What Just Happened?
+
+| Analysis Level   | Unit               | Focus                                   |
+|------------------|--------------------|-----------------------------------------|
+| **Event-Level**  | Hospital Admission | Beds, staffing, costs per visit        |
+| **Person-Level** | Individual Patient | Prevalence, risk, health equity        |
+
+::: write_speak
+If you treat registry data as "one person per row" by default, you are giving "heavy users" a louder voice in your statistics.
+
+::: question
+If a researcher calculates the average age of all *admissions* in 2023, and one 90-year-old patient was admitted 50 times that year, how will this affect the result?
+- It will pull the average age upward, making the "typical patient" seem older than they actually are.
+- It will have no effect because the patient is only one person.
+- It will pull the average age downward.
+
+::: write
+### 4. Disease Prevalence: The "Ever/Never" Rule
+Let's apply this to a specific question: **How many people have a circulatory disease?**
+
+::: write_speak
+If we just count rows where the diagnosis is "Heart," we overcount the people who are frequently hospitalized for their condition. To find the true prevalence, we use the **Ever/Never** approach: Did this patient *ever* have a circulatory admission?
+
+::: webr
+# The WRONG way: Counting rows
+circ_rows <- sum(hospital_data$diagnosis == "Heart") # Returns 5
+
+# The RIGHT way: Patient-level summary
+prevalence <- hospital_data %>%
+  group_by(patient_id) %>%
+  summarise(has_circulatory = any(diagnosis == "Heart")) %>% # Checks if "Heart" appears at least once for that ID
+  summarise(total_people = sum(has_circulatory)) # Returns 2
+
+print(prevalence)
+:::
+
+::: write_speak
+Disease prevalence is a property of **people**, not a property of **events**.
+
+::: write
+### 5. Why Averages are Dangerous
+Consider the "Average Age" of a patient. If frequent users are generally older, an event-level average will be skewed high.
+
+::: draw
+[IMAGE: A bar chart showing one tall bar for 'Event Average' and a shorter bar for 'Person Average', illustrating the skew caused by repeat visitors.]
+:::
+
+::: write_speak
+Always ask yourself: **What does this average represent?** Is it the average person walking through the door, or the average person living in the community?
+
+::: write
+### 6. When is Event-Level Analysis Useful?
+We haven't spent this time telling you that event-level counting is "wrong." It’s just often used for the wrong question. 
+
+**Use Event-Level when you care about:**
+* Hospital workload and bed occupancy.
+* Budgeting for procedures (e.g., how many X-rays did we perform?).
+* Analyzing readmission patterns.
+
+**Use Person-Level when you care about:**
+* Disease incidence and prevalence.
+* Public health outcomes.
+* Risk prediction for individuals.
+
+::: write
+### 7. The Concept Toolbox
+To switch between these perspectives, we usually use these three strategies:
+1.  **First Admission:** Keep only the very first row for each patient.
+2.  **Ever/Never Indicators:** Create a True/False flag for each person.
+3.  **Counts per Patient:** Summarize the data so each row represents one person and a column tells us how many times they visited.
+
+::: write_speak
+Most patients in a registry have a single admission. However, a small "long-tail" of patients has dozens. These "heavy users" dominate the data rows but represent a tiny fraction of the population.
+
+::: question
+Which of the following research questions REQUIRES a person-level analysis?
+- How many nurses do we need to staff the Emergency Department on Tuesdays?
+- What percentage of the population will develop Type 2 Diabetes by age 60?
+- How many surgical masks were used in the operating theater this month?
+
+::: write_speak
+### Summary: The Habit to Build
+Before you write a single line of R code, identify two things:
+1.  **Unit of Analysis:** Am I talking about people or visits?
+2.  **Estimand:** What exactly am I trying to estimate?
+
+Many registry mistakes come from answering the wrong question perfectly. 
+
+In our next session, we’ll tackle the "Time" problem: **Who is a 'new' patient, and how far back do we need to look to be sure?**
+:::

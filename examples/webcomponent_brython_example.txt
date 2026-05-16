@@ -1,0 +1,38 @@
+::: title
+Web component defined in Brython – example
+
+::: webcomponent note-card(lang=brython)
+from browser import webcomponent, html, document
+
+class NoteCard:
+    def __init__(self):
+        self.attachShadow({'mode': 'open'})
+        slot = document.createElement('slot')
+        self.shadow <= html.DIV(Class='note-card') <= (
+            html.DIV(Class='note-title', id='title'),
+            html.DIV(Class='note-body', id='body'),
+            slot,
+        )
+
+    def connectedCallback(self):
+        t = self.attrs.get('title') or ''
+        self.shadow.select('#title')[0].text = t
+        body_el = self.shadow.select('#body')[0]
+        b = self.attrs.get('content') or ''
+        if b:
+            body_el.innerHTML = b
+
+webcomponent.define('note-card', NoteCard)
+
+::: write
+Below: the same component used twice – once with **into** (body → attribute), once with body as **children**.
+
+::: comp note-card(title="First card", into="content")
+This is the **body** of the first card. It is passed into the <code>content</code> attribute and the component shows it in the body area.
+
+::: comp note-card(title="Second card")
+  <p>This paragraph is appended as a <strong>child</strong> of the element (default slot).</p>
+  <p>No <code>into</code> in the kwargs, so the block body becomes DOM children.</p>
+
+::: write
+End of example.

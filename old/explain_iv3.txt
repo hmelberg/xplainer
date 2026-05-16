@@ -1,0 +1,73 @@
+::: pyodide(silent=true)
+# Setup for potential data visualization or simulation
+import numpy as np
+import pandas as pd
+def generate_iv_data(n=100):
+    z = np.random.normal(0, 1, n) # Instrument
+    u = np.random.normal(0, 1, n) # Unobserved error
+    x = 0.5 * z + 0.8 * u + np.random.normal(0, 0.1, n) # Endogenous X
+    y = 2 * x + 2 * u + np.random.normal(0, 0.1, n) # Y with bias
+    return pd.DataFrame({'Z': z, 'X': x, 'Y': y})
+
+::: write_speak
+# Instrumental Variables (IV)
+In econometrics, we often face a problem called **Endogeneity**. This happens when our explanatory variable ($X$) is correlated with the <CIRCLE>error term</CIRCLE> ($u$).
+
+::: wait(click=true)
+
+::: message(level="warning")
+When $X$ and $u$ are correlated, Ordinary Least Squares (OLS) estimates are **biased** and **inconsistent**. You aren't measuring the true causal effect!
+
+::: write_speak
+### The Solution: The Instrument ($Z$)
+An <BOX>Instrumental Variable</BOX> is a third variable that helps us isolate the "clean" variation in $X$. 
+To be valid, an instrument must satisfy two strict conditions:
+1. **Relevance**: $Z$ must be correlated with $X$.
+2. **Exogeneity**: $Z$ must NOT be correlated with the error term $u$ (it only affects $Y$ through $X$).
+
+
+
+::: wait(click=true)
+
+::: pyodide(editable=true, title="IV Simulation")
+# Let's see how OLS fails vs how IV succeeds
+import numpy as np
+from sklearn.linear_model import LinearRegression
+
+# Generate biased data
+n = 500
+z = np.random.normal(0, 1, (n, 1))
+u = np.random.normal(0, 1, (n, 1))
+x = 0.7 * z + 0.9 * u + np.random.normal(0, 0.1, (n, 1))
+y = 2 * x + 3 * u + np.random.normal(0, 0.1, (n, 1))
+
+# OLS Regression (Biased)
+ols = LinearRegression().fit(x, y)
+print(f"True Beta: 2.0")
+print(f"OLS Estimate: {ols.coef_[0][0]:.3f}")
+
+::: wait(click=true)
+
+::: write_speak
+### Two-Stage Least Squares (2SLS)
+The most common way to implement IV is <UNDERLINE>Two-Stage Least Squares</UNDERLINE>:
+1. **Stage 1**: Regress $X$ on $Z$ to get predicted values $\hat{X}$. This strips away the "dirty" correlation with $u$.
+2. **Stage 2**: Regress $Y$ on $\hat{X}$.
+
+$$ \hat{\beta}_{IV} = (Z^T X)^{-1} Z^T Y $$
+
+::: wait(click=true)
+
+::: question
+Which of the following describes the 'Exclusion Restriction' in IV analysis?
+- The instrument must be highly correlated with the independent variable.
+* The instrument must affect the dependent variable ONLY through the independent variable.
+- The instrument must be excluded from the first stage of the regression.
+
+::: wait(click=true)
+
+::: write
+### Summary Checklist
+- Is your $X$ endogenous? (Use a Hausman Test)
+- Is your instrument **Strong**? (Check F-statistic > 10 in Stage 1)
+- Is your instrument **Valid**? (Theory-driven; $Z$ is uncorrelated with $u$)

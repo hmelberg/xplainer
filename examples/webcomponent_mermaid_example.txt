@@ -1,0 +1,67 @@
+::: title
+Mermaid as a web component (like ::: mermaid)
+
+::: webcomponent comp-mermaid(lang=js, body_attr=content)
+(function() {
+  const tagName = 'comp-mermaid';
+  if (typeof customElements !== 'undefined' && customElements.get(tagName)) return;
+  class CompMermaid extends HTMLElement {
+    static get observedAttributes() { return ['content']; }
+    connectedCallback() { this._render(); }
+    attributeChangedCallback() { this._render(); }
+    async _render() {
+      const code = (this.getAttribute('content') || '').trim();
+      if (!code) return;
+      if (this._lastCode === code) return;
+      this._lastCode = code;
+      this.innerHTML = '<span style="color:#8b949e;">Loading diagram…</span>';
+      try {
+        let mermaid = typeof window !== 'undefined' && window.mermaid;
+        if (!mermaid) {
+          const mod = await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs');
+          mermaid = mod.default || mod.mermaid || mod;
+          if (typeof mermaid.initialize === 'function') mermaid.initialize({ startOnLoad: false, securityLevel: 'loose' });
+        }
+        const id = 'mermaid-' + Math.random().toString(36).slice(2);
+        const { svg, bindFunctions } = await mermaid.render(id, code);
+        const wrap = document.createElement('div');
+        wrap.className = 'mermaid-block';
+        wrap.style.maxWidth = '100%';
+        wrap.innerHTML = svg;
+        if (typeof bindFunctions === 'function') bindFunctions(wrap);
+        this.innerHTML = '';
+        this.appendChild(wrap);
+      } catch (err) {
+        this.innerHTML = '';
+        const pre = document.createElement('pre');
+        pre.style.margin = '0'; pre.style.fontSize = '13px';
+        pre.textContent = 'Mermaid error: ' + (err && err.message ? err.message : String(err));
+        this.appendChild(pre);
+      }
+    }
+  }
+  customElements.define(tagName, CompMermaid);
+})();
+
+::: write
+Below: the same diagram you could write with <code>::: mermaid</code>, but using the <code>comp-mermaid</code> component. The block body is the Mermaid definition; the component is defined with <code>body_attr=content</code> so you can write just <code>::: comp comp-mermaid</code>.
+
+::: comp comp-mermaid
+flowchart LR
+  A[Start] --> B{OK?}
+  B -->|Yes| C[End]
+  B -->|No| A
+
+::: write
+Another diagram:
+
+::: comp comp-mermaid
+sequenceDiagram
+  participant U as User
+  participant P as Player
+  U->>P: Click play
+  P->>P: Run next block
+  P-->>U: Show content
+
+::: write
+End of example.

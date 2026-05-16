@@ -1,0 +1,106 @@
+::: defaults(skin=playful)
+speech_lang="nb-NO"
+
+::: intro(text="Velkommen til microdata.no", subtitle="microdata101 · Leksjon 1 av 5", enter=blur-in, duration=3500, speak="Velkommen til microdata.no")
+
+::: new_page(title="En merkelig datamaskin", transition=fade)
+
+::: write_speak
+Det finnes en datamaskin i Oslo som kjenner lønna, utdanninga og familien til hver eneste bosatte i Norge. Du skal få lov til å spørre den spørsmål — men den gir deg aldri rådata tilbake.
+
+::: write_speak
+Den datamaskinen heter microdata.no. Den driftes av Sikt og SSB. Og i løpet av de neste fem leksjonene skal du lære å snakke med den.
+
+::: new_page(title="Hvorfor den finnes", transition=cross-dissolve)
+
+::: write_speak
+Statistikkloven sier at SSB ikke kan utlevere opplysninger som kan knyttes til en enkeltperson. Samtidig har forskere et legitimt behov for nettopp slike data. microdata.no er kompromisset: koden din reiser inn på serveren, rådataene reiser aldri ut.
+
+::: write_speak
+Tilgangen gis til forskere, masterstudenter og analytikere via Feide. Du kjører analyser i nettleseren. Du får se tabeller, koeffisienter, histogrammer. Du får aldri se en eneste persons rad.
+
+::: message(level=info, icon=shield)
+**Konfidensialitetsvakta.** Plattformen vinsoriserer halene på fordelinger, undertrykker celler med for få personer, og krever minstepopulasjon på 1000 før en analyse i det hele tatt får kjøre. Du merker det knapt — helt til du prøver noe plattformen nekter å svare på.
+
+::: new_page(title="Fire områder, ett vindu", transition=wipe-left)
+
+::: write_speak
+Før vi skriver noe, et lynkjapt riss av hva du ser når du logger inn. Fire områder, ingen skjermdump — bare et skjelett.
+
+::: draw(size=440, animate=true)
+rect(20, 20, 400, 30), speak="Øverst, verktøylinja. Her åpner, lagrer og kjører du skript."
+text(220, 40, "verktøylinje")
+rect(20, 70, 240, 230), speak="Til venstre, skriptvinduet — også kalt kodefeltet. Her skriver du skript du kan lagre og kjøre på nytt."
+text(140, 120, "skriptvinduet")
+text(140, 140, "(kodefeltet)")
+rect(280, 70, 140, 140), speak="Oppe til høyre, variabelbeskrivelsene. Katalogen med metadata over alle SSB-variablene du har tilgang til."
+text(350, 130, "variabel-")
+text(350, 150, "beskrivelser")
+rect(280, 230, 140, 70), speak="Nede til høyre, resultatområdet. Tabeller, tall og feilmeldinger dukker opp her når du kjører noe."
+text(350, 265, "resultat-")
+text(350, 285, "området")
+
+::: write_speak
+Kommandovinduet og skriptvinduet gjør i prinsippet det samme — de kjører kommandoer. Forskjellen er at kommandovinduet er et skraperom for enkeltkommandoer, mens skriptvinduet er der du lagrer en hel analyse du kan kjøre igjen i morgen.
+
+::: new_page(title="Spørsmålet vi skal svare på", transition=iris)
+
+::: write_speak
+Hele denne serien dreier seg rundt ett spørsmål: **hva forklarer lønna til 30-åringer i Norge?** Vi bygger svaret stein for stein. I leksjon 5 lar vi regresjonen snakke tilbake.
+
+::: write_speak
+Men først må vi ha en kohort. La oss bygge den. Her er det første skriptet du noensinne skal kjøre mot microdata.no.
+
+::: code
+// Koble til databanken. Versjon 12 av SSBs Forskningsdatabase.
+require no.ssb.fdb:12 as db
+
+// Opprett et tomt arbeidsdatasett som heter populasjon.
+create-dataset populasjon
+
+// Hent fødselsår og -måned som et heltall på formen YYYYMM.
+import db/BEFOLKNING_FOEDSELS_AAR_MND 2020-01-01 as faarmnd
+
+// Deriver alder per 2020: trunker vekk måneden og trekk fra året.
+generate alder = 2020 - int(faarmnd/100)
+
+// Behold bare 30-åringene. Det er kohorten vår.
+keep if alder == 30
+
+// Tell dem.
+tabulate alder
+
+::: write_speak
+Seks linjer. Den første kobler deg til databanken — et navngitt, versjonert lager av SSB-variabler. Den andre lager et tomt arbeidsdatasett. Det er din egen private kopi som bare eksisterer i økta.
+
+::: write_speak
+Den tredje linja henter én variabel, fødselsåret og -måneden, som et heltall på formen 199005 for mai 1990. Den fjerde deler på hundre og trunkerer — igjen året — og trekker fra 2020 for å få alder. Den femte kaster ut alle som ikke er 30. Den sjette tabulerer det som er igjen.
+
+::: message(level=info, icon=lightbulb)
+**Hvorfor `int(faarmnd/100)`?** Fordi 199005 delt på 100 er 1990.05, og `int()` kapper av desimalene. En halv linje matte som erstatter en hel month-extraction-funksjon. microdata.no er full av slike triks.
+
+::: new_page(title="Sjekk intuisjonen", transition=fade)
+
+::: multiple_choice
+Hva er forskjellen på kommandovinduet og skriptvinduet?
+* Skriptvinduet lar deg lagre og kjøre en samling kommandoer samlet — kommandovinduet er for å teste enkeltkommandoer underveis.
+- Skriptvinduet er for deskriptiv statistikk, kommandovinduet er for regresjon.
+- Kommandovinduet kjører mot databanken, skriptvinduet kjører lokalt på din maskin.
+- Ingen forskjell — de er to navn på det samme området.
+
+::: celebrate(kind=confetti, bursts=2)
+
+::: sound(name=success)
+
+::: write_speak
+Riktig. Skriptvinduet er der analyser bor når de skal kunne kjøres på nytt i morgen. Kommandovinduet er skraperommet.
+
+::: new_page(title="Hvor vi er nå", transition=slide-up)
+
+::: write_speak
+Vi har koblet til databanken. Vi har laget et tomt datasett som heter populasjon. Vi har fylt det med én variabel og filtrert ned til 30-åringene. Det er rammeverket vårt — kohorten alt det neste skal hekte seg på.
+
+::: write_speak
+Neste skritt: å fylle populasjonen med ekte personer og forstå at microdata.no organiserer data i tre helt forskjellige former. Valget mellom dem bestemmer hvilke spørsmål du kan stille.
+
+::: xplainer_link(url="02_datasett.txt", text="Neste: Tre slags data — tverrsnitt, hendelse, panel")

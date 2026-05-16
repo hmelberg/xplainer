@@ -1,0 +1,186 @@
+# Master plan — Health + R: Data Science on Health Registries
+
+A 10-lecture xplainer series that introduces researchers and analysts to data
+science with R on **patient registry** and **prescription registry** data.
+Inspired by Nordic-style national health registries where every contact with
+the healthcare system is linked by a personal identifier, enabling population-
+scale observational research.
+
+## Audience
+
+Researchers, analysts, clinicians, and students who know some R (or are ready
+to pick it up) and want to work with real health data. Not for beginners who
+have never seen a data frame — we assume you can install packages and read a
+line of code. But each lecture is self-contained and explains what it uses.
+
+## The running clinical example
+
+Across the whole series we use **type 2 diabetes** and **metformin** as the
+anchor. Everyone has heard of them, the clinical story is simple, and the
+relevant codes are well known:
+
+- ICD-10 for type 2 diabetes: **E11** (often **E11.9** without complications).
+- ATC for metformin: **A10BA02**.
+- Questions we work toward:
+  - How many new cases of type 2 diabetes per year?
+  - What share of patients start metformin within 90 days of diagnosis?
+  - Is metformin use associated with lower rates of cardiovascular
+    hospitalisation?
+
+## The shared synthetic dataset
+
+All lectures reference the same simulated dataset of ~5,000 people followed
+2010-2023. The schema below is exactly what authors should use in code
+examples — it keeps the series coherent.
+
+### Table 1: `person` (one row per person)
+
+| Column       | Type    | Notes                                |
+|--------------|---------|--------------------------------------|
+| person_id    | integer | Primary key.                         |
+| birth_date   | date    | ISO-8601.                            |
+| sex          | chr     | "M" or "F".                          |
+| region       | chr     | "north", "south", "east", "west".    |
+| death_date   | date/NA | NA if the person is still alive.     |
+
+### Table 2: `patient_registry` (one row per admission or outpatient visit)
+
+| Column           | Type    | Notes                                                  |
+|------------------|---------|--------------------------------------------------------|
+| person_id        | integer | Foreign key to person.                                 |
+| admission_date   | date    | Start of the encounter.                                |
+| discharge_date   | date/NA | NA for an outpatient visit.                            |
+| icd10_main       | chr     | Main diagnosis, e.g. "E11.9".                          |
+| icd10_secondary  | chr     | ";"-separated secondary diagnoses (may be NA).         |
+| ward             | chr     | "medicine", "surgery", "cardio", "emergency", ...      |
+| hospital_id      | integer | Hospital.                                              |
+
+### Table 3: `prescription_registry` (one row per dispensing)
+
+| Column           | Type    | Notes                                                  |
+|------------------|---------|--------------------------------------------------------|
+| person_id        | integer | Foreign key to person.                                 |
+| dispensing_date  | date    | When the drug was picked up at the pharmacy.           |
+| atc_code         | chr     | ATC classification, e.g. "A10BA02".                    |
+| product_name     | chr     | Brand or generic, e.g. "Metformin 500mg".              |
+| ddd_dispensed    | numeric | Defined daily doses dispensed for this fill.           |
+| prescriber_type  | chr     | "GP", "specialist", "hospital".                        |
+
+Authors can invent plausible loader code like `readr::read_csv("person.csv")`
+or `arrow::read_parquet("prescription_registry.parquet")`. The point is
+consistency, not realism — the dataset is a shared fiction.
+
+## Style conventions (all lectures)
+
+Every lecture file must start with:
+
+    ::: defaults(skin=playful)
+
+    ::: intro(text="<lecture title>", subtitle="Health + R · Lecture N of 10", enter=blur-in, duration=3500, speak="<lecture title spoken>")
+
+And end with:
+
+    ::: xplainer_link(url="<next lecture file name>", text="Next: <next lecture title>")
+
+(Lecture 10 links back to lecture 1.)
+
+**Hard rules for every lecture:**
+
+- **Tidyverse**: use dplyr, ggplot2, lubridate, tidyr. snake_case variable
+  names. Pipe with `|>` (native pipe) or `%>%`, pick one and stick with it.
+- **Code blocks**: use `::: r(auto_run=before, title="...")` for
+  demonstrations. End-of-line comments in the code become narration.
+- **Block variety**: at least **6 distinct block types** per lecture. Do not
+  produce a wall of `write_speak`.
+- **One comprehension check**: every lecture includes at least one
+  `::: multiple_choice` or `::: question`.
+- **Playtime target**: 5-8 minutes (~15-25 blocks total).
+- **Build on prior lectures**: when you use a concept from a prior lecture,
+  mention it by number (e.g. "Remember from Lecture 3, we join by
+  `person_id`"). Do not re-derive it from scratch.
+- **Tee up the next**: in the closing narration, name what the next lecture
+  will add.
+- **No fabricated blocks**: only use blocks listed in `src/explain_prompt3.txt`.
+
+## The ten lectures
+
+### 01 — Welcome to health registries (why R?)
+**File**: `01_welcome.txt`. **Hook**: what questions can a linked national
+health registry answer that a clinical trial can't? Introduce the three-table
+schema as a whole. Motivate R as the tool of choice: open, rectangular, strong
+tidyverse + survival ecosystem. No code yet beyond one tiny loading snippet.
+
+### 02 — Loading and exploring registry data
+**File**: `02_loading.txt`. Read the three tables with `readr` and briefly
+mention `data.table` and `arrow` for bigger data. Show `glimpse()`,
+`summary()`, `skimr::skim()`. Walk through the shape of each table. Flag the
+obvious missing-data patterns (discharge_date NA for outpatient, death_date NA
+for alive, icd10_secondary can be NA or `";"`-separated).
+
+### 03 — Linking patients across tables
+**File**: `03_linking.txt`. Joins with `dplyr` (`left_join`, `inner_join`,
+`anti_join`). Why `left_join` is the default for epidemiology. Date parsing
+with `lubridate::ymd()`. Pivoting with `tidyr::pivot_longer`. Show how a
+person's story gets reconstructed by joining the three tables on `person_id`.
+
+### 04 — Building a cohort
+**File**: `04_cohort.txt`. Inclusion and exclusion criteria: adults with at
+least one E11 diagnosis between 2012 and 2020, alive at the time of diagnosis.
+Deduplication: pick the **first-ever** E11 record per person (that date is the
+**index date**). Introduce the concept of the index date formally — it
+recurs in every subsequent lecture.
+
+### 05 — Describing your cohort (Table 1)
+**File**: `05_table1.txt`. Counts, proportions, means by group. Use
+`gtsummary::tbl_summary()` for a publication-ready Table 1 and show ggplot2
+bar/histograms for sex, age-at-index, region. What a reviewer expects in a
+Table 1 and what they do not.
+
+### 06 — Measuring drug exposure
+**File**: `06_exposure.txt`. From raw dispensing rows to "on drug" time.
+Filter prescription_registry to `atc_code == "A10BA02"`. First fill date per
+person. Gap-based episode construction: consecutive fills within N days count
+as one continuous episode. Introduce DDD as a coarse dose measure.
+
+### 07 — Outcomes in patient registries
+**File**: `07_outcomes.txt`. Defining an outcome from ICD-10. Walk through
+detecting hospitalisation for major cardiovascular events (I21 acute MI, I63
+ischaemic stroke) in `icd10_main` OR `icd10_secondary`. First-occurrence vs
+recurrent events. The `";"`-split trick for secondary diagnoses.
+
+### 08 — Follow-up time and censoring
+**File**: `08_followup.txt`. Start of follow-up = index date (from Lecture 4).
+End = first outcome OR death OR end-of-study (2023-12-31). Introduce
+`survival::Surv()` and the concept of censoring. Compute person-time in years.
+Common beginner mistakes: including people before their index date, forgetting
+to censor at death.
+
+### 09 — Incidence rates and Kaplan-Meier
+**File**: `09_rates.txt`. Crude incidence rate per 1000 person-years. Hand-
+compute one, then show the `epitools::rateratio()` or base R one-liner.
+Kaplan-Meier curves with `survival::survfit()` + `survminer::ggsurvplot()`.
+How to read the curve. Median follow-up time vs median survival time.
+
+### 10 — A mini study
+**File**: `10_mini_study.txt`. Putting it all together: a reproducible mini-
+analysis asking "do metformin users have lower rates of major cardiovascular
+events than non-users in our cohort?". End-to-end script: cohort → exposure →
+outcome → follow-up → rate ratio with 95% CI. Critical discussion of
+confounding by indication, immortal-time bias, and what a proper study would
+add. Tee up further reading. Last block links back to Lecture 1.
+
+## Cross-reference chain
+
+01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 01
+
+Use relative URLs in `xplainer_link`, e.g. `url="02_loading.txt"`.
+
+## Authoring notes
+
+- Every author: read `src/explain_prompt3.txt` first and follow it.
+- Every author: keep the running example (type 2 diabetes + metformin)
+  visible in at least one block of your lecture — even if your topic is
+  "joins", show a join on the metformin prescription table.
+- Do not recycle the same opening hook as another lecture.
+- Vary the transition styles in `new_page(transition=...)` across lectures
+  so the series feels musical, not repetitive.

@@ -1,0 +1,141 @@
+::: defaults(skin=playful)
+speech_lang="nb-NO"
+
+::: intro(text="Svaret", subtitle="microdata101 · Leksjon 5 av 5", enter=blur-in, duration=3500, speak="Svaret. Hva forklarer lønna til 30-åringer?")
+
+::: new_page(title="Tilbake til spørsmålet", transition=fade)
+
+::: write_speak
+Nå vender vi tilbake til spørsmålet fra leksjon 1: hva forklarer lønna til 30-åringer? Tid for å svare.
+
+::: write_speak
+Fire leksjoner, ett spørsmål. Vi har koblet til databanken, bygd populasjonen, derivert variabler og sett på fordelingene. Nå kjører vi modellen.
+
+::: message(level=info, icon=lightbulb)
+En liten advarsel før vi starter: tallene du ser om et øyeblikk er pedagogiske mock-verdier — plausible, men ikke hentet fra plattformen i dag. Når du kjører dette selv i microdata, får du dine egne tall.
+
+::: new_page(title="Hovedmodellen", transition=fade)
+
+::: write_speak
+Vi regresserer lønn på utdanning, kjønn og foreldrenes inntekt. Fire variabler, ett svar.
+
+::: code
+// OLS-regresjon på arbeidspopulasjonen fra leksjon 2–4
+use populasjon
+generate mann = 1 if kjonn == '1'
+replace mann = 0 if kjonn == '2'
+
+// Hovedmodellen: lønn forklart av utdanning, kjønn og foreldreinntekt
+regress lonn hoyutd mann inntekt_far inntekt_mor
+
+::: write_speak
+Én kommando. Én linje. Resultatene kommer opp i resultatområdet.
+
+::: write_speak
+Output viser fire koeffisienter. Høyere utdanning gir omtrent 120 000 kroner høyere årslønn. Å være mann gir rundt 45 000 kroner ekstra. Foreldrenes lønn bidrar med noen øre per krone — positivt, men lite.
+
+::: write_speak
+R² er rundt 0.20. Modellen fanger en femtedel av variasjonen. Fire femtedeler står igjen som uforklart.
+
+::: new_page(title="Formaliseringen", transition=cross-dissolve)
+
+::: write_speak
+Nå som vi har sett hva regresjonen gir oss, la oss formalisere det. Ligningen er ikke noe annet enn en oppskrift for den samme tabellen.
+
+::: math
+\text{lonn}_i = \beta_0 + \beta_1 \cdot \text{hoyutd}_i + \beta_2 \cdot \text{mann}_i + \beta_3 \cdot \text{inntekt}\_\text{far}_i + \beta_4 \cdot \text{inntekt}\_\text{mor}_i + \varepsilon_i
+
+::: write_speak
+Hver beta i ligningen er én koeffisient i output. Beta-én er de 120 000 for høyere utdanning. Beta-to er de 45 000 for kjønn. Epsilon er alt modellen ikke vet — ferdigheter, flaks, bransjevalg, forhandlingsevne.
+
+::: new_page(title="Diagnostikk — sjekk at du kan stole på modellen", transition=wipe-left)
+
+::: write_speak
+En koeffisient uten diagnostikk er som en fartsmåler uten dekk. Vi må se på residualene før vi våger å tro på tallet.
+
+::: code
+// Lagre residualer, prediksjoner og Cook's distance
+regress-predict lonn hoyutd mann inntekt_far inntekt_mor, residuals(res) predicted(pred) cooksd(cook)
+
+// Se på residualfordelingen
+histogram res
+histogram cook
+
+::: write_speak
+Du leter etter to ting. Først: er residualene en symmetrisk klokkekurve rundt null? Hvis ja, er linearitet og homoskedastisitet rimelige antagelser. For det andre: er det enkeltobservasjoner med ekstremt høy Cook's distance? De drar modellen alene og bør granskes.
+
+::: new_page(title="Alternativ: logistisk regresjon", transition=iris)
+
+::: write_speak
+Vi kan også spørre: hvem er høytlønnet, og hvem er det ikke? Da flytter vi fra kroner til sannsynlighet.
+
+::: code
+// Dummy for høy lønn — her brukt 500 000 som terskel
+generate hoylonn = 1 if lonn > 500000
+replace hoylonn = 0 if lonn <= 500000
+
+// Logistisk regresjon: sannsynligheten for å være høytlønnet
+logit hoylonn hoyutd mann inntekt_far inntekt_mor
+
+::: write_speak
+Logit gir deg koeffisienter i log-odds — ikke like intuitivt som kroner. For tolkning er marginaleffekter det du vil ha: de oversetter log-odds til sannsynlighetsendringer i prosentpoeng.
+
+::: message(level=info, icon=lightbulb)
+Skulle du heller bruke probit? I praksis gir logit og probit nesten identiske prediksjoner. Velg den du er mest komfortabel med å rapportere.
+
+::: new_page(title="Panelregresjon over tid", transition=fade)
+
+::: write_speak
+Husker du panelet vi bygde i leksjon 2? Der hadde vi lønn år for år fra 2017 til 2020. Med det kan vi kjøre en fasteffektregresjon.
+
+::: code
+// Bytt til paneldatasettet fra leksjon 2
+use lonnspanel
+
+// Fasteffekter: hver person er sin egen kontrollgruppe
+regress-panel lonn alder hoyutd, fe
+
+::: write_speak
+Fasteffekt betyr at hver person blir sammenlignet med seg selv over tid. Alt som er konstant for individet — oppvekst, personlighet, medfødt evne — faller ut av ligningen. Det som blir igjen er hvordan lønna endrer seg når alder og utdanningsstatus endrer seg.
+
+::: message(level=info, icon=info)
+Vil du vite om fasteffekter eller tilfeldige effekter passer best? Kjør hausman etter modellen. Lav p-verdi betyr: hold på fasteffektene.
+
+::: new_page(title="Svaret", transition=slide-up)
+
+::: write_speak
+Vi startet med spørsmålet: hva forklarer lønna til 30-åringer? Her er hovedtallet.
+
+::: countdown(n=3, step_ms=900, text="Koeffisienten på høyere utdanning er...", speak="Tre. To. Én.")
+
+::: reveal
+Omtrent 120 000 kroner høyere årslønn, når man holder kjønn og foreldrenes inntekt konstant. Det er nesten to månedslønner — hvert år, livet ut.
+
+::: celebrate(kind=fireworks, bursts=3)
+
+::: sound(name=drumroll)
+
+::: new_page(title="Hva vi egentlig lærte", transition=cross-dissolve)
+
+::: write_speak
+Men vi lærte noe mer. Utdanning er bare én del av bildet. Foreldrenes inntekt har også betydning — den følger med inn gjennom livet. Og modellen forklarer bare 20 prosent av variasjonen. Åtti prosent er noe vi ikke har fanget opp her.
+
+::: multiple_choice
+Hvorfor er det viktig å rapportere R² sammen med koeffisienten på hoyutd?
+* Fordi den forteller hvor mye av lønnsvariasjonen modellen faktisk forklarer — en stor koeffisient i en svak modell er fortsatt bare én puslespillbit.
+- Fordi R² er det samme som p-verdien til koeffisienten.
+- Fordi microdata.no krever at R² rapporteres for at resultatet skal godkjennes.
+
+::: celebrate(kind=confetti, bursts=2)
+
+::: sound(name=success)
+
+::: write_speak
+Vil du gå dypere? Se på ivregress for å håndtere endogen utdanning. Bruk oaxaca til å dekomponere kjønnsforskjellen i en forklart og en uforklart del. Prøv mlogit når utfallet har flere enn to kategorier.
+
+::: write_speak
+Du har nå sett hele løpet: fra require til regress. Det eneste som står mellom deg og ditt eget forskningsprosjekt er spørsmålet ditt.
+
+::: xplainer_link(url="01_velkommen.txt", text="Tilbake til start: Velkommen til microdata.no")
+
+::: xplainer_link(url="../microdata scripteditor.txt", text="Oppfølger: Skripteditoren i microdata — en UI-guidet tur")

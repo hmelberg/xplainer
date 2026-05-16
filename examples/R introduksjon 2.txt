@@ -1,0 +1,195 @@
+::: defaults
+speech_lang="nb-NO"
+webr_result_location="left"
+speak_code_language="en-US"
+explain_code="all"
+r_requirements="readr, dplyr, tidyr, ggplot2"
+ 
+:::title
+ Innføring i R - Smakebiter
+
+::: write_speak
+Denne videoen gir en smakebit på hvordan vi kan analysere helsedata ved hjelp av programmeringsspråket R.
+
+Det første vi skal gjøre, er å laste inn data og pakker med kommandoer.
+
+::: write
+## 1) Hvordan last inn pakker med kommandoer, datafiler og gi det navn?
+
+:::r
+library(readr) ## Laster pakken readr slik at vi kan lese filer med ulike typer data
+library(dplyr) ## Laster dplyr for datamanipulering
+library(tidyr) ## Laster tidyr for omforming av data (f.eks. pivot_longer)
+library(ggplot2) ## Laster ggplot2 for figurer
+npr <- read_csv("https://raw.githubusercontent.com/hmelberg/health_data/refs/heads/main/npr.csv") # read_csv kommandoen leser NPR-data fra lokal fil
+head(npr) ## Viser de 6 første radene for en rask sjekk
+
+:::write(effect="fade")
+npr <- read_csv(FILNAVN) betyr at man leser inn en fil og gir det et navn.
+Pilen betyr det samme som et likhetstegn: 
+Å skrive __x=5__ er det samme som å skrive __x <- 5__
+
+::: write_speak
+Pilen betyr at vi gir navn til ting. Det er nyttig å bruke navn. Det betyr at vi kan ha mange datasett med ulike navn og jobbe med de samtidig. Vi kan også gi navn til resultater fra regresjoner og utregninger.
+
+
+## 2) Hvordan se på variablene og telle observasjoner?
+
+La oss undersøke størrelse på data og hvilke variabler vi har tilgjengelig.
+
+:::r(result_location="below")
+dim(npr) ## Viser antall rader og kolonner
+
+:::r
+names(npr) ## Lister alle variabelnavn (kolonnenavn)
+
+:::r 
+str(npr) ## Viser datatype for hver variabel
+:::
+
+## 3) Hvordan lage nye variabler?
+
+I dette datasettet finnes ikke `ALDER` som ferdig kolonne.
+Vi beregner derfor alder ved innleggelse fra inndato og fødselsår.
+Samtidig lager vi liggetid fra `INNDATO` og `UTDATO`.
+
+:::r(result_location="below")
+npr <- npr |>
+  mutate(
+    INNDATO = as.Date(INNDATO),
+    UTDATO = as.Date(UTDATO),
+    ALDER_BEREGNET = as.integer(format(INNDATO, "%Y")) - FODSELSAAR,
+    LIGGETID = as.numeric(UTDATO - INNDATO)
+  ) 
+
+summary(npr$ALDER_BEREGNET) ## Oppsummering av beregnet (omtrentlig) alder
+:::r
+summary(npr$LIGGETID) #= Oppsummering av liggetid
+:::
+
+## 4) Hvordan lage en kjede med kommandoer og et histogram? 
+
+:::r
+npr |> # Start med datasettet som heter npr
+  dplyr::pull(ALDER_BEREGNET) |>  # trekk ut beregnet alder
+  hist(main = "Aldersfordeling ved innleggelse", xlab = "Alder", col = "skyblue")
+:::
+::: write(effect="fade")
+Man kan knytte operasjoner sammen i kjeder ved hjelp av "piping." Man bruker da symbolet `|>` (eller `%>%`). Resultatet fra en operasjon blir sendt videre til neste operasjon.
+
+:::
+## 5) Hvordan telle hvilke prosedyrer som er mest vanlig?
+
+Her teller vi forekomst av prosedyrer fra både `PROSEDYRE1` og `PROSEDYRE2`.
+
+:::r
+# Samler alle prosedyrekolonner til én lang liste for telling
+pros_telling <- npr |> ## Legg resultatet i en variable som heter pros_telling, start med datasettet npr 
+  tidyr::pivot_longer( ## I data er prosedyre 1 og 2 i hver sin kolonne. pivot_longer "smelter" disse kolonnene slik at de kan telles.
+    cols = starts_with("PROSEDYRE"), ## Velger alle kolonner som begynner med "PROSEDYRE"
+    values_to = "PROSEDYRE"          ## Legger alle kodenavnene i en ny kolonne kalt PROSEDYRE
+  ) |>
+  filter(!is.na(PROSEDYRE), PROSEDYRE != "") |> ## Fjerner tomme rader og manglende verdier (NA)
+  count(PROSEDYRE, sort = TRUE)                 ## Teller forekomster av hver kode og sorterer resultatet
+# Viser de 10 øverste radene i konsollen for en rask sjekk
+pros_telling |> slice_head(n = 10)
+
+:::r
+# Lager et søylediagram av de 15 vanligste prosedyrene
+ggplot(pros_telling |> slice_head(n = 15),     # Bruker kun de 15 mest frekvente kodene
+       aes(x = reorder(PROSEDYRE, n), y = n)) + # Sorterer koden på x-aksen etter antall (n)
+  geom_col(fill = "steelblue") +                # Lager søyler med en fin blåfarge
+  coord_flip() +                                # Vender diagrammet slik at kodenavnene blir lettere å lese
+  labs(
+    title = "De 15 vanligste prosedyrekodene",  # Legger til tittel på diagrammet
+    x = "Prosedyrekode",                        # Navngir aksen som viser kodene
+    y = "Antall registreringer"                 # Navngir aksen som viser antallet
+  )
+:::
+:::r(silent=true)
+npr <- npr |>
+  mutate(
+    KOMMUNENR_NUM = as.integer(KOMMUNENR),
+    REGION = if_else(
+      "REGION" %in% names(npr),
+      REGION,
+      case_when(
+        KOMMUNENR_NUM < 2000 ~ "HSOR_OST",
+        KOMMUNENR_NUM < 3000 ~ "HVEST",
+        KOMMUNENR_NUM < 4000 ~ "HMIDT",
+        TRUE ~ "HNORD"
+      )
+    )
+  )
+:::
+## 6) Plot: gjennomsnittsalder per region
+
+Her grupperer vi på `REGION` og beregner gjennomsnittsalder.
+
+:::r(result_location="below")
+## Starter med det opprinnelige datasettet 'npr' og lagrer resultatet i 'alder_region'
+alder_region <- npr |>
+  ## Grupperer dataene basert på kolonnen REGION for å gjøre beregninger per helseregion
+  group_by(REGION) |>
+  ## Oppretter et sammendrag med nye kolonner basert på grupperingen
+  summarise(
+    ## Beregner gjennomsnittlig alder; na.rm = TRUE fjerner rader som mangler alder (NA)
+    gjennomsnitt_alder = mean(ALDER_BEREGNET, na.rm = TRUE),
+    ## Teller antall rader (observasjoner/innleggelser) i hver region
+    antall_innleggelser = n(),
+    ## Sørger for at grupperingen fjernes etterpå slik at tabellen blir "normal" igjen
+    .groups = "drop"
+  )
+
+## Viser den ferdige oppsummeringstabellen i konsollen
+alder_region
+::: og et plot ...
+:::r
+ggplot(alder_region, aes(x = REGION, y = gjennomsnitt_alder, fill = REGION)) +
+  geom_col(show.legend = FALSE) +
+  labs(
+    title = "Gjennomsnittsalder ved innleggelse per region",
+    x = "Region",
+    y = "Gjennomsnittsalder"
+  )
+:::
+
+
+
+## 7) Plot: DRGVEKT per region (boxplot)
+
+Denne figuren viser både nivå og spredning i DRG-vekt mellom regioner.
+Tolkning: En høy medianlinje betyr høyere typisk DRGVEKT i regionen. En høy boks betyr større variasjon (IQR). Punkter utenfor boksen er enkeltopphold med uvanlig høy eller lav DRGVEKT.
+
+:::r
+ggplot(npr, aes(x = REGION, y = DRGVEKT, fill = REGION)) +
+  geom_boxplot(show.legend = FALSE, outlier.alpha = 0.25) +
+  labs(
+    title = "Fordeling av DRGVEKT per region",
+    x = "Region",
+    y = "DRGVEKT"
+  )
+:::
+
+## 8) Enkel oppsummering
+
+La oss lage en mini-rapport i en setning.
+
+:::r(result_location="below")
+## Starter med det opprinnelige datasettet 'npr' for å lage en felles oppsummering
+npr |>
+  ## Bruker summarise for å beregne statistikk på tvers av alle rader i datasettet
+  summarise(
+    ## Teller det totale antallet rader (innleggelser) i hele tabellen
+    antall_innleggelser = n(),
+    ## Beregner gjennomsnittsalder; na.rm = TRUE hopper over rader der alder mangler
+    gjennomsnitt_alder = mean(ALDER_BEREGNET, na.rm = TRUE),
+    ## Finner medianverdien for liggetid (den midterste verdien, ofte mer robust enn gjennomsnitt)
+    median_liggetid = median(LIGGETID, na.rm = TRUE),
+    ## Beregner andelen som har minst én prosedyre registrert (gjennomsnittet av en LOGISK test)
+    andel_med_prosedyre = mean(coalesce(PROSEDYRE1, "") != "" | coalesce(PROSEDYRE2, "") != "")
+  )
+:::
+
+Du kan nå: laste data (read_csv), gi ting navn (<-), velge kolonner ($), visualisere fordeling, og lage nye variabler (mutate).
+

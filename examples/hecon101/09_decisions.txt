@@ -1,0 +1,102 @@
+::: defaults(skin=playful)
+
+::: intro(text="Who decides?", subtitle="hecon101 · Lecture 9 of 10", enter=blur-in, duration=3500, speak="Thresholds, budgets, and the committees who actually say yes or no.")
+
+::: new_page(title="From ICER to decision", transition=fade)
+
+::: write_speak
+Lecture 8 gave you the ICER. This lecture asks who looks at it, and what else they weigh.
+
+::: new_page(title="The HTA agency tour", transition=wipe-left)
+
+::: write
+**Health Technology Assessment** — the national bodies that decide whether a drug is worth covering.
+
+::: table
+| Agency | Country | Approach |
+| --- | --- | --- |
+| NICE | UK | Explicit threshold: £20,000-30,000 per QALY |
+| IQWiG | Germany | Efficiency frontier, no explicit threshold |
+| HAS | France | Therapeutic benefit scale (ASMR I-V) |
+| ICER | US | Voluntary, reference pricing for payers |
+
+::: write_speak
+Four agencies, four philosophies. Only NICE puts a number on the door.
+
+::: new_page(title="Why the threshold isn't the whole story", transition=cross-dissolve)
+
+::: write
+A committee looking at a drug weighs more than one ratio:
+- **Budget impact** — can the system actually afford the rollout?
+- **Severity** — is the disease fatal, disabling, or mild?
+- **Innovation** — first-in-class or me-too?
+- **Equity** — who gets helped, who gets left out?
+- **Public outrage** — will patients march in the streets?
+- **Political feasibility** — will the minister survive the headline?
+
+::: new_page(title="Budget Impact Analysis", transition=wipe-right)
+
+::: write_speak
+A cheap drug per patient can still be an expensive drug in total. Budget Impact Analysis does the multiplication.
+
+::: math
+\text{Total cost} = \text{price per patient} \times \text{eligible patients}
+
+::: table
+| Quantity | Value |
+| --- | --- |
+| Sovaldi ICER (per patient) | ~€12,000 / QALY |
+| Sovaldi list price (12-week course) | €60,000 |
+| Eligible Hep C patients (illustrative) | 200,000 |
+| **Total rollout cost** | **€12 billion** |
+| Typical national drug budget | ~€25 billion |
+
+::: write
+Sovaldi's per-patient ICER passes every CEA threshold in Europe. Its total rollout price tag eats roughly half a national drug budget in one year.
+
+::: message(level=warn)
+CEA and BIA can disagree. Sovaldi passes CEA easily but blows up every BIA. Real decisions are made at the intersection of the two axes, not from one alone.
+
+::: new_page(title="When CEA runs out of room", transition=iris)
+
+::: write_speak
+Multi-criteria decision analysis lets committees weight severity, innovation, and equity alongside cost per QALY. It's a way to put ethics into the arithmetic rather than next to it.
+
+::: new_page(title="The decision flow", transition=slide-up)
+
+::: mermaid
+flowchart TD
+    A[New drug arrives] --> B{ICER below threshold?}
+    B -- No --> R[Reject or negotiate price]
+    B -- Yes --> C{Budget impact feasible?}
+    C -- No --> N[Negotiate, phase rollout, or restrict]
+    C -- Yes --> D{MCDA concerns: severity, equity, innovation?}
+    D -- Red flags --> N
+    D -- Clear --> Y[Covered]
+
+::: new_page(title="Check your intuition", transition=fade)
+
+::: multiple_choice
+A drug with an ICER of €15,000 per QALY — well below the €30,000 threshold — can still be rejected because...
+* the total budget impact is too large to absorb
+- it is too cost-effective
+- CEA thresholds are illegal in the EU
+
+::: celebrate(kind=confetti, bursts=2)
+::: sound(name=success)
+
+::: write_speak
+Exactly. Passing CEA per patient is necessary but never sufficient.
+
+::: new_page(title="What you now know", transition=cross-dissolve)
+
+::: write
+- **NICE** uses an explicit £20-30k/QALY threshold; **IQWiG**, **HAS**, and **ICER** don't.
+- **Budget Impact Analysis** multiplies per-patient cost by eligible patients — and can veto a CEA-approved drug.
+- **MCDA** adds severity, equity, and innovation into the weighing.
+- Sovaldi is the textbook collision: great ICER, catastrophic BIA.
+
+::: write_speak
+Next lecture we put all nine tools on one case and watch three countries make three different calls on Sovaldi.
+
+::: xplainer_link(url="10_sovaldi_case.txt", text="Next: the Sovaldi decision")

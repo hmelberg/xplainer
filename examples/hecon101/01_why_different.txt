@@ -1,0 +1,91 @@
+::: defaults(skin=playful)
+
+::: intro(text="Why health economics is different", subtitle="hecon101 · Lecture 1 of 10", enter=blur-in, duration=3500, speak="Why health economics is different.")
+
+::: new_page(title="A cure with a price tag", transition=fade)
+
+::: write_speak
+In 2014, Gilead launched Sovaldi — an oral pill that cures hepatitis C in more than 95% of patients. The price per 12-week course: sixty thousand euros.
+
+::: message(level=info, icon=pill)
+**Sovaldi (sofosbuvir), 2014** — cure rate >95%, list price ≈ €60,000 per course. With 3-5 million Hep C patients in Europe, a full rollout would have eaten national drug budgets whole.
+
+::: write_speak
+Standard microeconomics has a tidy answer to high prices: substitute, postpone, or shop around. Watch all three answers fail.
+
+::: write(effect=fade, split=true, split_mode=sentence)
+**Substitute?** There is no cheaper cure. The old interferon regimen was toxic and often failed.
+**Postpone?** Hepatitis C quietly scars your liver while you wait. "Next year" is not neutral.
+**Shop around?** Only your hepatologist can prescribe it, and the price is set by one manufacturer.
+
+::: new_page(title="So what breaks?", transition=wipe-left)
+
+::: write_speak
+Four features of health care bend the standard supply-and-demand picture out of shape. Every lecture in this course is really about one of them.
+
+::: draw(size=460, animate=true)
+rect(30, 30, 200, 160), speak="Top left. Uncertainty."
+text(130, 80, "UNCERTAINTY")
+text(130, 120, "about needs")
+rect(230, 30, 200, 160), speak="Top right. Asymmetric information."
+text(330, 80, "ASYMMETRIC")
+text(330, 120, "INFORMATION")
+rect(30, 190, 200, 160), speak="Bottom left. Externalities."
+text(130, 240, "EXTERNALITIES")
+text(130, 280, "my care, your risk")
+rect(230, 190, 200, 160), speak="Bottom right. Equity."
+text(330, 240, "EQUITY")
+text(330, 280, "limits of willingness-to-pay")
+
+::: write
+**One-line examples — the four gaps:**
+- **Uncertainty:** You don't schedule your heart attack.
+- **Asymmetric info:** Your cardiologist knows if the stent is optional.
+- **Externalities:** Your flu shot protects me.
+- **Equity:** A society that tolerates "priced out of chemo" is not one we live in.
+
+::: new_page(title="Back to Sovaldi, briefly", transition=cross-dissolve)
+
+::: write_speak
+All four gaps show up in one drug. You can't predict who gets Hep C, the specialist knows more than the patient, untreated carriers infect others, and "only rich patients get cured" is politically radioactive.
+
+::: message(level=warn, icon=compass)
+If the first four lectures feel like a tour of market failures, that is the point. Health economics is the study of a market that admits, up front, that it is not a normal market.
+
+::: new_page(title="The road ahead", transition=slide-up)
+
+::: write
+**hecon101 — the 9 lectures that follow**
+- **L2** Health as investment — the Grossman model
+- **L3** Demand for health care — RAND HIE, elasticity ≈ -0.2
+- **L4** Insurance and moral hazard
+- **L5** Adverse selection — Akerlof's lemons
+- **L6** Supply side — physicians, hospitals, payment systems
+- **L7** Equity vs efficiency
+- **L8** Cost-effectiveness analysis and the QALY
+- **L9** Decision rules — NICE, IQWiG, HAS, ICER, budget impact
+- **L10** Finale: the Sovaldi decision revisited
+
+::: new_page(title="Quick check", transition=fade)
+
+::: multiple_choice
+Which of the following is NOT one of the four reasons standard microeconomics struggles with health care?
+- Uncertainty about when you'll need care
+- The doctor knows more than the patient
+- Your treatment can affect other people's risk
+- Society refuses to accept "priced out of chemo"
+* Prices vary across providers
+
+::: celebrate(kind=confetti, bursts=2)
+
+::: sound(name=success)
+
+::: write_speak
+Price variation exists in every market — it is not what makes health care special. The four features above are.
+
+::: new_page(title="Where we're going", transition=iris)
+
+::: write_speak
+For the next nine lectures, each of the four gaps gets its own set of tools, and Sovaldi will keep coming back as our stress test. By lecture ten, you will decide yourself whether €60,000 per cure was a bargain or a scandal.
+
+::: xplainer_link(url="02_grossman.txt", text="Next: Health as investment — the Grossman model")

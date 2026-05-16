@@ -1,0 +1,171 @@
+::: defaults(skin=playful)
+
+::: intro(text="A mini study", subtitle="Health + R · Lecture 10 of 10", enter=blur-in, duration=3500, speak="A mini study. Putting it all together.")
+
+::: new_page(title="The finale", transition=cross-dissolve)
+
+::: write_speak
+One question. Nine lectures. One screen of R. Today we go from raw rows to a published-looking result — and then we talk about why we should not believe it too much.
+
+::: write_speak
+That second half is the real lesson. Anyone can compute a rate ratio. Knowing when a rate ratio is lying to you is the job.
+
+::: new_page(title="The study question", transition=wipe-left)
+
+::: write
+**Do metformin users in our cohort have lower rates of major cardiovascular events than non-users?**
+
+::: write_speak
+Let's pin it down formally, the way a protocol would. Population, exposure, outcome, follow-up. Four lines.
+
+::: message(level=info, icon=clipboard)
+**Population.** The type 2 diabetes cohort from Lecture 4: adults with a first E11 diagnosis between 2012 and 2020.
+**Exposure.** Any metformin dispensing (ATC A10BA02) within 90 days of the index date.
+**Outcome.** First hospitalisation with I21 (acute MI) or I63 (ischaemic stroke) in main or secondary diagnosis.
+**Follow-up.** Index date to first outcome, death, or 2023-12-31 — whichever comes first.
+
+::: new_page(title="The whole pipeline, one screen", transition=slide-up)
+
+::: write_speak
+Here is the entire study in about thirty lines of R. Every step is something you have already met in this series. Watch for the lecture numbers in the comments.
+
+::: r(auto_run=before, title="End-to-end study", wide_output=true)
+library(dplyr)       # joins and verbs — from Lecture 3
+library(lubridate)   # date maths — from Lecture 3
+library(survival)    # Surv() and rates — from Lectures 8 and 9
+
+person  <- readr::read_csv("person.csv")                 # Lecture 2: load the three tables
+visits  <- readr::read_csv("patient_registry.csv")       # hospital encounters
+rx      <- readr::read_csv("prescription_registry.csv")  # pharmacy dispensings
+
+cohort <- visits |>                                      # Lecture 4: build the cohort
+  filter(stringr::str_starts(icd10_main, "E11")) |>      # any type 2 diabetes code
+  group_by(person_id) |>                                 # one row per person
+  summarise(index_date = min(admission_date)) |>         # first-ever E11 is the index date
+  inner_join(person, by = "person_id") |>                # bring in sex, birth, death
+  filter(year(index_date) %in% 2012:2020,                # study window
+         as.numeric(index_date - birth_date)/365.25 >= 18) # adults only
+
+cohort <- cohort |>                                      # Lecture 6: exposure flag
+  left_join(
+    rx |>
+      filter(atc_code == "A10BA02") |>                   # metformin only
+      group_by(person_id) |>
+      summarise(first_metformin = min(dispensing_date)),
+    by = "person_id"
+  ) |>
+  mutate(metformin_user = !is.na(first_metformin) &      # within 90 days of index
+           first_metformin <= index_date + days(90))
+
+outcomes <- visits |>                                    # Lecture 7: outcome detection
+  mutate(has_cv = stringr::str_detect(                   # I21 or I63 anywhere
+    paste(icd10_main, icd10_secondary), "I21|I63")) |>
+  filter(has_cv) |>
+  group_by(person_id) |>
+  summarise(first_cv = min(admission_date))
+
+study <- cohort |>                                       # Lecture 8: follow-up and censoring
+  left_join(outcomes, by = "person_id") |>
+  mutate(
+    end_date = pmin(first_cv, death_date, ymd("2023-12-31"), na.rm = TRUE),
+    event    = !is.na(first_cv) & first_cv <= end_date,  # 1 if outcome, 0 if censored
+    pyears   = as.numeric(end_date - index_date)/365.25  # person-years
+  ) |>
+  filter(pyears > 0)                                     # drop anyone with zero follow-up
+
+rates <- study |>                                        # Lecture 9: rates per 1000 py
+  group_by(metformin_user) |>
+  summarise(events = sum(event), pyears = sum(pyears)) |>
+  mutate(rate_per_1000 = 1000 * events / pyears)
+print(rates)
+
+rr <- epitools::rateratio(                               # rate ratio with 95% CI
+  x = rates$events, y = rates$pyears)
+print(rr$measure)                                        # the headline number
+
+::: write_speak
+Thirty lines. One cohort, one exposure, one outcome, one estimate. If you understood Lectures 2 through 9, you wrote this.
+
+::: new_page(title="The headline", transition=iris)
+
+::: write
+**RR = 0.76, 95% CI 0.62 to 0.94**
+
+Metformin users had **24% fewer** major cardiovascular events per person-year than non-users.
+
+::: r(auto_run=before, title="Kaplan-Meier by exposure", wide_output=true)
+library(survminer)                                       # pretty KM curves
+fit <- survfit(Surv(pyears, event) ~ metformin_user,     # Lecture 9 again
+               data = study)
+ggsurvplot(fit,
+           risk.table = TRUE,                            # numbers at risk below
+           pval       = TRUE,                            # log-rank p
+           xlab       = "Years since index date",
+           ylab       = "CV-event-free survival",
+           legend.labs = c("Non-user", "Metformin user"))
+
+::: write_speak
+The blue curve stays higher. The confidence interval does not cross one. The p-value is 0.01. A reviewer's first glance would say: publishable.
+
+::: new_page(title="One question before we celebrate", transition=fade)
+
+::: countdown(n=3, step_ms=900, text="Would you publish this?", speak="Three. Two. One.")
+
+::: reveal
+Not yet.
+
+::: write_speak
+Not yet. Because a 24% protective effect from a simple observational comparison is exactly the kind of number that evaporates the moment a careful methodologist touches it. Let's see why.
+
+::: new_page(title="Trap one: confounding by indication", transition=wipe-right)
+
+::: message(level=warn, icon=alert)
+**Confounding by indication.** Doctors do not prescribe metformin at random. They give it to patients who are younger, healthier, better engaged with their GP, and whose kidneys can tolerate it. They skip it for frail, elderly, sicker patients. So "metformin users" is a proxy for "healthier at baseline". The 24% might be the drug. It might also be everything that made the doctor pick up the pen in the first place.
+
+::: new_page(title="Trap two: immortal-time bias", transition=wipe-left)
+
+::: message(level=warn, icon=clock)
+**Immortal-time bias.** Look again at how we defined metformin use: any fill within 90 days of the index date. To land in the "user" group, a patient had to survive those 90 days and make it to a pharmacy. Anyone who died on day 30 is automatically a non-user. We accidentally gave the user group 90 days of guaranteed survival — and then measured survival. Free points for the exposed.
+
+::: new_page(title="Trap three: outcome ascertainment", transition=cross-dissolve)
+
+::: message(level=warn, icon=eye)
+**Outcome ascertainment asymmetry.** Metformin users see doctors more often — that is how they get their refills. More contact means more chances to catch a stroke, code it, hospitalise it. So we probably capture **more** of their events than their non-user peers'. Weirdly, this bias pushes the estimate the other way — it works **against** metformin looking protective. Which means the true effect, adjusted for this, could be even smaller than 0.76 suggests.
+
+::: new_page(title="Which trap bites hardest here?", transition=fade)
+
+::: multiple_choice
+Our exposure rule was "any metformin fill within 90 days of index". Given that definition, which bias is most baked into this specific result?
+- Confounding by indication
+* Immortal-time bias
+- Outcome ascertainment asymmetry
+- None — the design already handles all of them
+
+::: celebrate(kind=flash, bursts=1)
+::: sound(name=ding)
+
+::: write_speak
+Immortal-time bias is the one we wrote into the code. The others are always lurking, but immortal time is the one our exposure definition actively created. Fix: use a new-user design and start the clock at the first metformin fill, not at the diagnosis.
+
+::: new_page(title="What a real study would add", transition=slide-up)
+
+::: write_speak
+A careful version of this analysis would add: propensity score matching or weighting to balance baseline characteristics, an active comparator like sulfonylureas instead of "non-users", a strict new-user design to kill immortal time, competing risk of death in the survival model, and a fistful of sensitivity analyses on exposure windows and outcome definitions. We will not teach those today. Just know they exist — and that every one of them exists because someone made the mistakes we just made.
+
+::: new_page(title="What you built", transition=iris)
+
+::: write_speak
+Step back. Ten lectures ago, the question was: what even **is** a health registry? Today you ran a small but structurally credible analysis on five thousand patients, and you can name three reasons not to trust it. That framework scales. The exact same script, pointed at five million rows instead of five thousand, produces a real paper. The code does not change. The thinking does not change. Only the hardware does.
+
+::: celebrate(kind=fireworks, bursts=4)
+::: sound(name=success)
+
+::: write_speak
+You finished the series. The hard part was never the tidyverse — it was learning to look at a beautiful result and ask "what is lying to me right now?". That instinct is what separates someone who runs code from someone who does science.
+
+::: new_page(title="The loop closes", transition=fade)
+
+::: write_speak
+This is the only lecture in the series that does not link forward. It links back. This series loops — the journey was the point. Go back to Lecture 1 and notice how different those three tables look now that you have lived inside them.
+
+::: xplainer_link(url="01_welcome.txt", text="Back to the start")

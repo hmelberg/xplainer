@@ -1,0 +1,174 @@
+::: defaults(skin=playful)
+speech_lang="nb-NO"
+
+::: intro(text="Se på dataene først", subtitle="microdata101 · Leksjon 4 av 5", enter=blur-in, duration=3500, speak="Se på dataene før du modellerer dem.")
+
+::: new_page(title="Vent litt med regresjonen", transition=fade)
+
+::: write_speak
+Du har datasettet. Du har lyst til å kjøre regresjon. Vent — se på dataene først, ellers finner du ting som ikke er der.
+
+::: write_speak
+I leksjon 3 bygde vi analyse-datasettet: alder, utdanning, lønn, og foreldrenes inntekt. Nå skal vi se på fordelingene før vi modellerer.
+
+::: message(level=info, icon=lightbulb)
+Fire kommandoer dekker 90 prosent av deskriptivt arbeid på microdata.no: `tabulate`, `summarize`, `histogram` og `hexbin`. En femte, `sankey`, tar seg av flyt over tid.
+
+::: new_page(title="Krysstabeller", transition=fade)
+
+::: write_speak
+Begynn alltid med `tabulate`. Det er billigste måte å oppdage at en kategori mangler, at kodingen er feil, eller at en gruppe er mistenkelig stor.
+
+::: code
+use populasjon
+tabulate hoyutd
+tabulate hoyutd kjonn, rowpct
+
+::: write_speak
+Første linje viser hvor mange av 30-åringene som har høyere utdanning. Den andre krysser utdanning mot kjønn. `rowpct` gir radprosenter, slik at du leser "blant menn, hvor mange prosent har høyere utdanning" rett fra tabellen.
+
+::: new_page(title="Oppsummeringsstatistikk", transition=cross-dissolve)
+
+::: write_speak
+`summarize` gir deg gjennomsnitt, standardavvik, minimum og maksimum på ett ord. Legg til `detail` og du får også persentiler og skjevhet.
+
+::: code
+summarize lonn
+summarize lonn if hoyutd == 1
+summarize lonn, detail
+
+::: write_speak
+For norske 30-åringer ligger gjennomsnittslønna et sted rundt 450 tusen. Betinger du på høyere utdanning, klatrer gjennomsnittet noen titalls tusen. Median ligger lavere enn gjennomsnittet — et første hint om at fordelingen er skjev.
+
+::: new_page(title="Histogram", transition=wipe-left)
+
+::: write_speak
+Et tall er et tall. En fordeling er en form. Histogrammet viser deg formen.
+
+::: code
+histogram lonn, bin(30)
+
+::: draw(size=440, animate=true)
+line(50, 360, 420, 360), speak="Horisontal akse: lønn i tusen kroner, fra null til rundt halvannen million."
+line(50, 40, 50, 360), speak="Vertikal akse: antall personer i hver bin."
+text(230, 388, "lønn (tkr)")
+text(12, 200, "antall")
+rect(55, 330, 18, 30), speak="Under to hundre tusen er det få — studenter, deltidsarbeid, avbrutte karrierer."
+rect(73, 290, 18, 70)
+rect(91, 220, 18, 140)
+rect(109, 150, 18, 210)
+rect(127, 100, 18, 260), speak="Toppen ligger rundt fire hundre tusen — her er de fleste."
+rect(145, 110, 18, 250)
+rect(163, 150, 18, 210)
+rect(181, 200, 18, 160)
+rect(199, 240, 18, 120)
+rect(217, 275, 18, 85)
+rect(235, 300, 18, 60)
+rect(253, 318, 18, 42)
+rect(271, 330, 18, 30), speak="Halen strekker seg langt til høyre — en liten gruppe tjener veldig mye."
+rect(289, 338, 18, 22)
+rect(307, 344, 18, 16)
+rect(325, 349, 18, 11)
+rect(343, 353, 18, 7)
+rect(361, 356, 18, 4), speak="Dette er kjennetegnet på en lønnsfordeling: høyreskjev."
+
+::: write_speak
+Fordelingen er høyreskjev. Noen få som tjener to-tre millioner drar gjennomsnittet opp uten å flytte medianen. Det er derfor du nesten alltid vil oppgi begge deler når du rapporterer lønn.
+
+::: new_page(title="Privatlivs-fellen: scatter finnes ikke her", transition=iris)
+
+::: write_speak
+Du vil se sammenhengen mellom foreldrenes og barnas lønn. I SPSS hadde du laget en scatter. På microdata.no er det forbudt.
+
+::: write_speak
+Tenk deg hva en scatter gjør: én prikk per person. I et register med hele Norge ville én prikk bety én identifiserbar nordmann. Plattformen lar deg ikke lage den. Du må aggregere.
+
+::: code
+hexbin lonn inntekt_far
+
+::: write_speak
+`hexbin` tegner et sekskantrutenett over planet. Hver celle farges etter hvor mange personer som faller i det området. Du ser skyen — uten å se individene. Mørk midtklump, tynnere haler, akkurat som i en vanlig scatter — bare personvernvennlig.
+
+::: new_page(title="Sankey — flyt over tid", transition=slide-up)
+
+::: write_speak
+`sankey` er historiefortelleren i verktøyet. Den viser hvordan folk beveger seg fra én tilstand til en annen: fra sivilstand til sivilstand, fra bosted til bosted, fra jobb til jobb.
+
+::: code
+// Vi trenger bosted på to tidspunkter. Kohorten var 20 år i 2010 og 30 år i 2020.
+import db/BOSATT_KOMMUNE 2010-01-01 as kommune2010
+import db/BOSATT_KOMMUNE 2020-01-01 as kommune2020
+
+// De to første sifrene i kommunenummeret er fylket
+generate fylke10 = substr(kommune2010, 1, 2)
+generate fylke20 = substr(kommune2020, 1, 2)
+
+// Tegn flyten for dem som bodde i Oslo (fylke 03) i 2010
+sankey fylke10 fylke20 if fylke10 == '03'
+
+::: write_speak
+Filteret plukker dem som bodde i Oslo i 2010. Diagrammet tegner så strømmene ut: flesteparten ble værende, en bred stripe flyttet til Akershus, tynnere strimler til resten av landet. Et bilde som ville tatt tre setninger å beskrive med ord.
+
+::: new_page(title="Konfidensialitetsvernene", transition=fade)
+
+::: message(level=info, icon=shield)
+Fire vern er alltid på når du lager deskriptiv output:
+
+- **Vinsorisering**: ekstremverdier kappes til 1- og 99-persentilen før de tegnes.
+- **Celleundertrykking**: celler med færre enn 5 personer blir blokkert.
+- **Minstepopulasjon 1000**: du får ikke kjørt analyser på færre enn 1000 personer.
+- **Støy i celletall**: frekvenstabeller får lagt til et lite tilfeldig tall slik at eksakte tellinger ikke kan leses av.
+
+::: draw(size=440, animate=true)
+text(110, 25, "rått"), speak="Tenk deg det rå histogrammet — med de ekstreme halene intakt."
+line(40, 180, 220, 180)
+rect(45, 165, 10, 15)
+rect(55, 140, 10, 40)
+rect(65, 100, 10, 80)
+rect(75, 70, 10, 110), speak="Toppen er den samme."
+rect(85, 85, 10, 95)
+rect(95, 115, 10, 65)
+rect(105, 140, 10, 40)
+rect(115, 155, 10, 25)
+rect(125, 165, 10, 15)
+rect(135, 170, 10, 10)
+rect(145, 173, 10, 7)
+rect(155, 175, 10, 5)
+rect(165, 177, 10, 3), speak="Og halen strekker seg langt ut til høyre."
+rect(175, 178, 10, 2)
+rect(185, 179, 10, 1)
+text(310, 25, "vinsorisert"), speak="Nå det samme datasettet etter vinsorisering."
+line(240, 180, 420, 180)
+rect(245, 165, 10, 15)
+rect(255, 140, 10, 40)
+rect(265, 100, 10, 80)
+rect(275, 70, 10, 110), speak="Midten er uendret — det er der massen ligger."
+rect(285, 85, 10, 95)
+rect(295, 115, 10, 65)
+rect(305, 140, 10, 40)
+rect(315, 155, 10, 25)
+rect(325, 165, 10, 15)
+rect(335, 170, 10, 10), speak="Halen er kuttet. De som tjente ti millioner er nå kappet til ni-hundre-tusen."
+line(345, 172, 345, 180)
+
+::: write_speak
+Samme form, samme median, samme historie — bare uten at de 57 personene som tjente over ti millioner kan gjenkjennes. Du mister sjelden noe viktig, og du vinner at plattformen faktisk lar deg publisere figuren.
+
+::: new_page(title="Test deg selv", transition=fade)
+
+::: multiple_choice
+Hvilken visualisering ville du valgt for å vise sammenhengen mellom foreldrenes og barnas lønn på microdata.no?
+* Hexbin — det er den eneste som er tillatt for punktsky-lignende data.
+- Scatter plot — enkelt og rett frem.
+- Line plot — viser trenden over tid.
+- Pie chart — viser proporsjoner.
+
+::: celebrate(kind=confetti, bursts=2)
+::: sound(name=success)
+
+::: new_page(title="Nå er vi klare", transition=cross-dissolve)
+
+::: write_speak
+Nå vet vi hvordan dataene ser ut: lønnsfordelingen er skjev, utdanningsnivået varierer, og sammenhengen mellom foreldrenes og barnas lønn er synlig i hexbin. Nå er vi klare for den faktiske modelleringen.
+
+::: xplainer_link(url="05_regresjon.txt", text="Neste: Regresjon — svaret på det vi spurte om")

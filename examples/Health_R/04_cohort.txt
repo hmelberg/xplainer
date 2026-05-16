@@ -1,0 +1,126 @@
+::: defaults(skin=playful)
+
+::: intro(text="Building a cohort", subtitle="Health + R · Lecture 4 of 10", enter=blur-in, duration=3500, speak="Building a cohort. Lecture four.")
+
+::: write_speak
+A cohort is a decision. Before you write a single line of analysis code, you have already made ten decisions by defining who is in and who is out. Today we pin down the ones that matter.
+
+::: write_speak
+Now that we can link people across tables from Lecture 3, we can finally ask: which of those people are actually in our study?
+
+::: new_page(title="The running question", transition=wipe-left)
+
+::: write_speak
+Our clinical target is the same as always: adults newly diagnosed with type 2 diabetes. But "newly diagnosed" is doing a lot of heavy lifting in that sentence. Let us be ruthless about what we mean.
+
+::: accordion(title="Inclusion and exclusion criteria", open=true)
+- **Include**: at least one E11 diagnosis in `patient_registry`
+- **Include**: first-ever E11 record falls between 2012-01-01 and 2020-12-31
+- **Include**: age 18 or older on the date of that first E11
+- **Include**: alive on that date (death_date is NA or later)
+- **Exclude**: any prior E10 (type 1 diabetes) diagnosis — ever
+- **Exclude**: anyone whose first E11 is outside the 2012-2020 window
+
+::: message(level=info, icon=pin)
+The **index date** is the anchor point in time from which everything else is measured, for each person. For this cohort, it is the date of their first-ever E11 record. Every lecture from here on uses this concept — Table 1, exposure windows, follow-up, survival curves. All of it hangs on the index date.
+
+::: new_page(title="Finding the index date", transition=cross-dissolve)
+
+::: write_speak
+Here is the move. Filter the patient registry to E11 rows, group by person, take the minimum admission date. That minimum is the index date. One row per person, guaranteed.
+
+::: r(auto_run=before, title="Finding the index date")
+library(dplyr)  # our verbs for table surgery
+library(lubridate)  # for time arithmetic later
+
+# Start from the full patient registry from Lecture 3
+index_dates <- patient_registry |>
+  filter(str_detect(icd10_main, "^E11")) |>   # keep only type 2 diabetes rows
+  group_by(person_id) |>                       # one bucket per person
+  slice_min(admission_date, n = 1, with_ties = FALSE) |>  # earliest row wins
+  ungroup() |>
+  select(person_id, index_date = admission_date)  # rename for clarity
+
+nrow(index_dates)  # how many people have any E11 ever
+
+::: write_speak
+`slice_min` is the tidy way to say "take the smallest, break ties cleanly, give me back one row per group". You could also write it as `filter(admission_date == min(admission_date))`, but slice_min tells the reader your intent.
+
+::: new_page(title="Applying exclusions", transition=fade)
+
+::: write_speak
+Now we whittle. We want adults with their first E11 inside the 2012 to 2020 window, alive at that moment, and no earlier E10 record on file.
+
+::: r(auto_run=before, title="Applying exclusions")
+# Pull in birth_date and death_date from the person table
+cohort <- index_dates |>
+  left_join(person, by = "person_id") |>  # bring demographics alongside
+  filter(index_date >= ymd("2012-01-01"),  # first E11 on or after 2012
+         index_date <= ymd("2020-12-31")) |>  # and on or before 2020
+  mutate(age_at_index = time_length(index_date - birth_date, "years")) |>  # age in fractional years
+  filter(age_at_index >= 18) |>  # adults only
+  filter(is.na(death_date) | death_date >= index_date)  # alive at index — defensive check
+
+# People with any prior E10 — we want to drop them
+prior_e10 <- patient_registry |>
+  filter(str_detect(icd10_main, "^E10")) |>  # type 1 diabetes rows
+  distinct(person_id)  # one row per person is enough
+
+cohort <- cohort |>
+  anti_join(prior_e10, by = "person_id")  # remove anyone with any E10 ever
+
+nrow(cohort)  # the size of our final cohort
+
+::: message(level=warn, icon=shield)
+The "alive at index" filter should remove zero people — you cannot be diagnosed after you die. Code it anyway. Defensive filters catch upstream data errors that would otherwise silently poison your results.
+
+::: new_page(title="The funnel", transition=wipe-right)
+
+::: write_speak
+Every cohort paper has one of these. A funnel showing how many people you started with, and how many fell out at each step. Reviewers love it. Future you will love it more.
+
+::: draw(size=460, animate=true)
+rect(80, 20, 300, 40), speak="We start with five thousand people in the full registry."
+text(230, 45, "5,000 people in registry")
+rect(100, 80, 260, 40), speak="Twelve hundred of them have an E11 diagnosis at some point."
+text(230, 105, "1,200 with any E11")
+rect(115, 140, 230, 40), speak="Eleven hundred have their first E11 inside the 2012 to 2020 window."
+text(230, 165, "1,100 first E11 in 2012-2020")
+rect(130, 200, 200, 40), speak="Of those, one thousand and eighty are adults at index date."
+text(230, 225, "1,080 adults at index")
+rect(145, 260, 170, 40), speak="One thousand and fifty are alive at their index date — the remaining thirty were a data glitch."
+text(230, 285, "1,050 alive at index")
+rect(160, 320, 140, 40), speak="And nine hundred and eighty have no prior type 1 diabetes. That is our cohort."
+text(230, 345, "980 in cohort")
+
+::: write_speak
+Nine hundred eighty people. That is the study. Every number you publish from now on — every rate, every hazard ratio, every p-value — is a statement about these 980 humans and nobody else.
+
+::: new_page(title="Check your intuition", transition=slide-up)
+
+::: multiple_choice
+Person A was first diagnosed with E11 in 2014 at age 42, with no other diagnoses. Person B was first diagnosed with E10 in 2010 at age 30, then first diagnosed with E11 in 2015 at age 35. Which of them belongs in our cohort?
+* Person A only
+- Person B only
+- Both
+- Neither
+
+::: celebrate(kind=confetti, bursts=2)
+
+::: sound(name=success)
+
+::: write_speak
+Person A sails through every criterion. Person B is knocked out by the prior E10 record from 2010 — the E11 in 2015 does not rescue them. Once a type 1 diagnosis is on the chart, they are not in a type 2 incidence cohort.
+
+::: new_page(title="What you just built", transition=fade)
+
+::: write_speak
+You now have a table called `cohort` with one row per person, each with an `index_date` and `age_at_index`. That is the spine of every subsequent lecture. Lose this table and the rest of the series collapses.
+
+::: message(level=info, icon=sparkles)
+Save `cohort` to disk. Seriously. `write_parquet(cohort, "cohort.parquet")`. You will reload it in Lectures 5 through 10.
+
+::: write_speak
+Next up: we describe who these 980 people actually are. Ages, sexes, regions, comorbidities — the Table 1 that opens every observational paper. It is less glamorous than survival analysis, but reviewers read it first.
+
+::: xplainer_link(url="05_table1.txt", text="Next: Table 1, describing who you just included")

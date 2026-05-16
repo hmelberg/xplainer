@@ -1,0 +1,87 @@
+::: defaults(skin=playful)
+
+::: intro(text="Health as investment", subtitle="hecon101 · Lecture 2 of 10", enter=blur-in, duration=3500, speak="Health as investment. The Grossman model.")
+
+::: new_page(title="A strange question", transition=fade)
+
+::: write_speak
+In 1972 an economist named Michael Grossman asked a strange question: what if health is a *capital good*, like a car or a house? The answer turns out to shape almost every modern health policy debate.
+
+::: new_page(title="Recap from Lecture 1", transition=cross-dissolve)
+
+::: message(level=info, icon=link)
+Last lecture we saw four reasons health markets misbehave: uncertainty, asymmetric information, externalities, and equity. Grossman gives us the first coherent theory that takes at least two of them seriously.
+
+::: new_page(title="The four claims", transition=wipe-left)
+
+::: write
+**Grossman's model in four claims**
+
+1. You inherit a stock of health at birth.
+2. The stock depreciates — faster as you age.
+3. You invest in it with time and medical care.
+4. There is an optimal path over the lifecycle.
+
+::: new_page(title="Picture the stock", transition=fade)
+
+::: draw(size=420, animate=true)
+line(40, 360, 400, 360), speak="Horizontal axis: age, from zero on the left to roughly eighty on the right."
+line(40, 40, 40, 360), speak="Vertical axis: your stock of health."
+text(220, 385, "age →")
+text(15, 200, "H")
+line(40, 80, 120, 110), speak="You start life with a big inherited health stock."
+line(120, 110, 200, 160), speak="It drifts downward as cells age and wear accumulates."
+line(200, 160, 260, 220), speak="Depreciation speeds up in middle age."
+line(260, 220, 320, 290), speak="And faster still as you get older."
+line(320, 290, 390, 340), speak="Until the stock approaches a critical floor."
+circle(175, 150, 6), speak="Here, a medical investment — a vaccine, a statin — nudges the stock back up."
+circle(255, 205, 6), speak="Another investment later in life."
+circle(315, 275, 6), speak="And another. Each one buys you time above the floor."
+line(40, 345, 400, 345), speak="This dashed line is the death threshold. Cross it, and the model ends."
+
+::: new_page(title="The one-line law of motion", transition=wipe-right)
+
+::: math
+H_t = (1 - \delta)\, H_{t-1} + I_t
+
+::: write
+Health tomorrow = health today, minus what depreciates, plus what you invest. One line. That is the whole engine.
+
+::: new_page(title="The derived-demand twist", transition=iris)
+
+::: message(level=info, icon=lightbulb)
+You do not want an MRI. You do not want a pill. You want the *health* those things produce. Demand for health CARE is **derived** from demand for health itself.
+
+::: new_page(title="Two 40-year-olds", transition=cross-dissolve)
+
+::: table
+| Person              | Age | δ (yearly decay) | Lifestyle investment |
+| ------------------- | --- | ---------------- | -------------------- |
+| Runner, non-smoker  | 40  | ~1.5%            | High (time + diet)   |
+| Heavy smoker        | 40  | ~4.0%            | Low                  |
+
+::: write
+Same calendar age. Very different biological trajectories. In Grossman's language: the smoker's δ is bigger, so the same investment buys less health.
+
+::: new_page(title="Sovaldi, rethought", transition=fade)
+
+::: write_speak
+For a Hep C patient, Sovaldi isn't consumption. It's capital investment — restoring a health stock that was quietly depreciating for years.
+
+::: new_page(title="Check your intuition", transition=slide-up)
+
+::: multiple_choice
+Why does Grossman's model predict older people consume MORE health care than younger people, even though they have less life ahead?
+* Because depreciation δ is higher in old age, so more investment is needed to keep the stock above the floor.
+- Because insurance premiums are cheaper for older people, so care is a better deal.
+- Because older people have more free time and spend it at the doctor.
+
+::: celebrate(kind=confetti, bursts=2)
+::: sound(name=success)
+
+::: new_page(title="Why this rewires everything", transition=cross-dissolve)
+
+::: write_speak
+Once health is capital, every policy question becomes an investment question: what is the return, what is the depreciation, who pays the premium? Grossman gave us the grammar the rest of this course speaks.
+
+::: xplainer_link(url="03_demand.txt", text="Next: Demand for health care — RAND, Oregon, and the -0.2 elasticity")

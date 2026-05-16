@@ -1,0 +1,57 @@
+new_page(title="Do only a few patients make up most of the hospital admissions?")
+::: 
+### Who Uses the Hospital Most? A Simple Concentration Curve
+An interesting question is the following: **What percentage of patients account for what percentage of admissions?** 
+
+::: write
+This is a simple "concentration curve" that shows how uneven hospital use can be.
+
+If most admissions are made up of a few pateints, then policy changes that improve their situation would be very beneficial.
+:::
+
+::: webr
+library(dplyr)
+
+# Step 1: Count admissions per patient
+admissions_per_patient <- hospital_data %>%
+  group_by(patient_id) %>%
+  summarise(n_admissions = n(), .groups = "drop")
+
+admissions_per_patient   # One row per patient with their number of admissions
+
+# Step 2: Sort patients from fewest to most admissions
+admissions_sorted <- admissions_per_patient %>%
+  arrange(n_admissions)
+
+admissions_sorted
+
+# Step 3: Compute cumulative shares of patients and admissions
+total_patients   <- nrow(admissions_sorted)
+total_admissions <- sum(admissions_sorted$n_admissions)
+
+concentration_tbl <- admissions_sorted %>%
+  mutate(
+    cum_patients   = cumsum(rep(1, n())) / total_patients,          # Cumulative share of patients
+    cum_admissions = cumsum(n_admissions) / total_admissions        # Cumulative share of admissions
+  )
+
+concentration_tbl                           # Table for the concentration curve
+:::
+
+::: webr
+library(ggplot2)
+
+# Step 4: Plot the concentration curve
+ggplot(concentration_tbl,
+       aes(x = cum_patients, y = cum_admissions)) +
+  geom_line(color = "steelblue", size = 1.1) +                         # The concentration curve
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +         # Line of equality (everyone uses equally)
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1)) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(
+    title = "Concentration of Hospital Admissions",
+    x = "Cumulative share of patients",
+    y = "Cumulative share of admissions"
+  ) +
+  theme_minimal()
+:::

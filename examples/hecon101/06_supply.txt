@@ -1,0 +1,100 @@
+::: defaults(skin=playful)
+
+::: intro(text="Who's in the Room with the Patient?", subtitle="hecon101 · Lecture 6 of 10", enter=blur-in, duration=3500, speak="Supply side. Physician and hospital incentives.")
+
+::: new_page(title="Flip the mirror", transition=wipe-left)
+
+::: write_speak
+Lectures 3 to 5 were about the demand side — patients and insurers. Now flip the mirror: the person who writes the prescription has their own incentives too.
+
+::: new_page(title="Two principals, one agent", transition=fade)
+
+::: message(level=info, icon=stethoscope)
+The physician is supposed to act in the patient's interest. But she also has an income, a schedule, a mortgage, and a malpractice lawyer. **Two principals (patient + payer), one agent (doctor).** That gap is the whole supply-side story.
+
+::: new_page(title="Fuchs 1978: the tonsil puzzle", transition=cross-dissolve)
+
+::: write
+**Victor Fuchs (1978):** across US regions, per-capita tonsillectomy rates tracked the number of surgeons per capita — not the number of bad tonsils. More surgeons, more surgeries.
+
+::: table
+| Region | Surgeons per 100k | Tonsillectomies per 1,000 kids |
+| --- | --- | --- |
+| A | 4.1 | 2.1 |
+| B | 5.2 | 2.6 |
+| C | 5.8 | 2.9 |
+| D | 6.7 | 3.4 |
+| E | 7.5 | 3.9 |
+| F | 8.3 | 4.5 |
+| G | 9.1 | 4.8 |
+| H | 10.0 | 5.3 |
+| I | 11.2 | 6.0 |
+| J | 12.4 | 6.7 |
+
+::: write_speak
+Double the surgeons, roughly double the tonsils coming out. Supply seems to create its own demand — economists call this **supplier-induced demand**.
+
+::: new_page(title="The picture", transition=iris)
+
+::: svg(animate=true, wait_until_drawn=true)
+<svg viewBox="0 0 420 280" xmlns="http://www.w3.org/2000/svg">
+  <line x1="60" y1="240" x2="400" y2="240" stroke="#333" stroke-width="2" data-step="1"/>
+  <line x1="60" y1="240" x2="60" y2="30" stroke="#333" stroke-width="2" data-step="1"/>
+  <text x="210" y="270" font-size="12" text-anchor="middle" data-step="1">Surgeons per 100k</text>
+  <text x="20" y="135" font-size="12" text-anchor="middle" transform="rotate(-90 20 135)">Tonsillectomies</text>
+  <circle cx="85"  cy="215" r="5" fill="#e55" data-step="2"/>
+  <circle cx="115" cy="200" r="5" fill="#e55" data-step="2"/>
+  <circle cx="135" cy="188" r="5" fill="#e55" data-step="2"/>
+  <circle cx="165" cy="170" r="5" fill="#e55" data-step="2"/>
+  <circle cx="195" cy="152" r="5" fill="#e55" data-step="2"/>
+  <circle cx="225" cy="130" r="5" fill="#e55" data-step="2"/>
+  <circle cx="255" cy="115" r="5" fill="#e55" data-step="2"/>
+  <circle cx="285" cy="95"  r="5" fill="#e55" data-step="2"/>
+  <circle cx="325" cy="75"  r="5" fill="#e55" data-step="2"/>
+  <circle cx="365" cy="55"  r="5" fill="#e55" data-step="2"/>
+  <line x1="75" y1="222" x2="380" y2="50" stroke="#38a" stroke-width="2" stroke-dasharray="4,4" data-step="3"/>
+  <text x="260" y="45" font-size="11" fill="#38a" data-step="3">fit line</text>
+</svg>
+
+::: new_page(title="Three ways to pay a doctor", transition=slide-up)
+
+::: table
+| Unit of payment | What it rewards | Classic risk |
+| --- | --- | --- |
+| **Fee-for-service** — per procedure | Volume: more visits, more scans, more surgeries | Over-provision, supplier-induced demand |
+| **Capitation** — per enrolled patient per month | Keeping the patient healthy and out of the clinic | Under-provision, cherry-picking healthy enrollees |
+| **DRG / case-mix** — per discharge by diagnosis | Short inpatient stays, efficient throughput | "Quicker and sicker" discharges |
+
+::: write_speak
+Each payment unit is a different steering wheel — none of them is neutral. You pick your incentive, you pick your distortion.
+
+::: new_page(title="Kaiser vs Medicare", transition=fade)
+
+::: message(level=info, icon=building-hospital)
+**Kaiser Permanente** uses salaried physicians plus capitation inside an integrated delivery system. For comparable populations, it runs **roughly 20–30% lower procedure rates than fee-for-service Medicare** — same medicine, different steering wheel.
+
+::: new_page(title="Where does Sovaldi fit?", transition=cross-dissolve)
+
+::: message(level=warn, icon=pill)
+Specialists can't really induce demand for **Sovaldi** — a Hep C diagnosis is objective, and you either have the virus or you don't. But hospitals CAN negotiate rebates, and pharmacists CAN steer patients to preferred brands. **Incentive design matters at every link in the chain.**
+
+::: new_page(title="Check yourself", transition=wipe-right)
+
+::: multiple_choice
+A hospital paid by DRG (per discharge by diagnosis group) has a strong incentive to...
+* discharge patients quickly, sometimes before they are fully recovered
+- admit as many patients as possible regardless of diagnosis
+- prevent enrolled patients from getting sick in the first place
+
+::: celebrate(kind=confetti, bursts=2)
+::: sound(name=success)
+
+::: write_speak
+Right — DRGs pay a fixed lump per discharge, so every extra hospital day is pure cost. "Admit more" is the fee-for-service reflex; "prevent illness" is the capitation reflex.
+
+::: new_page(title="Zooming back out", transition=slide-up)
+
+::: write_speak
+Demand-side tools change what patients face; supply-side payment rules change what doctors face. A smart health system tunes both dials at once.
+
+::: xplainer_link(url="07_equity.txt", text="Next: Equity vs efficiency")

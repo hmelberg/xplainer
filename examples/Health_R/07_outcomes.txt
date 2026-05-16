@@ -1,0 +1,135 @@
+::: defaults(skin=playful)
+
+::: intro(text="Outcomes in patient registries", subtitle="Health + R · Lecture 7 of 10", enter=blur-in, duration=3500, speak="Outcomes in patient registries.")
+
+::: new_page(title="From exposure to outcome", transition=wipe-left)
+
+::: write_speak
+In Lecture 6 you turned raw dispensings into metformin exposure — the "who is on the drug, and when" question. Now we need the other side of the equation: who had the bad thing happen, and when.
+
+::: write_speak
+An outcome is just another data question. But registry data makes it sneaky. The code you are looking for is sometimes the main diagnosis, sometimes a secondary, sometimes hidden in a semicolon-separated list. Miss one case and your rate ratio silently shifts.
+
+::: new_page(title="Our outcome: major CV events", transition=fade)
+
+::: write_speak
+For the diabetes cohort we care about major cardiovascular events. Concretely: ICD-10 **I21** — acute myocardial infarction, a heart attack — or **I63** — ischaemic stroke, the most common kind. Both are serious hospital events, and both have clean, consistent codes.
+
+::: message(level=info, icon=stethoscope)
+ICD-10 codes are hierarchical. "I21" is the three-character parent for acute MI; "I21.0", "I21.4", etc. are subtypes. So any code that *starts with* "I21" counts.
+
+::: new_page(title="Pattern 1 — main diagnosis", transition=cross-dissolve)
+
+::: write_speak
+The easy case first. If the heart attack was the reason for admission, it lands in `icd10_main`. We can use `str_detect` with a regex anchored at the start.
+
+::: r(auto_run=before, title="Main-diagnosis match")
+library(dplyr)      # for filter and friends
+library(stringr)    # for str_detect
+main_hits <- patient_registry |>
+  filter(str_detect(icd10_main, "^I21") |   # acute MI as main
+         str_detect(icd10_main, "^I63"))    # stroke as main
+main_hits |> select(person_id, admission_date, icd10_main) |> head()
+
+::: write_speak
+The caret `^` anchors the match at the beginning, so "I21" matches "I21.4" but not some hypothetical "XI21". Good. But this only finds events that were the *primary* reason for hospitalisation.
+
+::: new_page(title="Pattern 2 — secondary diagnoses", transition=wipe-right)
+
+::: write_speak
+Here is the trap. The `icd10_secondary` column is a single string with codes glued together by semicolons, like `"E11.9;I10;I21.0"`. You cannot just compare it to "I21" — you have to look *inside* it.
+
+::: table
+| person_id | icd10_main | icd10_secondary       |
+| --- | --- | --- |
+| 101 | E11.9 | I10;I21.0             |
+| 102 | I21.4 | E11.9                 |
+| 103 | J18.9 | E11.9;I63.9;I10       |
+| 104 | E11.9 | NA                    |
+
+::: write_speak
+Two clean ways to handle this. Option A: explode the string into one row per secondary code with `separate_longer_delim`, then filter normally. Option B: use `str_detect` directly on the glued string, with a careful regex.
+
+::: r(auto_run=before, title="Option A — explode then filter")
+library(tidyr)   # for separate_longer_delim
+secondary_hits <- patient_registry |>
+  filter(!is.na(icd10_secondary)) |>
+  separate_longer_delim(icd10_secondary, delim = ";") |>   # one row per code
+  filter(str_detect(icd10_secondary, "^I21") |
+         str_detect(icd10_secondary, "^I63"))
+secondary_hits |> select(person_id, admission_date, icd10_secondary) |> head()
+
+::: message(level=warn, icon=alert-triangle)
+Option B — `str_detect(icd10_secondary, "I21")` — is tempting but dangerous. It will match any substring. In ICD-10 it happens to be fine for "I21", but the habit is bad: a naive search for "I10" would also match "I100", "I101", and so on. Always anchor your codes, or explode first.
+
+::: new_page(title="Union: main OR secondary", transition=fade)
+
+::: write_speak
+A row is an outcome event if *either* the main *or* any secondary code matches. Let's build that flag in one pass, using the exploded approach and a grouped summary.
+
+::: r(auto_run=before, title="Flag every CV outcome row")
+cv_regex <- "^I21|^I63"   # acute MI or ischaemic stroke
+cv_events <- patient_registry |>
+  mutate(main_hit = str_detect(icd10_main, cv_regex)) |>
+  mutate(sec_list = strsplit(ifelse(is.na(icd10_secondary), "", icd10_secondary),
+                             ";")) |>
+  rowwise() |>
+  mutate(sec_hit = any(str_detect(sec_list, cv_regex))) |>
+  ungroup() |>
+  filter(main_hit | sec_hit) |>
+  select(person_id, admission_date, icd10_main, icd10_secondary)
+cv_events |> head()
+
+::: message(level=warn, icon=alert-circle)
+The most common beginner mistake is checking only the main diagnosis. For cardiovascular events, roughly 30 to 40 percent of real-world registry matches come from the secondary diagnoses. If you only check main, you undercount — and a silently undercounted outcome makes every rate ratio look wrong in the same direction.
+
+::: new_page(title="First event per person", transition=iris)
+
+::: write_speak
+Most analyses want the *first-ever* event per person, not every hospital admission they ever had. Group by `person_id`, take the earliest `admission_date`, and you get one row per person — the index date for the outcome.
+
+::: r(auto_run=before, title="Earliest CV event per person")
+first_cv <- cv_events |>
+  group_by(person_id) |>
+  summarise(first_cv_date = min(admission_date), .groups = "drop")
+first_cv |> head()
+
+::: new_page(title="First vs recurrent", transition=slide-up)
+
+::: write_speak
+Some studies do the opposite: they count *every* event, not just the first. A person who has two heart attacks contributes two outcomes to the numerator. That is a recurrent-event analysis, and it needs different models — things like Andersen-Gill or frailty survival. For now, we stick with first-ever events. It is the default for a reason: simpler, and what almost every incidence-rate paper reports.
+
+::: new_page(title="The logic, in one picture", transition=cut)
+
+::: mermaid
+flowchart LR
+  A[patient_registry rows] --> B{icd10_main<br/>matches ^I21 or ^I63?}
+  A --> C[split icd10_secondary<br/>on ';']
+  C --> D{any secondary<br/>matches ^I21 or ^I63?}
+  B -- yes --> E[outcome row]
+  D -- yes --> E
+  E --> F[group by person_id]
+  F --> G[min admission_date<br/>= first CV event]
+
+::: new_page(title="Check your intuition", transition=fade)
+
+::: multiple_choice
+You are looking for acute MI (I21) in the registry. Patient A has `icd10_main = "I10"` (hypertension) and `icd10_secondary = "I21.4;E11.9"`. Should they count as an outcome event?
+* Yes — the MI code is in the secondary list, and secondary codes count
+- No — only the main diagnosis matters
+- Only if the main diagnosis is also cardiovascular
+- Only if there is no hypertension code present
+
+::: celebrate(kind=confetti, bursts=2)
+
+::: sound(name=success)
+
+::: write_speak
+Yes. Secondary codes absolutely count — skipping them is exactly the 30-to-40-percent undercount we warned about. Patient A had an MI; the hospital just billed the admission under hypertension.
+
+::: new_page(title="What's next", transition=slide-up)
+
+::: write_speak
+We now have two dates per person: the index date from Lecture 4, and the first CV event date from today. The gap between them is follow-up time — but only if we handle death, emigration, and end-of-study correctly. That is censoring, the subtle backbone of every rate analysis, and it is all of Lecture 8.
+
+::: xplainer_link(url="08_followup.txt", text="Next: Follow-up time and censoring")

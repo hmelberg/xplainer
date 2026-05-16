@@ -1,0 +1,135 @@
+::: defaults(skin=playful)
+
+::: intro(text="Welcome to health registries", subtitle="Health + R · Lecture 1 of 10", enter=blur-in, duration=3500, speak="Welcome to health registries. Why R?")
+
+::: new_page(title="A question no trial can answer", transition=fade)
+
+::: write_speak
+Here is a question. Out of five million people, followed for ten years: how often do those who start metformin end up hospitalised with a heart attack, compared to those who don't? No one consented. No one dropped out. Nobody was randomised. Yet the answer is sitting on a hard drive somewhere, waiting.
+
+::: message(level=info, icon=lightbulb)
+A randomised trial of metformin with ten-year cardiovascular follow-up on five million people would cost billions and take a decade. A registry study can start tomorrow afternoon.
+
+::: new_page(title="What is a health registry?", transition=wipe-left)
+
+::: write_speak
+In Nordic-style healthcare systems, every contact leaves a trace. Every admission, every outpatient visit, every pharmacy pickup is recorded against a unique personal identifier. Researchers with ethics approval can link those traces into one long story per person.
+
+::: write_speak
+Three tables do most of the work in this series. One row per person. One row per hospital encounter. One row per prescription pickup. That is the whole universe.
+
+::: new_page(title="The three tables", transition=cross-dissolve)
+
+::: mermaid
+erDiagram
+    PERSON ||--o{ PATIENT_REGISTRY : "has visits"
+    PERSON ||--o{ PRESCRIPTION_REGISTRY : "picks up drugs"
+    PERSON {
+      int person_id PK
+      date birth_date
+      chr sex
+      chr region
+      date death_date
+    }
+    PATIENT_REGISTRY {
+      int person_id FK
+      date admission_date
+      date discharge_date
+      chr icd10_main
+      chr icd10_secondary
+      chr ward
+    }
+    PRESCRIPTION_REGISTRY {
+      int person_id FK
+      date dispensing_date
+      chr atc_code
+      chr product_name
+      num ddd_dispensed
+    }
+
+::: write_speak
+The magic is `person_id`. It is the same integer in all three tables. Join on it and a patient's timeline snaps into focus — birth, diagnoses, drug pickups, hospital stays, and eventually, sometimes, a death date.
+
+::: new_page(title="One row of each", transition=fade)
+
+::: write
+A peek at the raw data
+
+::: table
+| person_id | birth_date | sex | region | death_date |
+|-----------|------------|-----|--------|------------|
+| 1042      | 1956-03-14 | F   | north  | NA         |
+| 1043      | 1948-11-02 | M   | south  | 2021-06-30 |
+
+::: table
+| person_id | admission_date | icd10_main | ward     |
+|-----------|----------------|------------|----------|
+| 1042      | 2014-09-22     | E11.9      | medicine |
+| 1043      | 2020-01-11     | I21.0      | cardio   |
+
+::: table
+| person_id | dispensing_date | atc_code | product_name      | ddd_dispensed |
+|-----------|-----------------|----------|-------------------|---------------|
+| 1042      | 2014-10-05      | A10BA02  | Metformin 500mg   | 60            |
+| 1042      | 2014-12-02      | A10BA02  | Metformin 500mg   | 60            |
+
+::: write_speak
+Person 1042, a woman from the north, got diagnosed with type 2 diabetes — that is the E11.9 — in September 2014. Two weeks later she picked up her first metformin. She is still alive in our data. That is a whole clinical story, assembled from three flat files.
+
+::: new_page(title="Why R?", transition=wipe-right)
+
+::: write_speak
+Registry data is rectangular. Rectangular data is what the tidyverse was built for. Add the `survival` package, which is the gold standard for time-to-event analysis, and the whole toolchain is free, scriptable, and reproducible on any laptop.
+
+::: new_page(title="A first glimpse", transition=fade)
+
+::: r(auto_run=before, title="A first glimpse")
+library(tidyverse)  # dplyr, ggplot2, lubridate, and friends
+person <- read_csv("person.csv")  # five thousand rows, one per person
+glimpse(person)  # peek at columns, types, and the first few values
+
+::: write_speak
+Five lines. That is the entire on-ramp. Do not worry about running it yet — Lecture 2 teaches loading properly. This is a postcard from the future.
+
+::: new_page(title="The road ahead", transition=slide-up)
+
+::: write
+**The nine lectures that follow**
+
+1. **Loading and exploring** — `readr`, `glimpse`, and the shape of each table.
+2. **Linking patients** — joins across the three tables on `person_id`.
+3. **Building a cohort** — defining type 2 diabetes patients and the index date.
+4. **Describing your cohort** — a publication-ready Table 1.
+5. **Measuring drug exposure** — from raw pickups to metformin episodes.
+6. **Defining outcomes** — detecting cardiovascular events from ICD-10 codes.
+7. **Follow-up time and censoring** — the `Surv()` object, carefully.
+8. **Incidence rates and Kaplan-Meier** — putting numbers on risk.
+9. **A mini study** — the whole pipeline, end to end, with caveats.
+
+::: new_page(title="Check your intuition", transition=iris)
+
+::: write_speak
+Before you commit to the series, one quick gut check. Which of these questions fits a registry study best?
+
+::: multiple_choice
+Which question is best answered with a linked health registry?
+* Over 10 years of follow-up, are people who fill metformin less likely to be hospitalised for a heart attack than people who don't?
+- In a 12-week trial, does a new drug lower HbA1c more than placebo in 200 volunteers?
+- Does a single educational pamphlet improve diet recall the next morning?
+
+::: celebrate(kind=confetti, bursts=2)
+
+::: sound(name=success)
+
+::: write_speak
+Exactly. Long follow-up, population scale, no randomisation, real clinical endpoints. That is registry territory. The other two want a clean, short trial — a different tool for a different job.
+
+::: new_page(title="Where this leaves you", transition=cross-dissolve)
+
+::: write_speak
+By Lecture 10 you will be able to go from raw registry rows to a plausible answer to the metformin-and-heart-attack question we opened with. Not a perfect answer — we will spend real time on what a registry study cannot see. But a defensible one, written in R, that a colleague could rerun.
+
+::: write_speak
+Next up: actually loading the three tables, looking them in the eye, and cataloguing every missing value before it catches us out.
+
+::: xplainer_link(url="02_loading.txt", text="Next: Loading and exploring registry data")

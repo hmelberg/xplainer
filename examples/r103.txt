@@ -1,0 +1,126 @@
+::: defaults
+speech_lang="nb-NO"
+webr_result_location="left"
+speak_code_language="en-US"
+explain_code="all"
+
+::: names
+english: lang=en-US, voice=female
+
+r_requirements=readr, dplyr, ggplot2
+
+:::title
+ Analysere helsedata med R – filtrere, gruppere og oppsummere
+
+::: write_speak
+Her bygger vi videre på dplyr og ggplot2. Du lærer å filtrere rader, velge kolonner, gruppere og oppsummere – typiske steg når man analyserer helsedata.
+
+::: write
+## 1) Laste data og lage variabler
+
+Vi bruker samme NPR-data som tidligere og lager liggetid og alder som før.
+
+:::r
+library(dplyr)    ## Laster dplyr for databehandling
+library(ggplot2)  ## Laster ggplot2 for figurer
+npr <- read.csv("https://raw.githubusercontent.com/hmelberg/health_data/refs/heads/main/npr.csv")  ## Leser inn NPR-data
+npr <- npr %>%
+  mutate(
+    INNDATO = as.Date(INNDATO),     ## Konverterer innleggelsesdato til datoformat
+    UTDATO = as.Date(UTDATO),       ## Konverterer utskrivingsdato til datoformat
+    ALDER_BEREGNET = as.integer(format(INNDATO, "%Y")) - FODSELSAAR,  ## Alder ved innleggelse
+    LIGGETID = as.numeric(UTDATO - INNDATO)  ## Antall dager mellom inn og ut
+  )
+head(npr, 3)  ## Viser de 3 første radene
+:::
+
+
+## 2) Filtrere rader med filter()
+
+::: write
+Ofte vil du bare beholde noen rader: f.eks. pasienter med liggetid minst 0, eller innleggelser i et bestemt tidsrom.
+
+:::r
+npr_pos <- npr %>% filter(LIGGETID >= 0)  ## Beholder bare rader der liggetid er >= 0
+npr_pos %>% summarise(antall = n(), snitt_liggetid = mean(LIGGETID))  ## Teller rader og regner snitt liggetid
+:::
+
+::: write(effect="fade")
+filter(uttrykk) beholder bare rader der uttrykket er sant. Her: LIGGETID >= 0. Du kan legge til flere krav med komma (betyr «og»).
+
+:::r
+npr %>% filter(LIGGETID >= 0, ALDER_BEREGNET >= 18) %>% summarise(n = n())  ## Voksne (18+) med liggetid >= 0
+:::
+
+
+## 3) Velge kolonner med select()
+
+::: write
+select() velger hvilke kolonner du vil beholde. Nyttig for å lage et ryddig utkast eller når du sender data videre.
+
+:::r
+npr %>% select(INNDATO, UTDATO, LIGGETID, PROSEDYRE1) %>% head(4)  ## Velger fire kolonner, viser 4 rader
+:::
+
+::: write(effect="fade")
+Du kan også fjerne kolonner med select(-kolonnenavn), eller omdøpe med select(nytt_navn = gammelt_navn).
+
+
+## 4) Gruppere og oppsummere
+
+::: write
+group_by() + summarise() er svært brukt: først grupper du på en variabel (f.eks. kjønn eller prosedyre), deretter regner du ut tall per gruppe.
+
+:::r
+npr %>%
+  filter(LIGGETID >= 0) %>%  ## Bare rader med gyldig liggetid
+  group_by(KJONN) %>%       ## Grupperer på kjønn (1 og 2)
+  summarise(antall = n(), snitt_liggetid = round(mean(LIGGETID), 1))  ## Antall og snitt per gruppe
+:::
+
+::: write(effect="fade")
+group_by(KJONN) deler data i grupper (her: kode 1 og 2). summarise() lager én rad per gruppe med de oppsummeringene du ber om. n() gir antall rader i gruppen.
+
+:::r
+snitt_per_prosedyre <- npr %>%
+  filter(LIGGETID >= 0, PROSEDYRE1 != "") %>%  ## Gyldig liggetid og ikke-tom prosedyrekode
+  group_by(PROSEDYRE1) %>%                     ## Grupperer på prosedyrekode
+  summarise(n = n(), snitt_dager = round(mean(LIGGETID), 1)) %>%  ## Antall og snitt liggetid per prosedyre
+  arrange(desc(n)) %>%   ## Sorterer synkende på antall
+  slice_head(n = 5)      ## Tar de 5 vanligste prosedyrene
+snitt_per_prosedyre     ## Skriver ut tabellen
+:::
+
+
+## 5) Plot av gruppert data
+
+::: write
+Når du har oppsummert per gruppe, kan du pipe direkte inn i ggplot() og bruke geom_col() eller geom_point().
+
+:::r
+snitt_per_prosedyre %>%
+  ggplot(aes(x = n, y = reorder(PROSEDYRE1, n))) +  ## x = antall, y = prosedyre sortert på antall
+  geom_col(fill = "steelblue") +                    ## Søylediagram
+  labs(title = "Topp 5 prosedyrer (antall)", x = "Antall", y = "Prosedyrekode")
+:::
+
+:::r
+snitt_per_prosedyre %>%
+  ggplot(aes(x = snitt_dager, y = reorder(PROSEDYRE1, snitt_dager))) +  ## Snitt liggetid på x-aksen
+  geom_col(fill = "darkgreen", alpha = 0.8) +  ## Grønne søyler, litt gjennomsiktige
+  labs(title = "Gjennomsnittlig liggetid for topp 5 prosedyrer", x = "Dager", y = "Prosedyrekode")
+:::
+
+::: write(effect="fade")
+Samme tabell, to ulike plot: først antall innleggelser, deretter gjennomsnittlig liggetid. reorder() sorterer kategoriene langs y-aksen etter den variabelen du velger.
+
+
+::: write_speak
+## Oppsummering
+
+Du kan nå filtrere med filter(), velge kolonner med select(), gruppere med group_by() og oppsummere med summarise(). Kjeden filter → group_by → summarise → ggplot er svært vanlig i helsedataanalyse. Korte, tydelige steg gjør koden enkel å lese og endre.
+
+::: link
+xplainer.app#r104
+Neste leksjon: Hendelsesdata vs. personnivå (r104)
+:::

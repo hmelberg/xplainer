@@ -1,0 +1,42 @@
+::: new_page(title=Font sizing demo)
+::: defaults(font_size_px=20)
+
+::: write
+This paragraph uses the **global default** font size (20px here). It controls both this body text and any markdown headings inside the block.
+:::
+
+::: write
+# This is a level-1 heading (#)
+
+It uses the same block font size, so the heading is larger than this paragraph but scales with the default.
+
+## This is level-2 (##)
+
+All of this is one write block, so one font size drives everything you see above.
+:::
+
+::: write(font_size_px=16)
+This block uses **font_size_px=16** (smaller). Good for side notes or captions.
+:::
+
+::: write(font_size_px=26)
+This block uses **font_size_px=26** (larger). Good for emphasis or accessibility.
+:::
+
+::: write_speak
+Below, a code block has a **title** (larger), **subtitle** (medium), and **footnote** (smaller). Those three sizes are fixed in the player (20 / 16 / 14 px) and are **not** derived from the global default.
+:::
+
+::: webr(title=Block title — 20px, subtitle=Block subtitle — 16px)
+# This code block has title and subtitle above
+x <- 1 + 1
+x
+:::
+
+::: write
+The **footnote** (caption below the code) is rendered at 14px. So you have: page title (top of screen), write default (this text), block title/subtitle/footnote (fixed 20/16/14), and optional overrides like write(font_size_px=18).
+:::
+
+::: question(font_size_px=18, question=What font size is this question text?)
+18
+:::

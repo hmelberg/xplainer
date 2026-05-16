@@ -1,0 +1,93 @@
+window.lectureText = `
+::: write_speak
+Ever wondered how to turn a dry technical document into an interactive, narrated journey? 
+
+::: write
+### The Explain Engine
+A tool for building **living** explanations.
+
+::: write_speak
+Today, I'll show you how the Explain app uses simple markdown blocks to combine text, code, and visuals into a seamless tutorial.
+
+::: wait(click=true)
+
+::: write_speak
+The most basic building block is `write_speak`. It puts text on the screen while narrating it to the user.
+
+::: write(title="The Code")
+
+
+::: write_speak
+Ever wondered how to turn a dry technical document into an interactive, narrated journey? 
+
+::: write
+### The Explain Engine
+A tool for building **living** explanations.
+
+::: write_speak
+Today, I'll show you how the Explain app uses simple markdown blocks to combine text, code, and visuals into a seamless tutorial.
+
+::: wait(click=true)
+
+::: write_speak
+The most basic building block is `write_speak`. It puts text on the screen while narrating it to the user.
+
+::: write(title="The Code")
+
+
+::: write_speak
+Hello! This is on screen and spoken.
+
+
+
+::: write_speak
+But we aren't limited to just text. We can execute real code right in the browser using Python or R.
+
+::: pyodide(title="Live Python", editable=true)
+def greet(name):
+    return f"Welcome to {name}!"
+
+print(greet("Explain"))
+
+::: write_speak
+Notice how the code block above is editable? Go ahead and change the name, then run it. This is the "Use it" part of our pedagogical philosophy.
+
+::: wait(click=true)
+
+::: write_speak
+We can also direct the user's attention using annotations. I'll highlight the function name in that code block.
+
+::: annotate(target="code", code_text="greet", effect="highlight", color="yellow", pulse=2)
+
+::: write_speak
+Visuals are just as easy. We use `draw` for static diagrams and `p5` for interactive simulations.
+
+::: draw(height=150)
+line(10,10,90,10) stroke="#888"
+circle(50,50,30) stroke="#3b82f6"
+text(40,90,"A Circle") fill="#3b82f6"
+
+::: write_speak
+Finally, we check understanding with interactive questions to ensure the concepts actually stick.
+
+::: question
+Which block allows you to write text AND narrate it simultaneously?
+- ::: write
+* ::: write_speak ✅
+- ::: speak
+
+::: wait(click=true)
+
+::: write_speak
+In summary: the Explain app lets you Say it, Show it, and let the user Use it.
+
+::: write
+### Recap
+* **Text:** `write_speak` for narration.
+* **Code:** `pyodide` or `webr` for logic.
+* **Visuals:** `draw` or `p5` for intuition.
+* **Interaction:** `question` and `wait`.
+
+::: write_speak
+Ready to build your first interactive lesson?
+`;

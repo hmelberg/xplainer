@@ -1,0 +1,60 @@
+::: pyodide(silent=true)
+import numpy as np
+import pandas as pd
+::: write_speak
+In econometrics, we often face the problem of **endogeneity**. This happens when an explanatory variable is correlated with the error term, making standard OLS estimates <UNDERLINE>biased</UNDERLINE> and unreliable.
+::: message(level="note")
+Endogeneity usually arises from omitted variable bias, measurement error, or simultaneity.
+::: wait(click=true)
+::: write_speak
+The **Method of Instrumental Variables (IV)** solves this by using a third variable, , called an **Instrument**. For  to be valid, it must satisfy two strict conditions:
+
+1. **Relevance**:  must be correlated with the endogenous regressor .
+2. **Exogeneity**:  must NOT be correlated with the error term .
+::: wait(click=true)
+::: write_speak
+
+Think of the instrument as a <CIRCLE>filter</CIRCLE>. It captures the variation in  that is "clean" (unrelated to the error) and uses only 그 variation to estimate the effect on .
+::: wait(click=true)
+::: write_speak
+The most common way to implement this is **Two-Stage Least Squares (2SLS)**.
+In **Stage 1**, we regress  on our instrument  to get predicted values :
+
+
+
+::: wait(click=true)
+::: write_speak
+In **Stage 2**, we regress  on the <BOX>predicted values</BOX>  from the first stage:
+
+
+
+Because  is generated only by , it is uncorrelated with , giving us a consistent estimate of .
+::: wait(click=true)
+::: python(editable=true, title="2SLS Simulation")
+import statsmodels.api as sm
+from linearmodels.iv import IV2SLS
+
+# Simulate data
+
+n = 1000
+z = np.random.normal(size=n) # Instrument
+e = np.random.normal(size=n) # Error
+x = 0.5 * z + e + np.random.normal(size=n) # X is endogenous (related to e)
+y = 2 * x + 3 * e + np.random.normal(size=n) # True beta is 2
+
+# IV Regression
+
+data = pd.DataFrame({'y': y, 'x': x, 'z': z})
+data['const'] = 1
+result = IV2SLS(data.y, data[['const', 'x']], data.z).fit()
+print(result.summary)
+::: wait(click=true)
+::: question
+If an instrument  is directly correlated with the error term , which condition is violated?
+
+* Relevance
+* ✅ Exogeneity (or Exclusion Restriction)
+* Linearity
+* Homoskedasticity
+::: write_speak
+Would you like me to generate a specific case study, such as using **geographic distance** or **birth month** as an instrument?

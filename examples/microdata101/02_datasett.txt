@@ -1,0 +1,137 @@
+::: defaults(skin=playful)
+speech_lang="nb-NO"
+
+::: intro(text="Tre slags data", subtitle="microdata101 · Leksjon 2 av 5", enter=blur-in, duration=3500, speak="Tre slags data: tverrsnitt, hendelse og panel.")
+
+::: new_page(title="Samme person, tre svar", transition=fade)
+
+::: write_speak
+Samme person, samme spørsmål, tre forskjellige svar — alt avhenger av hvordan du ba om dataene.
+
+::: write_speak
+I leksjon 1 laget vi en tom `populasjon`. Før vi fyller den, må vi forstå at SSBs registerdata kommer i tre grunnleggende former.
+
+::: new_page(title="De tre formene", transition=wipe-left)
+
+::: write
+**Tre dataformer i microdata.no**
+
+1. **Tverrsnitt** — ett øyeblikksbilde, én rad per person.
+2. **Hendelse** — en tidslinje av hendelser, flere rader per person.
+3. **Panel** — gjentatte målinger, én rad per person × tidspunkt.
+
+::: new_page(title="Én person, tre representasjoner", transition=fade)
+
+::: draw(size=460, animate=true)
+line(40, 380, 430, 380), speak="Vannrett akse: tid, fra 2017 til venstre til 2020 til høyre."
+line(40, 40, 40, 380), speak="Loddrett akse: tre representasjoner av samme person."
+text(225, 405, "tid →")
+text(60, 80, "tverrsnitt")
+circle(380, 110, 9), speak="Tverrsnitt: én prikk på én dato. Dette er personen slik hun var 1. januar 2020."
+text(60, 200, "hendelse")
+circle(120, 220, 8), speak="Hendelse: en tidslinje. Hun var ugift fra 2017."
+line(120, 220, 240, 220)
+circle(240, 220, 8), speak="Så ble hun samboer i 2018."
+line(240, 220, 360, 220)
+circle(360, 220, 8), speak="Og gift i 2019. Tre rader, tre datoer."
+text(60, 320, "panel")
+circle(100, 330, 7), speak="Panel: fire prikker på faste år. Lønn 2017."
+circle(200, 330, 7), speak="Lønn 2018."
+circle(300, 330, 7), speak="Lønn 2019."
+circle(400, 330, 7), speak="Og lønn 2020. Én person blir til fire rader."
+
+::: new_page(title="Tverrsnitt: øyeblikksbildet", transition=cross-dissolve)
+
+::: write_speak
+Tverrsnittsdata er det enkleste: én rad per person, målt på en bestemt dato. `import` er kommandoen.
+
+::: write_speak
+Vi utvider `populasjon`-datasettet fra leksjon 1 med kjønn og kommune per 1. januar 2020, og låser oss til 1990-kohorten.
+
+::: code
+require no.ssb.fdb:12 as db
+use populasjon
+import db/BEFOLKNING_KJOENN 2020-01-01 as kjonn
+import db/BOSATT_KOMMUNE 2020-01-01 as kommune
+keep if faarmnd >= 199001 & faarmnd < 199101   // 1990-kohorten
+summarize alder                                 // alder ble derivert i leksjon 1
+
+::: write_speak
+Tre linjer import, én filterlinje. Nå har vi rundt seksti tusen 30-åringer, hver med kjønn og bostedskommune per nyttårsdag 2020.
+
+::: new_page(title="Når øyeblikket ikke er nok", transition=wipe-left)
+
+::: write_speak
+Tverrsnitt forteller deg hva som *er*. Det sier ingenting om hva som har *skjedd*.
+
+::: write_speak
+Spør du "har denne personen blitt skilt?", så trenger du en tidslinje — ikke et øyeblikksbilde. Det er det hendelsesdata er til for.
+
+::: code
+create-dataset sivstandsforlopet
+import-event db/SIVSTANDFDT_SIVSTAND 2010-01-01 to 2020-01-01 as sivstperiode
+collapse (count) sivstperiode, by(PERSONID_1)
+rename sivstperiode antall_sivstand
+
+::: write_speak
+`import-event` henter hver periode personen har vært i en sivilstand — ugift, gift, skilt, enke. `collapse (count)` teller radene per person, og vi står igjen med antall sivilstandsskifter.
+
+::: new_page(title="Hvilken form svarer på dette?", transition=fade)
+
+::: write_speak
+Tenk før du klikker: "Hvor mange ganger har denne personen skiftet sivilstand?"
+
+::: reveal
+Hendelse. Tverrsnitt kan bare vise dagens status — det vet ingenting om historie. Panel vet bare målinger på faste datoer, så overganger som skjer imellom, forsvinner.
+
+::: new_page(title="Paneldata — lønn år for år", transition=cross-dissolve)
+
+::: write_speak
+Panel er mellomtingen: faste tidspunkter, gjentatte målinger. Én rad per person *per* år. Perfekt når du vil følge lønn over tid.
+
+::: write_speak
+Paneldatasett arves fra et eksisterende datasetts enheter med `clone-units`. Så bytter du til det nye datasettet og henter variablene på hver dato.
+
+::: code
+clone-units populasjon lonnspanel
+use lonnspanel
+import-panel db/INNTEKT_WLONN 2017-01-01 2018-01-01 2019-01-01 2020-01-01 as lonn
+summarize-panel lonn
+
+::: write_speak
+Samme 30-åringer som før, men nå med fire rader hver. `summarize-panel` gir deg gjennomsnitt og spredning for hvert år separat.
+
+::: new_page(title="Tre datasett, én person-id", transition=wipe-right)
+
+::: write_speak
+Alle tre datasett er knyttet sammen via `PERSONID_1` — SSBs pseudonymiserte persontast. Du kan holde dem side om side og slå opp samme person på tvers.
+
+::: mermaid
+graph LR
+  P[PERSONID_1]
+  P --> A[populasjon<br/>tverrsnitt · 1 rad]
+  P --> B[sivstandsforlopet<br/>hendelse · N rader]
+  P --> C[lonnspanel<br/>panel · 4 rader]
+
+::: new_page(title="Test deg selv", transition=fade)
+
+::: multiple_choice
+Du vil svare på: "Hvilke yrker har personen hatt i løpet av tiåret?" Hvilken importkommando passer best?
+* `import-event` (fordi yrker over tid er en hendelsesserie)
+- `import` (bare dagens yrke)
+- `import-panel` (krever faste tidspunkter)
+- `collapse` (en aggregeringskommando, ikke import)
+
+::: celebrate(kind=confetti, bursts=2)
+
+::: sound(name=ping)
+
+::: write_speak
+Hendelse når du bryr deg om *når* ting skjedde. Panel når du vil ha målinger på faste datoer. Tverrsnitt når du bare trenger status akkurat nå.
+
+::: new_page(title="Tilbake til tråden", transition=slide-up)
+
+::: write_speak
+Nå har vi en tverrsnittspopulasjon av 30-åringer med kjønn og kommune. Før vi kan modellere lønn, må vi lage nye variabler — utlede alder, kode utdanning, og koble inn foreldrenes inntekt. Det gjør vi i neste leksjon.
+
+::: xplainer_link(url="03_variabler.txt", text="Neste: Derivere, omkode, koble")

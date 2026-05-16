@@ -1,0 +1,92 @@
+::: defaults(skin=playful)
+
+::: intro(text="Adverse Selection", subtitle="hecon101 · Lecture 5 of 10", enter=blur-in, duration=3500, speak="Adverse selection. How an insurance market can eat itself.")
+
+::: new_page(title="Worse than moral hazard", transition=fade)
+
+::: write_speak
+Lecture 4 showed insurance creates moral hazard. This lecture shows something worse — without a mandate, the insurance market can unravel entirely.
+
+::: new_page(title="A used-car dealer walks into a hospital", transition=wipe-left)
+
+::: message(level=info, icon=car)
+**George Akerlof, 1970.** In a used-car market where sellers know quality and buyers don't, good cars leave the market and only bad ones ("lemons") remain. Swap "used cars" for "health insurance customers" and you get adverse selection.
+
+::: write
+The insurer is now the buyer who cannot see quality. The customer is the seller who knows exactly how sick they are. Guess who ends up staying in the pool.
+
+::: new_page(title="The death spiral", transition=cross-dissolve)
+
+::: mermaid
+flowchart TD
+    A[Insurer sets premium at pool average] -->|too expensive for the healthy| B[Healthy people exit]
+    B -->|only sicker people remain| C[Average risk in pool rises]
+    C -->|costs up, break-even premium up| D[Insurer raises premium]
+    D -->|now even more people priced out| B
+    D -->|loop repeats| E[Market collapses]
+
+::: write
+Each arrow is a causal step, not a metaphor. The loop is self-reinforcing: every round of price hikes drives out the next-healthiest slice, which forces the next hike.
+
+::: new_page(title="Watch the numbers walk off a cliff", transition=wipe-right)
+
+::: table
+| Year | Pool average risk | Premium  |
+| ---- | ----------------- | -------- |
+| 1    | Mixed (healthy + sick) | €3,000  |
+| 2    | Healthiest third has left  | €4,500  |
+| 3    | Only the sickest remain    | €7,000  |
+
+::: write
+A fictional but plausible three-year spiral. Notice the premium more than doubles even though nobody got any sicker — the *composition* of the pool is what changed.
+
+::: new_page(title="Four ways to stop the spiral", transition=slide-up)
+
+::: write
+## Policy fixes
+1. **Individual mandate** — everyone must buy in. *ACA (US, 2010), Swiss Santésuisse (since 1996).*
+2. **Community rating** — insurer cannot price by individual risk. *EU non-life directive; ACA rating bands.*
+3. **Risk adjustment** — insurers stuck with sicker pools get transfers from insurers with healthier pools. *German sickness funds' Morbi-RSA.*
+4. **Reinsurance** — the state (or a pool) absorbs the most expensive cases. *Netherlands, early ACA reinsurance program.*
+
+::: write
+Each fix attacks a different step of the loop. A mandate keeps the healthy in; community rating stops cream-skimming; risk adjustment neutralises the remaining skew; reinsurance caps the tail.
+
+::: new_page(title="A natural experiment, sort of", transition=fade)
+
+::: write_speak
+When the US repealed the ACA individual mandate in 2017, actuaries predicted 10 million people would drop coverage. Premiums on ACA exchanges rose 10 to 20 percent the following year.
+
+::: message(level=info, icon=pill)
+**Sovaldi flashback.** Adverse selection doesn't apply to one-off drug decisions like Sovaldi — but it explains why nobody would voluntarily buy insurance that covers it, unless coverage is pooled across everyone.
+
+::: new_page(title="Check your intuition", transition=iris)
+
+::: write
+The adverse-selection death spiral happens because...
+
+::: multiple_choice
+Pick the mechanism Akerlof actually described.
+* healthy people exit first, because their expected cost is below the premium
+- insurers deliberately raise prices to punish sick customers
+- government regulation forces premiums upward each year
+
+::: celebrate(kind=confetti, bursts=2)
+::: sound(name=success)
+
+::: write_speak
+The healthy leave first because the average-based premium is a bad deal for them. Everything that follows — sicker pool, higher premium, more exits — is just that first step on repeat.
+
+::: new_page(title="Wrap-up", transition=fade)
+
+::: write
+## What to remember
+- Akerlof (1970): asymmetric information can kill a market
+- Insurance version: average-priced premiums push the healthy out, sickening the pool
+- Fixes: **mandate**, **community rating**, **risk adjustment**, **reinsurance**
+- 2017 ACA mandate repeal: a live demonstration, with premiums rising 10–20%
+
+::: write_speak
+Demand-side market failure is now on the table. Next we turn around and look at the other side: the doctors and hospitals selling the care.
+
+::: xplainer_link(url="06_supply.txt", text="Next: Supply side — physician and hospital incentives")

@@ -1,0 +1,120 @@
+::: defaults(skin=playful)
+
+::: intro(text="Incidence rates and Kaplan-Meier", subtitle="Health + R · Lecture 9 of 10", enter=blur-in, duration=3500, speak="Incidence rates and Kaplan Meier curves. Lecture nine of ten.")
+
+::: write_speak
+This is the lecture where everything you built in Lectures 4 through 8 turns into a number you can hand to a reviewer. Don't worry — the number itself is one line of code. The thinking behind it is the whole previous series.
+
+::: write_speak
+Quick recap. Lecture 6 gave you an exposure variable: metformin user or not. Lecture 7 gave you an outcome: hospitalisation for a major cardiovascular event. Lecture 8 gave you `followup_years` and `outcome_flag` per person. Today we turn those four columns into numbers.
+
+::: new_page(title="The rate formula", transition=wipe-left)
+
+::: write_speak
+A crude incidence rate is events divided by person-time. That is it. The whole machinery of survival analysis is built on top of this single fraction.
+
+::: math
+\text{rate} = \frac{\text{events}}{\text{person-years}} \times 1000
+
+::: write_speak
+We multiply by 1000 so the number reads nicely — "eighteen point four per thousand person-years" sounds like a rate instead of a tiny decimal. For rare outcomes you will sometimes see per 100,000 instead. Same idea, different denominator.
+
+::: new_page(title="Compute it by hand", transition=cross-dissolve)
+
+::: r(auto_run=before, title="Rate by hand")
+library(dplyr)  # grammar of data manipulation
+# cohort comes from Lecture 8: one row per person, with followup_years and outcome_flag
+rates <- cohort |>
+  group_by(exposure_group) |>  # metformin users vs non-users
+  summarise(
+    events = sum(outcome_flag),           # total cardiovascular events
+    pyears = sum(followup_years),         # total person-time at risk
+    rate   = events / pyears * 1000       # per 1000 person-years
+  )
+rates
+
+::: write_speak
+The fake-but-plausible output: metformin users clock 18.4 events per thousand person-years, non-users clock 25.2. That is the entire point of epidemiology in two rows.
+
+::: new_page(title="The rate ratio", transition=fade)
+
+::: write_speak
+To compare groups, we take the ratio. Rate ratio equals rate in the exposed group divided by rate in the unexposed group. 18.4 divided by 25.2 is about 0.73.
+
+::: write_speak
+In plain language: the metformin group has a 27% lower rate of cardiovascular events. Notice the word "rate" — not "risk", not "chance", not "probability". A rate is per unit of time, and that matters when we compare it to trial language next lecture.
+
+::: message(level=warn, icon=construction)
+A rate ratio of 0.73 does not mean metformin works. It means these two groups, as defined, had different event rates. Whether metformin caused the difference is Lecture 10's whole problem.
+
+::: new_page(title="Adding a confidence interval", transition=iris)
+
+::: r(auto_run=before, title="Rate ratio with CI")
+library(epitools)  # classic epi helpers
+# rows: exposed vs unexposed; cols: events, person-time
+tab <- matrix(
+  c(245, 13315,   # metformin users: 245 events in 13,315 PY
+    412, 16349),  # non-users: 412 events in 16,349 PY
+  nrow = 2, byrow = TRUE
+)
+rateratio(tab)  # Poisson exact test and CI
+
+::: write_speak
+`epitools::rateratio()` gives you the point estimate, a Poisson exact 95% confidence interval, and a p-value in one call. Imagine it prints something like "RR = 0.73, 95% CI 0.62 to 0.86". The CI excludes 1, so the difference is not plausibly zero — statistically speaking.
+
+::: new_page(title="The survival curve", transition=wipe-right)
+
+::: write_speak
+A rate is one number for the whole follow-up. A Kaplan-Meier curve is the same information stretched across time. It shows the probability of staying event-free, month by month, year by year, for each group.
+
+::: r(auto_run=before, title="Kaplan-Meier curve")
+library(survival)    # Surv() and survfit()
+library(survminer)   # pretty ggplot-based survival plots
+# Lecture 8 gave us followup_years and outcome_flag. Surv() glues them together.
+fit <- survfit(
+  Surv(followup_years, outcome_flag) ~ exposure_group,
+  data = cohort
+)
+ggsurvplot(
+  fit,
+  conf.int = TRUE,       # show 95% pointwise CI bands
+  risk.table = TRUE,     # number at risk below the plot
+  xlab = "Years since index date",
+  ylab = "Event-free probability",
+  legend.title = "Group"
+)
+
+::: write_speak
+Two step-function curves come out. Both start at 1.0 — everyone is event-free at time zero. Both drift downward as events accumulate. The lower curve drops faster — that's the non-metformin group, with the higher event rate.
+
+::: message(level=info, icon=eye)
+Three things to read off any KM plot: (1) how far apart the curves separate, (2) when that separation appears — immediately, or only after years, (3) how much the confidence bands around the two curves overlap. Early separation with narrow, non-overlapping bands is the strongest signal.
+
+::: new_page(title="Two medians, one confusion", transition=slide-up)
+
+::: write_speak
+People mix up two medians. Median follow-up is the typical length of time people were observed — you can compute it even if nobody has had the event yet. Median survival is the time by which half the cohort has had the event. If fewer than 50% of people had the event by the end of the study, median survival is simply undefined, and your software will politely report `NA`.
+
+::: new_page(title="Check your reading", transition=fade)
+
+::: multiple_choice
+Your KM curve for metformin users stays flat at 1.0 for the first 10 years of follow-up. What does that mean?
+- Metformin prevents cardiovascular events
+* No metformin user had the outcome during those 10 years
+- Something is wrong with your code
+
+::: celebrate(kind=confetti, bursts=2)
+::: sound(name=success)
+
+::: write_speak
+Exactly — the KM curve is a direct picture of your data, not a causal claim. If it is flat, zero people had the event yet. Whether metformin caused that zero is a separate question, and it is the question of the whole next lecture.
+
+::: new_page(title="What you can now say", transition=cross-dissolve)
+
+::: write_speak
+You can compute a crude rate. You can compute a rate ratio with a confidence interval. You can draw a Kaplan-Meier curve stratified by exposure and read it correctly. That is genuinely most of what applied registry epidemiology looks like on a given Tuesday.
+
+::: write_speak
+You have a rate ratio and a survival curve. Is metformin actually helping? That is a much harder question — confounding by indication, immortal-time bias, people who take metformin being different from people who don't. That's what the final lecture is about.
+
+::: xplainer_link(url="10_mini_study.txt", text="Next: A mini study — putting it all together")

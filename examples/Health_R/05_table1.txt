@@ -1,0 +1,115 @@
+::: defaults(skin=playful)
+
+::: intro(text="Describing your cohort", subtitle="Health + R · Lecture 5 of 10", enter=blur-in, duration=3500, speak="Describing your cohort. Table one.")
+
+::: write_speak
+Before you answer any question with your cohort, you answer one question about your cohort: who are they? That question lives in Table 1.
+
+::: write_speak
+Reviewers look at Table 1 first and last. So should you.
+
+::: new_page(title="What belongs in Table 1", transition=wipe-left)
+
+::: write_speak
+Remember the type 2 diabetes cohort we built in Lecture 4 — adults with a first E11 diagnosis between 2012 and 2020, each with their own index date. Now we describe them.
+
+::: table
+| Goes in Table 1            | Stays out of Table 1        |
+|----------------------------|-----------------------------|
+| N (total and per stratum)  | Outcome rates               |
+| Age at index               | Hazard ratios               |
+| Sex                        | P-values from your model    |
+| Region                     | Anything post-baseline      |
+| Follow-up time             | (those live in Table 2+)    |
+| Key baseline covariates    |                             |
+
+::: write_speak
+The rule of thumb: Table 1 is a snapshot of the cohort on its index date. If a number only exists because the study already happened, it is not a Table 1 number.
+
+::: new_page(title="Table 1 with gtsummary", transition=cross-dissolve)
+
+::: write_speak
+The fastest way to a publication-ready Table 1 in R is the gtsummary package. One pipe, one function, done.
+
+::: r(auto_run=before, title="Table 1 with gtsummary")
+library(dplyr)         # for select and the pipe
+library(gtsummary)     # for tbl_summary
+cohort |>                                      # the cohort from Lecture 4
+  select(sex, age_at_index, region, follow_up_years) |>   # keep only Table 1 columns
+  tbl_summary(
+    by = sex,                                  # stratify men vs women
+    label = list(                              # pretty labels for the report
+      age_at_index    ~ "Age at index (years)",
+      region          ~ "Region",
+      follow_up_years ~ "Follow-up (years)"
+    )
+  ) |>
+  add_overall() |>                             # total column on the left
+  add_n()                                      # N non-missing per row
+
+::: write_speak
+Numeric columns become median and interquartile range. Categorical columns become counts and percentages. gtsummary picks sensible defaults; you override only when you disagree.
+
+::: message(level=info, icon=info)
+Two other packages do the same job: `table1::table1()` and `tableone::CreateTableOne()`. Pick whichever you already like. The point is not the package — the point is that you made the table.
+
+::: new_page(title="Seeing the shape of age", transition=fade)
+
+::: write_speak
+A median is one number. A histogram is a thousand. Always look at your continuous variables with a plot, not just a summary.
+
+::: r(auto_run=before, title="Age at index, histogrammed")
+library(ggplot2)                               # grammar of graphics
+ggplot(cohort, aes(x = age_at_index)) +        # x axis is age on diagnosis day
+  geom_histogram(binwidth = 2, fill = "steelblue", color = "white") +
+  labs(
+    title = "Age at type 2 diabetes diagnosis",
+    x = "Age (years)",
+    y = "Patients"
+  ) +
+  theme_minimal()
+
+::: write_speak
+Notice the left tail. Type 2 diabetes is rare before 35 in our synthetic cohort, then climbs steeply. A median of 55 would hide that asymmetry completely.
+
+::: new_page(title="Region by sex", transition=wipe-right)
+
+::: r(auto_run=before, title="Region composition, split by sex")
+ggplot(cohort, aes(x = region, fill = sex)) +  # x axis region, colour by sex
+  geom_bar(position = "dodge") +               # side-by-side bars, not stacked
+  labs(
+    title = "Cohort composition by region and sex",
+    x = "Region",
+    y = "Patients",
+    fill = "Sex"
+  ) +
+  theme_minimal()
+
+::: write_speak
+A dodged bar chart lets you compare men and women within each region at a glance. If one region is visibly lopsided, that is a flag you want to catch before you start modelling.
+
+::: new_page(title="What Table 1 is hiding", transition=iris)
+
+::: message(level=warn, icon=warning)
+Table 1 shows **marginal** distributions — each variable one at a time. It does not show joint distributions, clusters, or missingness patterns. A cohort that is 50% female and 50% over 60 can still be made up entirely of young men and old women. Reviewers who only read Table 1 miss that. You should not.
+
+::: new_page(title="Check your intuition", transition=fade)
+
+::: multiple_choice
+Your Table 1 shows the mean age at index is 55. That is great. What has it NOT told you?
+- The median age
+- Whether age is skewed
+* Both of the above
+
+::: celebrate(kind=confetti, bursts=2)
+::: sound(name=success)
+
+::: write_speak
+Exactly. A mean alone hides the median and the shape. That is why Table 1 usually shows median and IQR for continuous variables, and why you always pair it with a histogram.
+
+::: new_page(title="Wrap up", transition=slide-up)
+
+::: write_speak
+You now know who is in your cohort — counts, ages, regions, follow-up. Next lecture, we ask what they were exposed to. Specifically: when did each person actually start metformin, and for how long?
+
+::: xplainer_link(url="06_exposure.txt", text="Next: Measuring drug exposure")

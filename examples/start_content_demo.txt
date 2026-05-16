@@ -1,0 +1,17 @@
+::: defaults(
+  start_title=Welcome to the demo,
+  start_image=https://picsum.photos/800/600,
+  start_html=<p style="text-align:center;margin-top:1em;opacity:0.9;">Click the play button to begin.</p>,
+  autostart=false
+)
+:::
+
+::: wait
+::: write_speak
+This is the first real slide. The start title, image, and HTML were shown when the lecture loaded. When you clicked play, they were cleared and playback began from here.
+:::
+
+::: wait
+::: write_speak
+You can rewind to the beginning anytime — the start image and title will appear again when you run from the start.
+:::

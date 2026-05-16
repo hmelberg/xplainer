@@ -1,0 +1,118 @@
+::: write_speak
+Why is it so hard to tell if a specific policy actually *caused* a result, or if it was just a coincidence?
+
+::: write
+
+### The Problem: Endogeneity
+
+In econometrics, we often want to know if **X** causes **Y**.
+
+::: write_speak
+The trouble is "omitted variable bias." There might be a hidden factor, **Z**, that affects both your cause and your effect, making them look related when they aren't.
+
+::: wait(click=true)
+
+::: draw(height=200, title="The Identification Problem")
+line(20,20,40,20) stroke="#888"
+text(15,20,"X") fill="#60a5fa"
+text(45,20,"Y") fill="#f87171"
+text(30,50,"U (Hidden)") fill="#9ca3af"
+line(30,45,20,25) stroke="#9ca3af"
+line(30,45,45,25) stroke="#9ca3af"
+
+::: write_speak
+Imagine we want to measure if "Education" (X) increases "Earnings" (Y). The hidden factor (U) might be "Innate Ability." People with high ability might get more education *and* earn more, making education look more powerful than it is.
+
+::: question
+If we ignore the "Hidden" factor in our data, what happens to our estimate of X's effect?
+
+* It stays accurate
+
+* It becomes biased ✅
+
+* It disappears
+
+::: write_speak
+To fix this, we use an **Instrumental Variable (IV)**. Think of it as a "surgical tool" that only moves the part of X we care about.
+
+::: write
+
+### The IV Requirements
+
+An instrument (**Z**) must follow two strict rules:
+
+1. **Relevance**: Z must be correlated with X.
+2. **Exclusion**: Z must affect Y *only* through X (no direct path to Y).
+
+::: wait(click=true)
+
+::: draw(height=200, title="How IV Works")
+text(5,20,"Z (Instrument)") fill="#10b981"
+line(15,20,35,20) stroke="#10b981"
+text(40,20,"X") fill="#60a5fa"
+line(45,20,65,20) stroke="#888"
+text(70,20,"Y") fill="#f87171"
+text(55,50,"U (Hidden)") fill="#9ca3af"
+line(55,45,70,25) stroke="#9ca3af"
+line(55,45,42,25) stroke="#9ca3af"
+
+::: write_speak
+A classic example is using **Quarter of Birth** as an instrument for **Years of Schooling**. Because of school start-age laws, kids born in Q1 leave school slightly earlier than those born in Q4. Quarter of birth is random (Relevance) and shouldn't directly affect your salary at age 40 (Exclusion).
+
+::: write
+
+### Two-Stage Least Squares (2SLS)
+
+We calculate IV in two steps:
+
+::: math
+\text{Stage 1: } \hat{X} = \alpha + \beta Z + \epsilon
+:::
+
+::: math
+\text{Stage 2: } Y = \gamma + \delta \hat{X} + u
+:::
+
+::: write_speak
+In the first stage, we use our instrument to predict X. This "cleans" X of its correlation with the hidden errors. In the second stage, we use that clean version to find the true effect on Y.
+
+::: wait(click=true)
+
+::: pyodide(title="Simulating an IV")
+import numpy as np
+import pandas as pd
+
+# 1. Generate data with a hidden bias (Ability)
+
+n = 1000
+ability = np.random.normal(0, 1, n)
+instrument = np.random.randint(0, 2, n) # e.g. Random Lottery
+education = 10 + 2*instrument + 0.5*ability + np.random.normal(0, 1, n)
+earnings = 20 + 0.5*education + 1.2*ability + np.random.normal(0, 1, n)
+
+# The 'True' effect of education is 0.5
+
+print(f"Correlation: {np.corrcoef(education, earnings)[0,1]:.3f}")
+:::
+
+::: write_speak
+In this code, the "true" impact of education is 0.5. But because "Ability" affects both, a simple correlation will overstate the result. The instrument (Z) allows us to isolate the 0.5 we are looking for.
+
+::: question
+Why can't we just use any random variable as an instrument?
+
+* Because it's too expensive
+
+* Because it must actually influence the cause (X) ✅
+* Because it must be hidden
+
+::: write
+
+### Summary
+
+* **The Problem**: Correlation  Causation due to hidden factors.
+* **The Solution**: An instrument (Z) that moves X but is otherwise unrelated to the outcome.
+* **The Result**: We isolate the "clean" causal effect of X on Y.
+
+::: write_speak
+Would you like to see a real-world case study, like using geographic distance to hospitals as an instrument for health outcomes?

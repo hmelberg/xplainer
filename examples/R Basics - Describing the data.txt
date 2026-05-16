@@ -1,0 +1,107 @@
+::: defaults
+speech_lang="nb-NO"
+webr_result_location="left"
+speak_code_language="en-US"
+explain_code="all"
+r_requirements="readr, dplyr, ggplot2"
+ 
+:::title
+ Innføring i R - Smakebiter
+
+::: write_speak
+Denne videoen gir en smakebit på hvordan vi kan analysere helsedata ved hjelp av programmeringsspråket R.
+
+:::message
+Du kan når som helst stoppe videoen og prøve selv. Du kan endre koden (trykk Edit), kjøre koden på nytt (trykk Run) og se resultatet.
+
+:::write(effect="fade")
+Det første vi skal gjøre, er å laste inn data og kommandoer.
+
+::: write
+## 1) Hvordan last inn kommandoer, datafiler og gi det navn?
+
+:::r
+library(readr) ## Laster pakken readr med kommandoer som gjør at vi kan lese filer med ulike typer data 
+library(dplyr) ## Laster dplyr med kommandoer for datamanipulering
+library(ggplot2) ## Laster ggplot2 for å lage figurer
+npr <- read_csv("https://raw.githubusercontent.com/hmelberg/health_data/refs/heads/main/npr.csv") # read_csv kommandoen leser inn NPR-data og gir data navnet npr
+head(npr) ## Viser de 6 første radene av NPR dataene
+
+:::write(effect="fade")
+npr <- read_csv(FIL) betyr at man leser inn en fil og gir det et navn.
+Å skrive __x=5__ er det samme som å skrive __x <- 5__
+
+::: write_speak
+Pilen betyr at vi gir navn til ting. Det betyr at vi kan ha mange datasett med ulike navn og jobbe med de samtidig. 
+
+
+## 2) Hvordan se variablene og telle observasjoner?
+
+:::r(result_location="below")
+dim(npr) ## Viser antall rader og kolonner
+
+:::r
+names(npr) ## Lister alle variabelnavn (kolonnenavn)
+
+:::r 
+str(npr) ## Viser datatype for hver variabel
+:::
+
+## 3) Hvordan lage nye variabler?
+
+I dette datasettet finnes ikke liggetid som ferdig kolonne.
+Vi beregner derfor liggetid fra `INNDATO` og `UTDATO`.
+:::r(silent=true)
+npr <- npr |>
+  mutate(
+    INNDATO = as.Date(INNDATO),
+    UTDATO = as.Date(UTDATO),
+    ALDER_BEREGNET = as.integer(format(INNDATO, "%Y")) - FODSELSAAR,
+    LIGGETID = as.numeric(UTDATO - INNDATO)
+  ) 
+:::r(result_location="below")
+npr <- npr |> ## Starter med npr data  som skal endres
+  mutate( ## Kommando som inneholder hvordan vi skal endre data
+    INNDATO = as.Date(INNDATO),     ## Konverterer INNDATO fra tekst/tall til et ekte datoformat 
+    UTDATO = as.Date(UTDATO),     ## Konverterer UTDATO til datoformat slik at R kjenner igjen år, måned og dag
+    LIGGETID = as.numeric(UTDATO - INNDATO)     ## Beregner antall dager mellom innleggelse og utskrivelse, og lagrer det som et tall
+  )
+
+summary(npr$LIGGETID) #= Oppsummering av liggetid
+:::
+
+## 4) Hvordan lage et histogram? 
+
+:::r
+hist(npr$ALDER_BEREGNET, ## Lager et histogram med kolonnen ALDER_BEREGNET i npr-tabellen
+     main = "Aldersfordeling ved innleggelse", ## Setter hovedtittelen på grafen
+     xlab = "Alder",                           ## Gir navn til x-aksen
+     col = "skyblue")                          ## Farger søylene himmelblå
+
+
+:::
+## 5) Hvordan telle hvilke prosedyrer som er mest vanlig?
+
+:::r
+pros_telling <- npr |> ## teller fra npr og gir resultatet navnet pros_telling
+  filter(PROSEDYRE1 != "" & !is.na(PROSEDYRE1)) |> ## Beholder kun rader med faktisk innhold
+  count(PROSEDYRE1, sort = TRUE)                 ## Teller og sorterer i ett jafs
+head(pros_telling, 10) ## Viser de 10 øverste resultatene direkte
+
+
+::: write(effect="fade")
+Legg merke til at vi kan knytte operasjoner sammen i kjeder ved hjelp av "piping." Man bruker da symbolet `|>` (eller `%>%`). 
+
+:::r
+barplot(pros_telling$n[10:1], ## ## Lager et søylediagram for de 10 vanligste prosedyrene
+        names.arg = pros_telling$PROSEDYRE1[10:1], ## Legger til kodenavn på aksen
+        horiz = TRUE,                              ## Gjør søylene horisontale
+        las = 1,                                   ## Sørger for at teksten på aksen står vannrett
+        col = "steelblue",                         ## Gir søylene farge
+        main = "Topp 10 prosedyrer",               ## Tittel
+        xlab = "Antall")                           ## Tekst på x-aksen
+
+::: write_speak
+## Oppsummering
+Du kan nå laste data (read_csv), gi ting navn (<-), se variabler (names/str), lage nye variabler (mutate), lage kjeder av kommandoer (|>) og lage figurer.
+

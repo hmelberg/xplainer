@@ -1,0 +1,62 @@
+::: defaults(skin=playful)
+
+::: intro(text="FX Demo", subtitle="Cinematic blocks for xplainer", enter=slide-up, duration=3000)
+
+::: new_page(title="Hello", transition=fade)
+
+::: write_speak
+Welcome to the **FX demo**. This short lecture exercises every new block added in the modular refactor:
+
+- `::: intro` — the cinematic chapter card you just saw
+- `::: new_page(transition=...)` — slide transitions
+- `::: celebrate` — confetti & fireworks
+- `::: sound` — synthesised UI sound effects
+- `::: countdown` — dramatic number countdown
+- `::: reveal` — blurred spoiler text
+
+::: wait(seconds=1.5)
+
+::: new_page(title="Countdown", transition=wipe-left)
+
+::: write_speak
+How many new block types did we add? Count with me.
+
+::: countdown(n=5, step_ms=700, text="Counting down...", speak="Five new blocks!")
+
+::: wait(seconds=0.8)
+
+::: new_page(title="Sound Bank", transition=cross-dissolve)
+
+::: write_speak
+The sound bank ships with synthesised beeps — no asset downloads.
+
+::: sound(name=ding)
+::: wait(seconds=0.4)
+::: sound(name=ping)
+::: wait(seconds=0.4)
+::: sound(name=success)
+::: wait(seconds=0.6)
+::: sound(name=drumroll)
+::: wait(seconds=1.0)
+
+::: new_page(title="Reveal", transition=iris)
+
+::: write_speak
+The answer to life, the universe, and everything is hidden below. Click to reveal.
+
+::: reveal
+42
+
+::: wait(seconds=2)
+
+::: new_page(title="Celebrate!", transition=slide-up)
+
+::: write_speak
+And finally — the confetti cannon.
+
+::: celebrate(kind=confetti, bursts=4)
+::: sound(name=success)
+
+::: wait(seconds=2)
+
+::: intro(text="The End", subtitle="Thanks for watching", enter=blur-in, duration=3200, size=medium)

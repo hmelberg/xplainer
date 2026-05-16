@@ -1,0 +1,95 @@
+::: write_speak
+How do we find the true effect of one thing on another when the world is messy and full of hidden factors?
+
+::: write
+### The Problem: Endogeneity
+When "X" and "Y" are linked by a hidden third variable.
+
+::: write_speak
+In a perfect experiment, we'd just change one thing. But in economics, variables are often "endogenous"—they are tangled up with unobserved factors. 
+
+::: table(title="The Correlation Trap")
+| Variable | Hidden Factor (Error) |
+| :--- | :--- |
+| Education | Natural Ability |
+| Price | Quality / Brand |
+
+::: write_speak
+Take education and wages. If we just look at the data, does more school lead to higher pay, or do people with higher "natural ability" simply stay in school longer? 
+
+::: wait(click=true)
+
+::: write_speak
+To untangle this, we use a "Tool" or an **Instrumental Variable (IV)**.
+
+::: write
+### Instrumental Variables (IV)
+A variable ($Z$) that affects $X$ but has no direct path to $Y$.
+
+::: draw(height=200)
+line(10,50,40,50) stroke="#888"
+text(42,50,"X") fill="#3b82f6"
+line(48,50,80,50) stroke="#888"
+text(82,50,"Y") fill="#10b981"
+text(5,50,"Z") fill="#f59e0b"
+circle(45,80,3) fill="#ef4444"
+line(45,77,45,55) stroke="#ef4444"
+line(48,80,80,55) stroke="#ef4444"
+text(43,85,"Error (U)") fill="#ef4444"
+
+::: write_speak
+Think of the Instrument ($Z$) as a "shaker." It moves $X$ around, but it's totally unrelated to the hidden "Error" term. 
+
+::: write
+### The Two Requirements
+1. **Relevance**: $Z$ must actually affect $X$.
+2. **Exogeneity**: $Z$ must not be related to the hidden factors (the "exclusion restriction").
+
+::: question
+If we use 'Distance to College' as an instrument for 'Years of Education' to see the effect on 'Wages', what is the Relevance condition?
+- Distance has no effect on wages directly.
+- Living closer to a college makes you more likely to attend. ✅
+- Smarter people live closer to colleges.
+
+::: wait(click=true)
+
+::: write_speak
+We typically estimate this using **Two-Stage Least Squares (2SLS)**. 
+
+::: write
+### Two-Stage Least Squares (2SLS)
+1. **Stage 1**: Use $Z$ to predict $X$. This gives us a "clean" version of $X$.
+2. **Stage 2**: Use that "clean" $X$ to predict $Y$.
+
+::: pyodide(title="IV Simulation")
+import numpy as np
+# Natural ability (Hidden)
+ability = np.random.normal(0, 1, 1000)
+# Instrument: Month of birth (arbitrary)
+Z = np.random.randint(1, 13, 1000)
+# Education (X) is affected by Z and Ability
+X = 0.5 * Z + 2 * ability + np.random.normal(0, 1, 1000)
+# Wages (Y) affected by Education and Ability
+Y = 1.5 * X + 5 * ability + np.random.normal(0, 1, 1000)
+
+print(f"Simple correlation X-Y: {np.corrcoef(X, Y)[0,1]:.3f}")
+print("IV helps strip away the 'ability' bias.")
+
+::: annotate(target="code", code_text="0.5 * Z", text="The 'clean' movement", color="orange")
+
+::: write_speak
+By looking only at the part of Education caused by the Month of Birth (the instrument), we ignore the parts caused by Natural Ability.
+
+::: write
+### Summary
+* **Problem**: Correlation != Causation due to hidden variables.
+* **Solution**: Find an instrument ($Z$) that acts as a random nudge.
+* **Result**: We isolate the causal effect of $X$ on $Y$.
+
+::: question
+Which of these would be a BAD instrument for the effect of Smoking on Health?
+- A sudden increase in cigarette taxes.
+- A person's genetic predisposition to enjoy nicotine. ✅
+- Laws banning smoking in public parks.
+::: speak
+The genetic predisposition is likely linked to other hidden health behaviors, violating the exogeneity rule!
