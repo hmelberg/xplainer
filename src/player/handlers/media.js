@@ -247,14 +247,69 @@
   actions.register("video", handleVideo);
 
   // ---------- :::youtube ----------
+  // Pull the 11-char video id out of whatever a user is likely to paste: a
+  // watch URL, a youtu.be short link, an /embed//shorts//live/ path, or a bare
+  // id. Returns "" when nothing looks like an id, so the caller can fall back
+  // to using the string as a literal src (e.g. a youtube-nocookie embed URL).
+  function extractYoutubeId(raw) {
+    const s = String(raw || "").trim();
+    if (!s) return "";
+    if (/^[\w-]{11}$/.test(s)) return s;
+    let u;
+    try {
+      u = new URL(/^https?:\/\//i.test(s) ? s : "https://" + s);
+    } catch (_) {
+      return "";
+    }
+    if (u.hostname.replace(/^www\./i, "").toLowerCase() === "youtu.be") {
+      return u.pathname.slice(1).split("/")[0] || "";
+    }
+    const v = u.searchParams.get("v");
+    if (v) return v;
+    const m = u.pathname.match(/\/(?:embed|shorts|live|v)\/([\w-]+)/);
+    return m ? m[1] : "";
+  }
+
   async function handleYoutube(action, api) {
-    const { createHtmlElement, applyCssFromSpec, applyPauseOnClick } = api.internal;
-    const id = action.id || action.video_id || "";
-    const src = id ? `https://www.youtube.com/embed/${id}` : (action.src || "");
+    const { createHtmlElement, applyCssFromSpec, applyPauseOnClick, renderMarkdownBlock } = api.internal;
+    // id/video_id stay verbatim (unchanged behaviour). url/positional/body get
+    // parsed; src remains the literal-embed-URL escape hatch.
+    const positional = Array.isArray(action.__positional) ? action.__positional[0] : undefined;
+    const loose = action.url ?? positional ?? action.content;
+    const looseStr = typeof loose === "string" ? loose.trim() : "";
+    const isUrl = /^https?:\/\//i.test(looseStr);
+    const explicitId = action.id || action.video_id || "";
+    let src = "";
+    if (explicitId) {
+      src = `https://www.youtube.com/embed/${explicitId}`;
+    } else if (isUrl && /\/embed\//.test(looseStr)) {
+      // Already an embed URL — keep it verbatim so youtube-nocookie.com and any
+      // player params the author set (?start=, ?rel=) survive.
+      src = looseStr;
+    } else {
+      const id = extractYoutubeId(loose);
+      if (id) src = `https://www.youtube.com/embed/${id}`;
+      else if (isUrl) src = looseStr;
+      else src = action.src || "";
+    }
+    const caption = action.caption ?? action.title;
+    if (!src) {
+      // Never fail silently: an empty iframe is invisible and looks like the
+      // block was ignored. Say so on the board and in the console.
+      console.warn("[explainer] youtube block: no video id or URL found", action);
+      const warn = renderMarkdownBlock(
+        "⚠️ **youtube:** no video id or URL — use `id=VIDEO_ID` or `url=https://www.youtube.com/watch?v=VIDEO_ID`",
+        { role: "footnote", muted: true },
+        api.internal.getColumnForLocation(api.internal.resolveLocation(action.location, "left"))
+      );
+      warn.container.classList.add("figure-footnote");
+      return;
+    }
     const iframe = createHtmlElement({
       tag: "iframe",
       attrs: {
         src,
+        title: caption,
         allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
         allowfullscreen: "true",
         loading: "lazy",
@@ -263,7 +318,15 @@
     });
     applyPauseOnClick(iframe, "youtube", action);
     if (action.css) applyCssFromSpec(iframe, action.css);
-    api.appendToLocation(iframe, action.location);
+    const target = api.appendToLocation(iframe, action.location);
+    if (caption) {
+      const cap = renderMarkdownBlock(
+        String(caption),
+        { role: "footnote", muted: true, pause_on_click_type: "youtube", pause_on_click: action.pause_on_click },
+        target
+      );
+      cap.container.classList.add("figure-footnote");
+    }
   }
   actions.register("youtube", handleYoutube);
 })();
