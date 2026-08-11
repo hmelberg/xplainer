@@ -1,0 +1,297 @@
+::: defaults
+question_wait_for_answer=true
+question_require_answer=true
+speech_lang=nb-NO
+:::
+
+::: new_page(title=Introduksjon: Hva er helsetjenestekunnskap?)
+
+
+::: write
+Velkommen til dette kurset i helsetjenestekunnskap!
+
+::: youtube(id=fgmD8DNvP-Q, title=Hans Olav Melberg: Helsetjenesten - Innledning og organisering)
+
+::: wait
+
+
+::: write
+Hvorfor skal du bruke tid på å lære om organisering, prioritering og økonomi i helsetjenesten?
+:::
+
+::: write
+Et argument for å vite mer om systemet, er at det er en stor sektor med betydelige utgifter. Hvor mye?
+
+
+::: question
+Hvor mye tror du Norge bruker på helsetjenester per innbygger per år?
+25 000 kr
+50 000 kr
+*83 000 kr
+140 000 kr
+:::
+
+::: write
+Riktig svar er ca. **83 000 kroner per person per år**. Men er dette egentlig mye eller lite sammenlignet med andre land?
+:::
+
+::: table
+| Målemetode | Norges nivå | Sammenligning i Europa |
+| --- | --- | --- |
+| **Absolutt beløp** (kroner per person) | Høyest (~83 000 NOK) | Blant de aller høyeste i Europa |
+| **Relativt beløp** (% av BNP) | Gjennomsnittlig ( litt under 10% av BNP) | På linje med OECD- og EU-snittet |
+:::
+
+::: write
+I absolutte kroner ligger vi på topp fordi Norge har et høyt generelt pris- og inntektsnivå. Men målt som andel av vår samlede verdiskaping (BNP), bruker vi omtrent det samme som våre naboland.
+:::
+
+::: question
+Hvordan ligger Norges helseutgifter an dersom vi måler dem som andel av Bruttonasjonalprodukt (BNP)?
+*Omtrent på gjennomsnittet i OECD/Europa
+Mye lavere enn i alle andre europeiske land
+Langt høyere enn noe annet land i verden
+Dobbelt så høyt som i våre nordiske naboland
+:::
+
+::: wait(label=Neste del: Hvorfor offentlig helsetjeneste?, click=true)
+
+::: new_page(title=Hvorfor har vi en offentlig helsetjeneste?)
+
+::: write
+En måte å forstå faget på, er å stille et fundamentalt spørsmål: Hvorfor overlater vi ikke bare helsetjenester til det frie markedet, slik vi gjør med mat, klær og elektronikk?
+:::
+
+::: image(src=https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800, alt=Medisinsk utstyr, max_width=450px)
+
+::: write
+Begrunnelsen for en offentlig finansiert og regulert helsetjeneste deles vanligvis inn i **tekniske argumenter**  og **normative argumenter** (rettferdighet).
+
+
+
+::: mermaid
+graph TD
+    A[Hvorfor offentlig helsetjeneste?] --> B[Tekniske argumenter: Markedssvikt]
+    A --> C[Normative argumenter: Rettferdighet]
+    B --> B1[Informasjonsasymmetri: Legen vet mer enn pasienten]
+    B --> B2[Eksternaliteter: Smittevern angår alle]
+    B --> B3[Advers seleksjon & Moral hazard]
+    C --> C1[Helse som et grunnleggende gode]
+    C --> C2[Likt tilbud uavhengig av betalingsevne]
+:::
+
+
+
+
+::: youtube(id=qfddV86mBrk, title=Forelesning om markedssvikt i helsevesenet med Hans Olav Melberg)
+:::wait
+
+::: question
+Hvilket begrep beskriver situasjonen der pasienten ikke har forutsetning for å vurdere om en medisinsk utredning er nødvendig, og derfor må stole helt på legens anbefaling?
+Moral hazard
+*Informasjonsasymmetri
+Advers seleksjon
+Alternativkostnad
+:::
+
+::: question
+Vaksinasjon mot smittsomme sykdommer beskytter ikke bare enkeltpersonen, men begrenser også smitte i hele samfunnet. Hva kalles denne effekten i helseøkonomien?
+Advers seleksjon
+Informasjonsasymmetri
+*Positiv eksternalitet
+Moral hazard
+:::
+
+::: wait(label=Neste del: Organiseringsmodeller, click=true)
+
+::: new_page(title=Hvordan organisere helsetjenesten? Bismarck vs. Beveridge)
+
+::: write
+Gitt at staten skal ta ansvar for helsetjenesten, gjenstår spørsmålet: **Hvordan** skal det gjøres? Skal staten eie og drive alt selv, eller bare finansiere private aktører?
+:::
+
+::: image(src=https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=800, alt=Sykehusbygning, max_width=450px)
+
+::: write
+I Europa har vi historisk sett hatt to dominerende organiseringstradisjoner:
+:::
+
+::: table
+| Egenskap | Bismarck-modellen | Beveridge-modellen |
+| --- | --- | --- |
+| **Hovedidé** | Forsikringsbasert (Sosialforsikring) | Offentlig tjeneste over skatteseddelen |
+| **Finansiering** | Obligatoriske avgifter til kasser/fond | Generell skatt |
+| **Eierskap/Drift** | Ofte private, ideelle eller stiftelser | Offentlig eide sykehus og ansatte |
+| **Eksempel-land** | Tyskland, Frankrike, Østerrike | Storbritannia, Norge, Sverige |
+:::
+
+::: write
+Norge følger i hovedsak **Beveridge-modellen**. Spesialisthelsetjenesten (sykehusene) eies og drives av staten gjennom de regionale helseforetakene (RHF-ene).
+:::
+
+::: write
+Primærhelsetjenesten i Norge er en hybrid: Kommunene har ansvaret, men fastlegene er som regel private næringsdrivende med offentlig fastlegeavtale.
+:::
+
+::: question
+Klassifiser den norske spesialisthelsetjenesten (sykehusene):
+Bismarck-modell (privat forsikring)
+*Beveridge-modell (skattefinansiert og offentlig eid)
+Ren markedsmodell uten statlig styring
+Semiprivat kooperativ
+:::
+
+::: question
+Hva kjennetegner hovedsakelig finansieringen i en klassisk Bismarck-modell som i Tyskland?
+100 % finansiert gjennom statlig merverdiavgift
+Aksjeemisjoner fra private investorer
+*Obligatoriske innbetalinger til ideelle sykeforsikringskasser
+Direkte egenbetaling fra pasientene ved hvert legebesøk
+:::
+
+::: wait(label=Neste del: Prioritering i praksis, click=true)
+
+::: new_page(title=Prioritering: De tre kriteriene)
+
+::: write
+I et marked rasjoneres goder etter pris. I en offentlig helsetjeneste uten direkte brukerbetaling må vi prioritere på en annen måte. Hvem skal få behandling, og hva skal vi tilby?
+:::
+
+::: write
+Skal vi bruke 100 millioner på kneproteser til eldre, eller på dyr biologisk medisin til unge med MS? I Norge er dette regulert gjennom **tre lovfestede prioriteringskriterier**: Nytten av behandling, resurssbruken, og hvor alvorlig sykdommen er for pasientene.
+:::
+
+::: write
+Kriteriene må vurderes **samlet**:
+Høyere alvorlighet aksepterer høyere ressursbruk per nytteenhet. Hvis en sykdom er ekstremt alvorlig og rammer unge, er samfunnet villig til å betale mer per helsegevinst enn for milde tilstander.
+:::
+
+:::write
+Rent formelt, er det flere måter å foreta en økonomisk evaluering av en helseintervensjon når man skal bestemme om den skal innføres. Denne videoen beskriver noen:
+
+::: youtube(id=zSRlTe6VB_4, title=Hans Olav Melberg forklarer prioritering)
+:::wait
+
+::: question
+Når er samfunnet i følge norske prioriteringsregler villig til å akseptere en HØYERE kostnad per helsegevinst (QALY)?
+Når behandlingen er utviklet av en norsk bedrift
+Når pasientgruppen har høy personlig inntekt
+*Når sykdomstilstanden er svært alvorlig
+Når tilstanden rammer flest mulig personer i befolkningen
+:::
+
+::: wait(label=Neste del: Operasjonalisering og QALY, click=true)
+
+::: new_page(title=Operasjonalisering: Hva er en QALY?)
+
+::: write
+En ting er å definere kriteriene og metodene formelt. En annen ting er å bruke dem i praksis når Nye Metoder eller Beslutningsforum skal godkjenne en ny medisin som koster **800 000 kr per pasient per år**.
+:::
+
+::: image(src=https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=800, alt=Medisiner, max_width=450px)
+
+::: write
+For å måle helsegevinst (nytte) bruker vi måleenheten **QALY** (*Quality-Adjusted Life Years* / Kvalitetsjusterte leveår).
+:::
+
+::: youtube(id=-muEzXA2ZNY, title=Hva er en QALY? - Hans Olav Melberg forklarer QALY-begrepet)
+
+
+
+::: write
+I Norge ligger den veiledende grensen for betalingsvillighet på rundt **300 000 kr per QALY** for tilstander med lav alvorlighet, men kan stige til **over 1 000 000 kr per QALY** for de mest alvorlige tilstandene.
+:::
+
+::: question
+Hvis en ny behandling gjør at en pasient lever i 4 år ekstra med en livskvalitet målt til 0,5 (på en skala fra 0 til 1), hvor mange QALYs tilsvarer dette?
+0,5 QALY
+1 QALY
+*2 QALYs
+4 QALYs
+:::
+
+
+
+::: question
+Hva innebærer begrepet "alternativkostnad" i prioriteringssammenheng?
+At man alltid velger det billigste alternativet
+*Verdien av den helsegevinsten pasienter mister fordi pengene ble brukt på et annet tiltak
+Kostnaden ved å bruke alternative medisinske behandlinger som akupunktur
+At budsjettet automatisk økes dersom medisinene blir dyrere
+:::
+
+::: wait(label=Neste del: Finansieringssystemer, click=true)
+
+::: new_page(title=Finansiering av tilbydere: Insentiver og modeller)
+
+::: write
+Når prioriteringene er valgt, må vi utforme finansieringssystemer for legene og sykehusene som yter tjenestene. Hvordan vi betaler dem, påvirker deres atferd direkte.
+:::
+
+::: image(src=https://images.unsplash.com/photo-1581056771107-24ca5f033842?w=800, alt=Lege ved skrivebord, max_width=450px)
+
+::: table
+| Finansieringsmodell | Forklaring | Fordeler | Ulemper / Risiko |
+| --- | --- | --- | --- |
+| **Rammebevilgning** *(Lump sum)* | Fast budsjett per år uavhengig av produsert mengde | Forutsigbart, god kostnadskontroll | Fare for underbehandling og lange helsekøer |
+| **Innsatsstyrt finansiering (ISF)** | Betaling per utført behandling (DRG-system) | Økt aktivitet, kortere ventetider | Fare for overbehandling / "DRG-skruing" |
+| **Stykkpris / Fee-for-service** | Fast takst per konsultasjon/prosedyre | Høy tilgjengelighet og ytelse | Kostnadseksplosjon, unødvendige prøver |
+| **Resultatbasert** *(Pay for performance)* | Belønning basert på måloppnåelse (f.eks. HbA1c) | Fokus på kvalitet og forebygging | Krevende måling, fare for "cream skimming" |
+:::
+
+::: youtube(id=VCewOvmUd0o, title=Fee for service)
+
+
+::: write
+I norske sykehus kombineres modellene: Sykehusene får en **rammebevilgning** (ca. 50–60 %) kombinert med **Innsatsstyrt finansiering (ISF)** (ca. 40–50 %). Dette gir en balanse mellom kostnadskontroll og stimulans til høy aktivitet.
+:::
+
+
+::: question
+Hvis et sykehus utelukkende finansieres med rammefinansiering (fast pott uansett pasientantall), hvilket insentiv får ledelsen rent økonomisk?
+Å behandle flest mulig pasienter så raskt som mulig
+Å utføre flest mulig dyre prosedyrer
+*Å begrense aktiviteten for å holde seg innenfor rammen
+Å registrere flest mulig bidiagnoser på hver pasient
+:::
+
+::: question
+Hva er en velkjent ulempe ved ren stykkprisfinansiering (Fee-for-service / provisjon per prøve og behandling)?
+Lange ventelister på grunn av lav produksjon
+*Fare for overbehandling og unødvendig mange prøver/behandlinger
+Vanskelig å kontrollere at legene møter opp på jobb
+Svekket motivasjon til å ta i mot nye pasienter
+:::
+
+::: wait(label=Neste del: Oppsummering og videre ressurser, click=true)
+
+::: new_page(title=Oppsummering og Videre Kilder)
+
+::: write
+Nå har du gått gjennom de viktigste grunnsteinene i helsetjenestekunnskap!
+:::
+
+::: write
+### Hovedpunkter du bør ta med deg videre:
+
+1. **Ressursforvaltning:** Norge bruker ~83 000 kr per person i året på helse. Du som lege er en nøkkelperson i å forvalte disse midlene.
+2. **Hvorfor offentlig:** Informasjonsasymmetri og markedssvikt gjør helse uegnet for et rent fritt marked. Rettferdighet krever lik tilgang.
+3. **Organisering:** Norge følger Beveridge-modellen med skattefinansierte og offentlig eide sykehus.
+4. **Prioritering:** Styres av tre kriterier: **Nytte**, **Ressursbruk** og **Alvorlighet**. Nytte måles i QALYs.
+5. **Finansiering:** Måten vi betaler sykehus og leger på (ISF vs. ramme), skaper insentiver for aktivitet og kvalitet.
+:::
+
+::: question
+Hva er hovedbegrunnelsen for at fastleger og sykehusleger må ha kunnskap om helseøkonomi og prioritering?
+Fordi leger skal erstatte økonomenes rolle i helseforetakene
+Fordi privat finansiering skal overta for Beveridge-modellen
+*Fordi legens kliniske valg direkte påvirker bruken av fellesskapets ressurser og alternativkostnaden for andre pasienter
+Fordi helseøkonomi krever at man alltid velger den billigste medisinen uavhengig av nytte
+:::
+
+::: write
+### Anbefalt videre lesning:
+- **NOU 2014:12** – *Åpent og rettferdig – prioriteringer i helsetjenesten* (Norheim-utvalget)
+- **Meld. St. 38 (2020–2021)** – *Nytte, ressurs og alvorlighet — Prioritering i helse- og omsorgstjenesten*
+- **Helse- og omsorgstjenesteloven** og **Spesialisthelsetjenesteloven** for det juridiske rammeverket i Norge.
+:::
