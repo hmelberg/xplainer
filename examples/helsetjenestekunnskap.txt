@@ -10,8 +10,9 @@ speech_lang=nb-NO
 ::: write
 Velkommen til dette kurset i helsetjenestekunnskap!
 
-::: youtube(id=fgmD8DNvP-Q, title=Hans Olav Melberg: Helsetjenesten - Innledning og organisering)
-
+::: html
+<iframe src="https://www.youtube.com/embed/fgmD8DNvP-Q" title="Hans Olav Melberg: Helsetjenesten - Innledning og organisering" style="width:100%;aspect-ratio:16/9;border:0;border-radius:8px" allowfullscreen loading="lazy"></iframe>
+<div style="opacity:.7;font-size:.9em;margin-top:4px">Hans Olav Melberg: Helsetjenesten - Innledning og organisering</div>
 ::: wait
 
 
@@ -83,7 +84,9 @@ graph TD
 
 
 
-::: youtube(id=qfddV86mBrk, title=Forelesning om markedssvikt i helsevesenet med Hans Olav Melberg)
+::: html
+<iframe src="https://www.youtube.com/embed/qfddV86mBrk" title="Forelesning om markedssvikt i helsevesenet med Hans Olav Melberg" style="width:100%;aspect-ratio:16/9;border:0;border-radius:8px" allowfullscreen loading="lazy"></iframe>
+<div style="opacity:.7;font-size:.9em;margin-top:4px">Forelesning om markedssvikt i helsevesenet med Hans Olav Melberg</div>
 :::wait
 
 ::: question
@@ -169,7 +172,9 @@ Høyere alvorlighet aksepterer høyere ressursbruk per nytteenhet. Hvis en sykdo
 :::write
 Rent formelt, er det flere måter å foreta en økonomisk evaluering av en helseintervensjon når man skal bestemme om den skal innføres. Denne videoen beskriver noen:
 
-::: youtube(id=zSRlTe6VB_4, title=Hans Olav Melberg forklarer prioritering)
+::: html
+<iframe src="https://www.youtube.com/embed/zSRlTe6VB_4" title="Hans Olav Melberg forklarer prioritering" style="width:100%;aspect-ratio:16/9;border:0;border-radius:8px" allowfullscreen loading="lazy"></iframe>
+<div style="opacity:.7;font-size:.9em;margin-top:4px">Hans Olav Melberg forklarer prioritering</div>
 :::wait
 
 ::: question
@@ -194,10 +199,9 @@ En ting er å definere kriteriene og metodene formelt. En annen ting er å bruke
 For å måle helsegevinst (nytte) bruker vi måleenheten **QALY** (*Quality-Adjusted Life Years* / Kvalitetsjusterte leveår).
 :::
 
-::: youtube(id=-muEzXA2ZNY, title=Hva er en QALY? - Hans Olav Melberg forklarer QALY-begrepet)
-
-
-
+::: html
+<iframe src="https://www.youtube.com/embed/-muEzXA2ZNY" title="Hva er en QALY? - Hans Olav Melberg forklarer QALY-begrepet" style="width:100%;aspect-ratio:16/9;border:0;border-radius:8px" allowfullscreen loading="lazy"></iframe>
+<div style="opacity:.7;font-size:.9em;margin-top:4px">Hva er en QALY? - Hans Olav Melberg forklarer QALY-begrepet</div>
 ::: write
 I Norge ligger den veiledende grensen for betalingsvillighet på rundt **300 000 kr per QALY** for tilstander med lav alvorlighet, men kan stige til **over 1 000 000 kr per QALY** for de mest alvorlige tilstandene.
 :::
@@ -239,9 +243,9 @@ Når prioriteringene er valgt, må vi utforme finansieringssystemer for legene o
 | **Resultatbasert** *(Pay for performance)* | Belønning basert på måloppnåelse (f.eks. HbA1c) | Fokus på kvalitet og forebygging | Krevende måling, fare for "cream skimming" |
 :::
 
-::: youtube(id=VCewOvmUd0o, title=Fee for service)
-
-
+::: html
+<iframe src="https://www.youtube.com/embed/VCewOvmUd0o" title="Fee for service" style="width:100%;aspect-ratio:16/9;border:0;border-radius:8px" allowfullscreen loading="lazy"></iframe>
+<div style="opacity:.7;font-size:.9em;margin-top:4px">Fee for service</div>
 ::: write
 I norske sykehus kombineres modellene: Sykehusene får en **rammebevilgning** (ca. 50–60 %) kombinert med **Innsatsstyrt finansiering (ISF)** (ca. 40–50 %). Dette gir en balanse mellom kostnadskontroll og stimulans til høy aktivitet.
 :::
