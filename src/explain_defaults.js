@@ -39,6 +39,10 @@ window.explainDefaults = {
   question_wait_seconds: 0.5,
   wait_seconds: 2,
   element_gap_seconds: 0.2,
+  /* Seconds a single step may run before the player shows a "stuck" banner with
+     a Skip button. Time spent waiting for the viewer (continue button,
+     unanswered question) is not counted. Set to 0 to disable the watchdog. */
+  stall_warn_seconds: 45,
   execution_mode: "movie",
   movie_wait_seconds: 2,
   code_new_page: false,

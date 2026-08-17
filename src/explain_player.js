@@ -261,7 +261,21 @@ let state = {
   codeCells: [],
   dimEnabled: false,
   webrShelter: null,
+  // Number of nested "waiting for the viewer to do something" scopes currently
+  // open (continue button, question answer). The stall watchdog in
+  // playFromHere ignores steps while this is > 0 — a deliberate pause is not a
+  // stall. See beginUserInputWait / endUserInputWait.
+  awaitingUserInput: 0,
+  stallNotice: null,
 };
+
+function beginUserInputWait() {
+  state.awaitingUserInput += 1;
+}
+
+function endUserInputWait() {
+  state.awaitingUserInput = Math.max(0, state.awaitingUserInput - 1);
+}
 
 function refreshVoices() {
   voices = speechSynthesis.getVoices() || [];
@@ -680,10 +694,37 @@ function animateSvgDraw(svg, opts = {}) {
   return lastDrawableEnd;
 }
 
+/**
+ * Resolve to `fallback` if `promise` has not settled within `ms`.
+ *
+ * Used to bound awaits on third-party code (mermaid, CDN module loads) that can
+ * hang forever on a stalled chunk request. A never-settling promise inside
+ * runAction freezes playback with nothing on screen to explain it, which is the
+ * failure mode the stall watchdog in playFromHere also guards against.
+ */
+function withTimeout(promise, ms, fallbackFactory) {
+  let timer = null;
+  const timeout = new Promise((resolve) => {
+    timer = setTimeout(() => resolve({ __timedOut: true }), ms);
+  });
+  return Promise.race([promise, timeout]).then((value) => {
+    if (timer) clearTimeout(timer);
+    if (value && value.__timedOut) return fallbackFactory ? fallbackFactory() : null;
+    return value;
+  }, (err) => {
+    if (timer) clearTimeout(timer);
+    throw err;
+  });
+}
+
 let mermaidInitPromise = null;
 async function initMermaid() {
   if (mermaidInitPromise) return mermaidInitPromise;
-  mermaidInitPromise = import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs")
+  mermaidInitPromise = withTimeout(
+    import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs"),
+    20000,
+    () => { throw new Error("Timed out loading mermaid from CDN"); },
+  )
     .then((mod) => {
       window.mermaid = mod.default || mod.mermaid || mod;
       window.mermaid.initialize({ startOnLoad: false, securityLevel: "loose" });
@@ -696,12 +737,24 @@ async function initMermaid() {
   return mermaidInitPromise;
 }
 
+function mermaidErrorBlock(message) {
+  const pre = document.createElement("pre");
+  pre.className = "code-pre";
+  pre.textContent = `Mermaid error:\n${message}`;
+  return pre;
+}
+
 async function renderMermaidDiagram(code, opts = {}) {
   const mermaid = await initMermaid();
-  if (!mermaid) return null;
+  if (!mermaid) return mermaidErrorBlock("mermaid failed to load (see console)");
   const id = `mermaid-${Math.random().toString(36).slice(2)}`;
   try {
-    const { svg, bindFunctions } = await mermaid.render(id, code);
+    // mermaid.render can hang indefinitely if one of its lazily-imported
+    // diagram chunks never arrives. Bound it so a bad network does not freeze
+    // the whole presentation on a diagram.
+    const rendered = await withTimeout(mermaid.render(id, code), 15000, () => null);
+    if (!rendered) return mermaidErrorBlock("diagram render timed out after 15s");
+    const { svg, bindFunctions } = rendered;
     const wrapper = document.createElement("div");
     wrapper.className = "mermaid-block";
     wrapper.innerHTML = svg;
@@ -710,9 +763,8 @@ async function renderMermaidDiagram(code, opts = {}) {
     if (opts.center) wrapper.style.margin = "0 auto";
     return wrapper;
   } catch (err) {
-    const pre = document.createElement("pre");
-    pre.textContent = `Mermaid error:\n${err && err.message ? err.message : String(err)}`;
-    return pre;
+    console.error("[xplainer] mermaid render failed", err, code);
+    return mermaidErrorBlock(err && err.message ? err.message : String(err));
   }
 }
 
@@ -1309,6 +1361,10 @@ function renderJsResult(result, outputEl) {
 function cancelAll() {
   state.cancelToken++;
   speechSynthesis.cancel();
+  // Every pending viewer-wait is abandoned by the token bump, so the balance
+  // counter would otherwise drift up and permanently mute the stall watchdog.
+  state.awaitingUserInput = 0;
+  hideStallNotice();
 }
 
 function clearBoard() {
@@ -3341,18 +3397,23 @@ function showContinueButtonLowerRight(labelMarkdown, tokenAtStart) {
     const label = labelMarkdown ? markdownToText(labelMarkdown) : "Continue";
     let settled = false;
     let cancelTimer = null;
+    // Declared up front: done() can run before the overlay is built (no board).
+    let wrap = null;
+    // This is a deliberate pause, not a stall — tell the watchdog to hold off.
+    beginUserInputWait();
     const done = () => {
       if (settled) return;
       settled = true;
+      endUserInputWait();
       state.waitingForClick = null;
       if (cancelTimer) clearInterval(cancelTimer);
-      if (wrap.parentNode) wrap.remove();
+      if (wrap && wrap.parentNode) wrap.remove();
       resolve();
     };
     state.waitingForClick = done;
-    if (!els.board) return resolve();
+    if (!els.board) { done(); return; }
     els.board.querySelectorAll(".continue-overlay").forEach((el) => el.remove());
-    const wrap = document.createElement("div");
+    wrap = document.createElement("div");
     wrap.className = "continue-overlay";
     const btn = document.createElement("button");
     btn.type = "button";
@@ -3519,8 +3580,22 @@ async function renderQuestion(question, requireAnswer, instant, tokenAtStart, lo
     return { waitForAnswer };
   }
 
-  await waitForAnswer;
+  // Blocking on the viewer's answer is a deliberate pause, not a stall.
+  await awaitUserInput(waitForAnswer);
   return { waitForAnswer };
+}
+
+/**
+ * Await a promise that is blocked on the viewer, with the stall watchdog held
+ * off for its duration. Always balanced, even if the promise rejects.
+ */
+async function awaitUserInput(promise) {
+  beginUserInputWait();
+  try {
+    return await promise;
+  } finally {
+    endUserInputWait();
+  }
 }
 
 function getTargetIds(action) {
@@ -4616,7 +4691,10 @@ async function animateDraw(el, tokenAtStart, drawSpeed, explicitDurSec) {
       resolve();
     };
     el.addEventListener("animationend", done);
-    setTimeout(() => { if (tokenAtStart === state.cancelToken) resolve(); }, (dur + 0.05) * 1000);
+    // Always resolve: animationend does not fire for zero-length paths or for
+    // elements detached mid-animation, and a token bump must not strand the
+    // await either (the caller re-checks the token afterwards).
+    setTimeout(done, (dur + 0.05) * 1000);
   });
 }
 
@@ -4633,7 +4711,8 @@ async function animateFadeIn(el, tokenAtStart, durSec = 0.4) {
       resolve();
     };
     el.addEventListener("animationend", done);
-    setTimeout(() => { if (tokenAtStart === state.cancelToken) resolve(); }, (dur + 0.05) * 1000);
+    // See animateDraw: the fallback timer must resolve unconditionally.
+    setTimeout(done, (dur + 0.05) * 1000);
   });
 }
 
@@ -5029,7 +5108,7 @@ async function runAction(action, tokenAtStart, opts = {}) {
             waitForClick(action.wait_label || action.label, action.location || "right", tokenAtStart),
           ]);
         } else if (requireAnswer || mustBeTrue) {
-          if (waitForAnswer) await waitForAnswer;
+          if (waitForAnswer) await awaitUserInput(waitForAnswer);
         }
       }
       return;
@@ -6820,6 +6899,92 @@ async function restartPlaybackFromStart() {
   }
 }
 
+/**
+ * Show / hide the "this step is stuck" banner on the board.
+ *
+ * Playback used to be able to freeze with nothing at all on screen: any step
+ * whose promise never settled would leave the loop parked forever, with the
+ * play button still showing "playing" and the bottom bar hidden. The viewer got
+ * no error, no console message and no way to continue. This banner is the
+ * feedback half of that fix — the skip button is the recovery half.
+ */
+function showStallNotice(action, index, onSkip) {
+  hideStallNotice();
+  if (!els.board) return;
+  const wrap = document.createElement("div");
+  wrap.className = "msg warn stall-notice";
+  wrap.style.cssText = "position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--space-2) + 40px);z-index:11;max-width:80%;";
+  const icon = document.createElement("span");
+  icon.className = "icon";
+  icon.textContent = "⚠️";
+  const text = document.createElement("span");
+  text.textContent = `Step ${index + 1} (:::${action && action.type}) is taking unusually long.`;
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.textContent = "Skip step";
+  btn.style.cssText = "margin-left:8px;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:2px 10px;";
+  btn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); onSkip(); };
+  wrap.append(icon, text, btn);
+  els.board.appendChild(wrap);
+  state.stallNotice = wrap;
+}
+
+function hideStallNotice() {
+  if (state.stallNotice && state.stallNotice.parentNode) state.stallNotice.remove();
+  state.stallNotice = null;
+}
+
+const SLOW_RUNTIME_TYPES = new Set(["webr", "pyodide", "brython", "js", "p5", "comp", "component", "webcomponent"]);
+
+/**
+ * Run one action, but never let it park playback silently.
+ *
+ * After `stall_warn_seconds` of no progress the banner above appears; the
+ * viewer can skip the step, and the loop moves on. Time spent deliberately
+ * waiting on the viewer (continue button, unanswered question) does not count —
+ * state.awaitingUserInput pushes the deadline forward while it is open.
+ */
+async function runActionWatched(action, index, tokenAtStart) {
+  const base = Number(state.defaults.stall_warn_seconds ?? 45);
+  // Code cells pay for a one-time runtime download (webR/Pyodide are tens of
+  // MB), so they get a much longer leash than a narration beat.
+  const warnSec = SLOW_RUNTIME_TYPES.has(action && action.type) ? base * 4 : base;
+  if (!(base > 0)) return runAction(action, tokenAtStart);
+
+  let skipped = false;
+  let poll = null;
+  const skip = () => {
+    if (skipped) return;
+    skipped = true;
+    hideStallNotice();
+    console.warn(`[xplainer] step ${index + 1} (:::${action && action.type}) skipped after stalling`, action);
+  };
+  const stalled = new Promise((resolve) => {
+    let deadline = Date.now() + warnSec * 1000;
+    let warned = false;
+    poll = setInterval(() => {
+      if (state.awaitingUserInput > 0 || tokenAtStart !== state.cancelToken) {
+        deadline = Date.now() + warnSec * 1000;
+        if (warned) { warned = false; hideStallNotice(); }
+        return;
+      }
+      if (Date.now() < deadline) return;
+      if (!warned) {
+        warned = true;
+        console.warn(`[xplainer] step ${index + 1} (:::${action && action.type}) has not finished after ${warnSec}s`, action);
+        showStallNotice(action, index, () => { skip(); resolve(); });
+      }
+    }, 500);
+  });
+
+  try {
+    await Promise.race([runAction(action, tokenAtStart), stalled]);
+  } finally {
+    if (poll) clearInterval(poll);
+    if (!skipped) hideStallNotice();
+  }
+}
+
 async function playFromHere() {
   if (!hasLecture()) return;
   state.playing = true;
@@ -6835,7 +7000,7 @@ async function playFromHere() {
     state.commandIndex += 1;
     if (action.type === "new_page") updatePageForIndex(actionIndex);
     try {
-      await runAction(action, tokenAtStart);
+      await runActionWatched(action, actionIndex, tokenAtStart);
     } catch (err) {
       console.warn("Command failed, skipping:", action, err);
     }
