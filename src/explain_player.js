@@ -3757,8 +3757,91 @@ function sleep(ms, tokenAtStart) {
   });
 }
 
+// LaTeX macros that exist only to typeset. The generic fallback at the end of
+// mathToSpeech speaks any unrecognised macro by its own name, so without these
+// lists `\text{Life Years}` is read aloud as "text Life Years".
+const TEX_DROP_WITH_ARG = /\\(?:phantom|vphantom|hphantom|hspace\*?|vspace\*?|label|tag|color|textcolor)\s*\{[^{}]*\}/g;
+const TEX_DROP_ARGLESS = /\\(?:displaystyle|textstyle|scriptstyle|scriptscriptstyle|limits|nolimits|quad|qquad|thinspace|medspace|thickspace|negthinspace|nobreak|notag|nonumber|left|right|middle|biggl|biggr|Biggl|Biggr|bigl|bigr|Bigl|Bigr|bigg|Bigg|big|Big)\b/g;
+// \, \; \: \! \> and backslash-space — all pure spacing.
+const TEX_DROP_SPACING = /\\[,;:!> ]/g;
+// Font switches: keep the argument, drop the wrapper, and let the rest of the
+// pipeline keep processing the contents (\mathbf{\alpha} must still say alpha).
+const TEX_UNWRAP_NAMES = "mathrm|mathbf|mathit|mathsf|mathtt|mathcal|mathbb|mathfrak|mathscr|bm|boldsymbol|rm|bf|it|sf|tt";
+// Macros whose argument is prose, not maths. Their contents are stashed so the
+// operator rewrites below cannot mangle them — otherwise \text{5-year survival}
+// comes out as "5 minus year survival".
+const TEX_PROSE_NAMES = "text|textrm|textbf|textit|textsf|texttt|textnormal|textsc|mbox|hbox|emph|operatorname\\*?";
+
+/** Index of the `}` matching the `{` at openIdx, or -1 if unbalanced. */
+function matchBrace(src, openIdx) {
+  let depth = 0;
+  for (let i = openIdx; i < src.length; i++) {
+    if (src[i] === "{") depth += 1;
+    else if (src[i] === "}") {
+      depth -= 1;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
+/**
+ * Rewrite `\name{...}` for any of `names`, passing the argument through
+ * `transform`. Brace-matched rather than regex-matched so nested groups such
+ * as `\text{a {nested} brace}` are handled — a `[^{}]*` argument pattern
+ * silently fails to match those, leaving the macro name to be spoken.
+ */
+function replaceTexMacroArg(src, names, transform) {
+  const re = new RegExp("\\\\(?:" + names + ")\\s*\\{", "g");
+  let out = "";
+  let last = 0;
+  let m;
+  while ((m = re.exec(src)) !== null) {
+    const openIdx = m.index + m[0].length - 1;
+    const closeIdx = matchBrace(src, openIdx);
+    if (closeIdx === -1) break;
+    out += src.slice(last, m.index) + transform(src.slice(openIdx + 1, closeIdx));
+    last = closeIdx + 1;
+    re.lastIndex = last;
+  }
+  return out + src.slice(last);
+}
+const TEX_ACCENTS = [
+  [/\\overline\s*\{([^{}]*)\}/g, " $1 bar "],
+  [/\\ddot\s*\{([^{}]*)\}/g, " $1 double dot "],
+  [/\\widehat\s*\{([^{}]*)\}/g, " $1 hat "],
+  [/\\widetilde\s*\{([^{}]*)\}/g, " $1 tilde "],
+  [/\\underline\s*\{([^{}]*)\}/g, " $1 "],
+  [/\\bar\s*\{([^{}]*)\}/g, " $1 bar "],
+  [/\\hat\s*\{([^{}]*)\}/g, " $1 hat "],
+  [/\\tilde\s*\{([^{}]*)\}/g, " $1 tilde "],
+  [/\\vec\s*\{([^{}]*)\}/g, " vector $1 "],
+  [/\\dot\s*\{([^{}]*)\}/g, " $1 dot "],
+];
+
 function mathToSpeech(tex) {
   let out = String(tex || "");
+
+  // Placeholders are plain uppercase+digits so none of the operator rewrites
+  // below (-, _, ^, =, /, {}) can touch the prose they stand in for.
+  const literals = [];
+  // Braces inside prose are formatting too — strip them before stashing, since
+  // the stash is restored after the brace-stripping pass has already run.
+  const stash = (s) => ` XTEXPROSE${literals.push(String(s).replace(/[{}]/g, " ")) - 1}X `;
+
+  out = out.replace(TEX_DROP_WITH_ARG, " ");
+  for (let i = 0; i < 8; i++) {
+    const before = out;
+    out = replaceTexMacroArg(out, TEX_PROSE_NAMES, stash);
+    out = replaceTexMacroArg(out, TEX_UNWRAP_NAMES, (inner) => ` ${inner} `);
+    if (out === before) break;
+  }
+  for (const [re, repl] of TEX_ACCENTS) out = out.replace(re, repl);
+  out = out.replace(TEX_DROP_ARGLESS, " ");
+  out = out.replace(TEX_DROP_SPACING, " ");
+  out = out.replace(/\\%/g, " percent ");
+  out = out.replace(/\\([$&#_{}])/g, "$1");
+
   const greek = {
     alpha: "alpha", beta: "beta", gamma: "gamma", delta: "delta",
     epsilon: "epsilon", zeta: "zeta", eta: "eta", theta: "theta",
@@ -3780,7 +3863,6 @@ function mathToSpeech(tex) {
   out = out.replace(/\\neq/g, " not equal to ");
   out = out.replace(/\\approx/g, " approximately ");
   out = out.replace(/\\to/g, " approaches ");
-  out = out.replace(/\\left|\\right/g, " ");
   out = out.replace(/\\([a-zA-Z]+)\b/g, (m, name) => ` ${greek[name] || name} `);
   out = out.replace(/\^(\{([^}]+)\}|[^\s]+)/g, (m, g1, g2) => ` to the power of ${g2 || g1.replace(/[{}]/g, "")} `);
   out = out.replace(/_(\{([^}]+)\}|[^\s]+)/g, (m, g1, g2) => ` sub ${g2 || g1.replace(/[{}]/g, "")} `);
@@ -3789,6 +3871,10 @@ function mathToSpeech(tex) {
   out = out.replace(/\+/g, " plus ");
   out = out.replace(/-/g, " minus ");
   out = out.replace(/\//g, " divided by ");
+  // Leftovers once braces are gone, e.g. the caret in `x^ \text{max}`.
+  out = out.replace(/\^/g, " to the power of ");
+  out = out.replace(/_/g, " sub ");
+  out = out.replace(/XTEXPROSE(\d+)X/g, (m, i) => literals[Number(i)] ?? "");
   out = out.replace(/\s+/g, " ").trim();
   return out;
 }
