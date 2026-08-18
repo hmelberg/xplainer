@@ -12,7 +12,7 @@
 (function () {
   "use strict";
 
-  var GOOGLE_CLIENT_ID = ""; // e.g. "1234567890-abc.apps.googleusercontent.com"
+  var GOOGLE_CLIENT_ID = "548330454961-92631aa0osu0d2p39qt8ndiv5u56cfnu.apps.googleusercontent.com";
   var SCOPE = "https://www.googleapis.com/auth/drive.file";
   var LS_DOCS = "xplainer_gdoc_docs";
 
