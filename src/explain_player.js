@@ -283,27 +283,48 @@ function refreshVoices() {
 speechSynthesis.onvoiceschanged = refreshVoices;
 refreshVoices();
 
+// macOS ships a set of novelty voices (Albert, Zarvox, Bells, ...) that sort
+// first alphabetically and sound metallic; never fall back to those. Prefer
+// the high-quality system and cloud voices instead.
+const NOVELTY_VOICES = /albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|organ|superstar|trinoids|whisper|wobble|zarvox|junior|ralph|fred|kathy/i;
+const QUALITY_VOICES = /samantha|karen|daniel|alex\b|moira|tessa|fiona|serena|allison|ava|susan|vicki|victoria|nora|google|microsoft|aria|natural|enhanced|premium/i;
+
+function rankVoice(v) {
+  let score = 0;
+  const name = v.name || "";
+  if (QUALITY_VOICES.test(name)) score += 10;
+  if (NOVELTY_VOICES.test(name)) score -= 100;
+  if (v.default) score += 2;
+  if (v.localService) score += 1;
+  return score;
+}
+
+function bestVoice(pool) {
+  if (!pool.length) return null;
+  return pool.slice().sort((a, b) => rankVoice(b) - rankVoice(a))[0];
+}
+
 function pickVoice(lang, pref) {
   if (!voices.length) return null;
   const lowerPref = (pref || "").toLowerCase();
   if (lowerPref === "uk_female") {
     const gb = voices.filter((v) => (v.lang || "").toLowerCase().startsWith("en-gb"));
-    return gb[0] || voices[0];
+    return bestVoice(gb) || bestVoice(voices);
   }
   if (lowerPref === "female") {
     const byLang = voices.filter((v) => (v.lang || "").toLowerCase().startsWith((lang || "").toLowerCase()));
     const pool = byLang.length ? byLang : voices;
-    const female = pool.find((v) => /zira|susan|aria|sara|eva|female/i.test(v.name));
+    const female = pool.find((v) => /zira|susan|aria|sara|eva|samantha|karen|female/i.test(v.name));
     if (female) return female;
   }
   if (lowerPref === "male") {
     const byLang = voices.filter((v) => (v.lang || "").toLowerCase().startsWith((lang || "").toLowerCase()));
     const pool = byLang.length ? byLang : voices;
-    const male = pool.find((v) => /david|mark|james|male/i.test(v.name));
+    const male = pool.find((v) => /david|mark|james|daniel|alex\b|male/i.test(v.name));
     if (male) return male;
   }
-  const byLang = voices.find((v) => (v.lang || "").toLowerCase().startsWith((lang || "").toLowerCase()));
-  return byLang || voices[0];
+  const byLang = voices.filter((v) => (v.lang || "").toLowerCase().startsWith((lang || "").toLowerCase()));
+  return bestVoice(byLang) || bestVoice(voices);
 }
 
 function updateCaptions(text) {
@@ -1816,12 +1837,21 @@ function applyLayout() {
 
 function showBottomBar() {
   if (!els.bottomBar) return;
+  const topbar = document.querySelector(".topbar");
   els.bottomBar.classList.remove("hidden");
+  if (topbar) topbar.classList.remove("bar-hidden");
   if (state.hideBarTimer) clearTimeout(state.hideBarTimer);
   state.hideBarTimer = setTimeout(() => {
     if (state.editorOpen) return;
-    if (!els.bottomBar.matches(":hover") && !els.bottomBar.contains(document.activeElement)) {
+    // YouTube-like: during active playback the bar fades even under a
+    // resting cursor; when paused, hovering keeps it visible.
+    const activePlayback = state.playing && !state.paused;
+    const hoverHolds = els.bottomBar.matches(":hover") && !activePlayback;
+    if (!hoverHolds && !els.bottomBar.contains(document.activeElement)) {
       els.bottomBar.classList.add("hidden");
+    }
+    if (topbar && activePlayback) {
+      topbar.classList.add("bar-hidden");
     }
   }, 1600);
 }
@@ -7035,6 +7065,8 @@ function getPageStartIndex(index) {
 function startPlayback() {
   hideCenterPlay();
   if (els.bottomBar) els.bottomBar.classList.add("hidden");
+  const topbarEl = document.querySelector(".topbar");
+  if (topbarEl) topbarEl.classList.add("bar-hidden");
   els.playPauseBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="3" width="3" height="10" fill="currentColor"></rect><rect x="9" y="3" width="3" height="10" fill="currentColor"></rect></svg>';
   playFromHere();
 }
@@ -8416,6 +8448,7 @@ els.progress.addEventListener("input", () => {
 
 els.speedSel.addEventListener("change", () => {
   state.speed = Number(els.speedSel.value || 1);
+  try { localStorage.setItem("xplainer_speed", els.speedSel.value); } catch (_) {}
   updateProgressUI();
   showBottomBar();
 });
@@ -8529,6 +8562,12 @@ try {
 } catch {}
 
 state.pages = buildPages();
+try {
+  const savedSpeed = localStorage.getItem("xplainer_speed");
+  if (savedSpeed && els.speedSel.querySelector(`option[value="${savedSpeed}"]`)) {
+    els.speedSel.value = savedSpeed;
+  }
+} catch {}
 state.speed = Number(els.speedSel.value || 1);
 
 updateFullscreenIcon(false);

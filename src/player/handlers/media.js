@@ -163,11 +163,13 @@
     const waitUntilDrawn = action.wait_until_drawn ?? action.svg_wait_until_drawn ?? api.state.defaults.svg_wait_until_drawn ?? true;
     if (root && shouldAnimate) {
       await new Promise((r) => requestAnimationFrame(r));
+      // Honor the playback-speed control like write/draw do.
+      const speed = Number(api.state.speed) > 0 ? Number(api.state.speed) : 1;
       const animOpts = {
-        baseDelay: action.svg_base_delay ?? api.state.defaults.svg_base_delay ?? 0,
-        stepDelay: action.svg_step_delay ?? api.state.defaults.svg_step_delay ?? 400,
-        minDur: action.svg_min_dur ?? api.state.defaults.svg_min_dur ?? 700,
-        durPer100px: action.svg_dur_per_100px ?? api.state.defaults.svg_dur_per_100px ?? 220,
+        baseDelay: (action.svg_base_delay ?? api.state.defaults.svg_base_delay ?? 0) / speed,
+        stepDelay: (action.svg_step_delay ?? api.state.defaults.svg_step_delay ?? 400) / speed,
+        minDur: (action.svg_min_dur ?? api.state.defaults.svg_min_dur ?? 700) / speed,
+        durPer100px: (action.svg_dur_per_100px ?? api.state.defaults.svg_dur_per_100px ?? 220) / speed,
         revealText: action.svg_reveal_text ?? api.state.defaults.svg_reveal_text ?? true,
       };
       const totalMs = animateSvgDraw(root, animOpts);
