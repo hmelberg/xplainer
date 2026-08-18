@@ -8448,7 +8448,6 @@ els.progress.addEventListener("input", () => {
 
 els.speedSel.addEventListener("change", () => {
   state.speed = Number(els.speedSel.value || 1);
-  try { localStorage.setItem("xplainer_speed", els.speedSel.value); } catch (_) {}
   updateProgressUI();
   showBottomBar();
 });
@@ -8562,12 +8561,6 @@ try {
 } catch {}
 
 state.pages = buildPages();
-try {
-  const savedSpeed = localStorage.getItem("xplainer_speed");
-  if (savedSpeed && els.speedSel.querySelector(`option[value="${savedSpeed}"]`)) {
-    els.speedSel.value = savedSpeed;
-  }
-} catch {}
 state.speed = Number(els.speedSel.value || 1);
 
 updateFullscreenIcon(false);
