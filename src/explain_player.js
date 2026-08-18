@@ -3488,7 +3488,8 @@ async function renderQuestion(question, requireAnswer, instant, tokenAtStart, lo
         state.currentDrawContext = createDrawBlock(
           cmd.size ?? state.defaults.draw_height_px ?? 160,
           targetColumn,
-          { id: cmd.id, pause_on_click: cmd.pause_on_click, pause_on_click_type: "draw" }
+          { id: cmd.id, padding: cmd.padding, max_width_px: cmd.max_width_px,
+            pause_on_click: cmd.pause_on_click, pause_on_click_type: "draw" }
         );
         if (cmd.footnote) {
           const f = renderMarkdownBlock(cmd.footnote, { role: "footnote", muted: true, pause_on_click_type: "draw", pause_on_click: cmd.pause_on_click }, targetColumn);
@@ -3630,11 +3631,16 @@ function applyUnderline(reg, color) {
   if (reg.type === "svg") {
     try {
       const bbox = reg.el.getBBox();
+      // Same 100-unit flip leftover as the old line-label maths: the underline
+      // was mirrored about y=100, so on any canvas that is not 100 units tall
+      // it landed nowhere near the element (usually off-canvas entirely).
+      // bbox is already in screen coords — sit just under the element.
+      const underlineY = bbox.y + bbox.height + 1;
       const line = svgEl("line", {
         x1: bbox.x,
         x2: bbox.x + bbox.width,
-        y1: 100 - (bbox.y - 1),
-        y2: 100 - (bbox.y - 1),
+        y1: underlineY,
+        y2: underlineY,
         stroke: color || "var(--accent)",
         "stroke-width": "1.2",
       });
@@ -4604,20 +4610,35 @@ function createDrawBlock(size, targetColumn, meta = {}) {
   block.className = "draw-block";
   applyPauseOnClick(block, meta.pause_on_click_type || "draw", meta);
 
-  // `size` is the intended drawing area in pixels, interpreted as a square.
-  // Accepts a number or a string like "420" or "420px".
+  // `size` is the author's coordinate space: a square viewBox running 0..size
+  // on both axes. It is NOT the rendered size — the block scales to the width
+  // of its column (up to draw_max_width_px) and stays square, so a drawing is
+  // as large as the slide allows without any author coordinate changing.
   let sizePx = 160;
   if (size != null) {
     const n = typeof size === "number" ? size : parseFloat(String(size));
     if (Number.isFinite(n) && n > 0) sizePx = n;
   }
-  block.style.height = `${sizePx}px`;
-  block.style.maxWidth = `${sizePx}px`;
+
+  // Breathing room around the coordinate space, in viewBox units. Without it,
+  // anything drawn at x=0 or y=0 sits flush against the border and labels that
+  // reach past an edge are clipped by .draw-block's overflow:hidden.
+  const padSetting = meta.padding ?? state.defaults.draw_padding;
+  const padRaw = (padSetting === null || padSetting === undefined || padSetting === "")
+    ? NaN
+    : Number(padSetting);
+  const pad = Number.isFinite(padRaw) && padRaw >= 0 ? padRaw : Math.round(sizePx * 0.06);
+  const viewSize = sizePx + pad * 2;
+
+  const maxWidthPx = Number(meta.max_width_px ?? state.defaults.draw_max_width_px) || 640;
+  block.style.width = "100%";
+  block.style.maxWidth = `${Math.max(sizePx, maxWidthPx)}px`;
+  block.style.aspectRatio = "1 / 1";
   block.style.marginLeft = "auto";
   block.style.marginRight = "auto";
 
   const svg = svgEl("svg", {
-    viewBox: `0 0 ${sizePx} ${sizePx}`,
+    viewBox: `${-pad} ${-pad} ${viewSize} ${viewSize}`,
     preserveAspectRatio: "xMidYMid meet",
     "aria-label": "board canvas",
   });
@@ -4716,6 +4737,46 @@ async function animateFadeIn(el, tokenAtStart, durSec = 0.4) {
   });
 }
 
+function svgBoxesOverlap(a, b, tol = 0.5) {
+  return a.x < b.x + b.width - tol
+    && a.x + a.width - tol > b.x
+    && a.y < b.y + b.height - tol
+    && a.y + a.height - tol > b.y;
+}
+
+/**
+ * Nudge a freshly-appended <text> until it clears the labels already on the
+ * canvas, in viewBox units.
+ *
+ * Labels are placed purely from their own shape's geometry, so two shapes
+ * close together produce two labels in the same spot — the "text drawn on top
+ * of text" in a cluttered figure. This tries a short ring of offsets around
+ * the requested position and keeps the first that is clear; if none is, the
+ * label stays where the author asked rather than drifting somewhere random.
+ */
+function avoidLabelOverlap(labelLayer, text, x, y, step) {
+  const others = Array.from(labelLayer.querySelectorAll("text")).filter((t) => t !== text);
+  if (!others.length) return;
+  let boxes;
+  try {
+    boxes = others.map((t) => t.getBBox());
+  } catch { return; }
+  const d = Math.max(1, step * 2);
+  const candidates = [
+    [0, 0], [0, -d], [0, d], [d, 0], [-d, 0],
+    [0, -d * 2], [0, d * 2], [d, -d], [-d, -d], [d, d], [-d, d],
+  ];
+  for (const [dx, dy] of candidates) {
+    text.setAttribute("x", String(x + dx));
+    text.setAttribute("y", String(y + dy));
+    let own;
+    try { own = text.getBBox(); } catch { return; }
+    if (!boxes.some((b) => svgBoxesOverlap(own, b))) return;
+  }
+  text.setAttribute("x", String(x));
+  text.setAttribute("y", String(y));
+}
+
 function addLabel(drawContext, element, cmd) {
   if (!cmd.label || !drawContext.labelLayer) return;
   const offset = cmd.label_offset ?? 3;
@@ -4745,15 +4806,22 @@ function addLabel(drawContext, element, cmd) {
     x = bbox.x + bbox.width / 2;
     y = bbox.y + bbox.height / 2;
     const loc = (cmd.label_location || "above").toLowerCase();
-    if (loc === "above") y = bbox.y + bbox.height + offset;
-    if (loc === "under") y = bbox.y - offset;
+    // Screen coordinates: y grows downward, so "above" is a SMALLER y. These
+    // two were swapped, a leftover from when the draw layer flipped Y — every
+    // label landed on the opposite side of its shape from the one requested,
+    // which is a large part of why labels collided with other elements.
+    if (loc === "above") y = bbox.y - offset;
+    if (loc === "under") y = bbox.y + bbox.height + offset;
     if (loc === "right") { x = bbox.x + bbox.width + offset; anchor = "start"; }
     if (loc === "left") { x = bbox.x - offset; anchor = "end"; }
     if (loc === "center") { x = bbox.x + bbox.width / 2; y = bbox.y + bbox.height / 2; }
   }
 
   const xSvg = x;
-  const ySvg = (cmd.cmd === "line" && cmd.x1 !== undefined) ? (100 - y) : y;
+  // Was `100 - y` for line labels: a hardcoded flip around a 100-unit canvas
+  // that no longer exists. On the default 180-unit canvas it threw every line
+  // label to the wrong place, and labels below y=100 landed off-canvas.
+  const ySvg = y;
   const text = svgEl("text", {
     x: String(xSvg),
     y: String(ySvg),
@@ -4763,10 +4831,14 @@ function addLabel(drawContext, element, cmd) {
     "font-size": String((cmd.label_size ?? state.defaults.svg_text_font_size ?? 12) * getScale()),
   });
   text.textContent = cmd.label;
+  drawContext.labelLayer.appendChild(text);
+  const avoid = cmd.label_avoid_overlap ?? state.defaults.draw_label_avoid_overlap ?? true;
+  if (avoid && !cmd.label_rotation) {
+    avoidLabelOverlap(drawContext.labelLayer, text, xSvg, ySvg, offset);
+  }
   if (cmd.label_rotation) {
     text.setAttribute("transform", `rotate(${cmd.label_rotation} ${xSvg} ${ySvg})`);
   }
-  drawContext.labelLayer.appendChild(text);
   if (cmd.label_id) {
     registerElement(cmd.label_id, { type: "svg", el: text });
   } else if (cmd.id) {

@@ -21,7 +21,17 @@ window.explainDefaults = {
   typewriter_list_pad_px: 20,
   draw_speed_sec_per_100: 1.0,
   draw_animate: true,
+  /* Author coordinate space: a square viewBox running 0..draw_height_px on both
+     axes. This is NOT the rendered size — the canvas scales to the column width
+     (capped by draw_max_width_px) and stays square. */
   draw_height_px: 180,
+  /* Widest the drawing canvas is allowed to render, in CSS pixels. */
+  draw_max_width_px: 640,
+  /* Margin around the coordinate space, in viewBox units, so shapes at x=0 or
+     y=0 are not flush against the border. Omit for 6% of draw_height_px. */
+  draw_padding: null,
+  /* Nudge a label off any label it would land on top of. */
+  draw_label_avoid_overlap: true,
   draw_location: "right",
   draw_coords: "svg",
   board_color: "#0b1220",

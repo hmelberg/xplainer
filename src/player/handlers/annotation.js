@@ -105,7 +105,8 @@
     api.state.currentDrawContext = createDrawBlock(
       action.size ?? api.state.defaults.draw_height_px ?? 160,
       targetColumn,
-      { id: action.id, pause_on_click: action.pause_on_click, pause_on_click_type: "draw" }
+      { id: action.id, padding: action.padding, max_width_px: action.max_width_px,
+        pause_on_click: action.pause_on_click, pause_on_click_type: "draw" }
     );
     if (action.footnote) {
       const f = renderMarkdownBlock(
@@ -129,7 +130,8 @@
       api.state.currentDrawContext = createDrawBlock(
         action.size ?? api.state.defaults.draw_height_px ?? 160,
         targetColumn,
-        { pause_on_click: action.pause_on_click, pause_on_click_type: "draw" }
+        { padding: action.padding, max_width_px: action.max_width_px,
+          pause_on_click: action.pause_on_click, pause_on_click_type: "draw" }
       );
     }
     const drawContext = api.state.currentDrawContext;
