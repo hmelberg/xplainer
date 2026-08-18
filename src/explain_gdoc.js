@@ -341,7 +341,7 @@
     var btn = document.createElement("button");
     btn.id = "editorGdocBtn";
     btn.className = "editor-btn";
-    btn.textContent = "Save to Doc";
+    btn.textContent = "Doc";
     btn.title = "Save to a Google Doc in your Drive (shareable play link)";
     btn.addEventListener("click", onSaveClick);
     actions.appendChild(btn);

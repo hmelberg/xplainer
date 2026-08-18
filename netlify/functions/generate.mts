@@ -98,6 +98,32 @@ export default async (req: Request, context: Context) => {
     return Response.json({ error: `Model not allowed: ${provider}/${model}` }, { status: 400 });
   }
 
+  // The gateway works by injecting these at runtime. If the provider's key
+  // is absent, fail up front with a diagnostic (names only, never values)
+  // instead of a cryptic SDK auth error mid-stream.
+  const GATEWAY_VARS = [
+    "ANTHROPIC_API_KEY", "ANTHROPIC_BASE_URL",
+    "OPENAI_API_KEY", "OPENAI_BASE_URL",
+    "GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GEMINI_BASE_URL",
+    "NETLIFY_AI_GATEWAY_BASE_URL", "NETLIFY_AI_GATEWAY_KEY",
+  ];
+  const present = GATEWAY_VARS.filter((k) => !!process.env[k]);
+  const needed =
+    provider === "anthropic" ? "ANTHROPIC_API_KEY"
+      : provider === "openai" ? "OPENAI_API_KEY"
+        : "GEMINI_API_KEY";
+  if (!process.env[needed] && !(provider === "gemini" && process.env.GOOGLE_API_KEY)) {
+    return Response.json(
+      {
+        error:
+          "AI Gateway credentials are not being injected for " + provider +
+          ". Injected vars present: [" + present.join(", ") + "]. " +
+          "Check team AI enablement on Netlify, or use your own API key (⚙ in the editor).",
+      },
+      { status: 503 },
+    );
+  }
+
   const deltas =
     provider === "anthropic"
       ? anthropicDeltas(model, system, user)

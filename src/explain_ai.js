@@ -13,7 +13,12 @@
     { provider: "openai", model: "gpt-5-mini", label: "OpenAI" },
   ];
   var MAX_TOKENS = 8192;
-  var PROMPT_URL = "src/explain_prompt_generate.txt";
+  // Resolve the prompt next to this script (not the page URL), so it loads
+  // no matter what path the app is served from.
+  var SCRIPT_SRC = (document.currentScript && document.currentScript.src) || "";
+  var PROMPT_URL = SCRIPT_SRC
+    ? new URL("explain_prompt_generate.txt", SCRIPT_SRC).href
+    : "src/explain_prompt_generate.txt";
   var LS_MODEL = "xplainer_ai_model";
   var LS_KEYS = "xplainer_ai_keys";
 
@@ -68,10 +73,16 @@
 
   function injectStyles() {
     var css = [
-      ".editor-ai { display:flex; gap:6px; align-items:center; width:100%; margin-top:6px; }",
-      ".editor-ai .editor-ai-spark { flex:0 0 auto; opacity:.8; }",
-      ".editor-ai input.editor-input { flex:1 1 auto; min-width:120px; }",
-      ".editor-ai select.editor-input { flex:0 0 auto; width:auto; }",
+      // A plain second row between the toolbar and the textarea; the pane's
+      // own gap and the controls' native classes keep it visually consistent.
+      // margin-top compensates for .editor-toolbar's negative bleed margin,
+      // which pulls following siblings space-3−space-2 above its visual edge.
+      ".editor-ai { display:flex; gap:var(--space-1); align-items:center; flex-wrap:nowrap; min-width:0;",
+      "  margin-top: calc(var(--space-3) - var(--space-2)); }",
+      ".editor-ai .editor-ai-spark { flex:0 0 auto; opacity:.8; font-size:var(--font-xs); }",
+      ".editor-ai input.editor-input { flex:1 1 auto; min-width:0; }",
+      ".editor-ai select.editor-input { flex:0 1 auto; width:auto; min-width:0; cursor:pointer; }",
+      ".editor-ai .editor-btn { flex:0 0 auto; white-space:nowrap; }",
       ".editor-ai-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.55);",
       "  display:none; align-items:center; justify-content:center; z-index:10000; }",
       ".editor-ai-modal-overlay.visible { display:flex; }",
@@ -102,7 +113,9 @@
       '<button id="aiRestoreBtn" class="editor-btn" style="display:none" ' +
       'title="Swap back to the text as it was before generation">Restore</button>' +
       '<button id="aiSettingsBtn" class="editor-btn" title="AI settings (your own API keys)">⚙</button>';
-    toolbar.appendChild(row);
+    // Own line below the toolbar — the toolbar itself is a nowrap flex row
+    // and cramming these controls into it squeezes everything.
+    toolbar.insertAdjacentElement("afterend", row);
 
     els.prompt = row.querySelector("#aiPromptInput");
     els.model = row.querySelector("#aiModelSelect");
@@ -181,7 +194,7 @@
   function getSystemPrompt() {
     if (state.promptCache) return Promise.resolve(state.promptCache);
     return fetch(PROMPT_URL, { cache: "no-store" }).then(function (res) {
-      if (!res.ok) throw new Error("Could not load generation prompt (" + res.status + ")");
+      if (!res.ok) throw new Error("Could not load generation prompt (" + res.status + " for " + PROMPT_URL + ")");
       return res.text();
     }).then(function (text) {
       state.promptCache = text;

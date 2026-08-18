@@ -240,7 +240,7 @@
     var btn = document.createElement("button");
     btn.id = "editorGithubBtn";
     btn.className = "editor-btn";
-    btn.textContent = "Save to GitHub";
+    btn.textContent = "GitHub";
     btn.title = "Commit this lecture to a GitHub repo (personal access token)";
     btn.addEventListener("click", function () {
       var textarea = document.getElementById("editorTextarea");
