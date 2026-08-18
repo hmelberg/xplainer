@@ -7268,8 +7268,18 @@ function syncEditorToggle() {
   }
 }
 
+// Google Docs autocorrect turns straight quotes into curly ones when
+// collaborators hand-edit a doc, which corrupts block args and code.
+// Applied only to text that came from a Google Doc export.
+function normalizeGdocQuotes(text) {
+  return String(text || "")
+    .replace(/[“”„‟]/g, '"')
+    .replace(/[‘’‚‛]/g, "'");
+}
+
 async function loadLectureFromText(text, name = "") {
-  const raw = text || "";
+  let raw = text || "";
+  if (/docs\.google\.com\/document\//i.test(String(name))) raw = normalizeGdocQuotes(raw);
   state.sourceText = raw;
   // Track the source URL (if any) so xplainer_link and other relative
   // resources can resolve bare filenames against the current lecture's path.
@@ -7811,7 +7821,8 @@ async function loadEditorFromUrl(value) {
   try {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Failed to load (${res.status})`);
-    const text = await res.text();
+    let text = await res.text();
+    if (/docs\.google\.com\/document\//i.test(url)) text = normalizeGdocQuotes(text);
     if (els.editorTextarea) {
       els.editorTextarea.value = text;
       state.editorText = text;
