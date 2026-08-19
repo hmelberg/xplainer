@@ -52,6 +52,7 @@ let mdMathEnabled = false;
 function buildMd(withMath) {
   const m = window.markdownit({ html: true, linkify: true, typographer: true });
   if (withMath && window.texmath && window.katex) {
+    patchTexmathDollarRules(window.texmath);
     return m.use(window.texmath, {
       engine: window.katex,
       delimiters: ["dollars", "brackets"],
@@ -60,6 +61,24 @@ function buildMd(withMath) {
   }
   return m;
 }
+// texmath 1.0.0's $$-rules use [^$]*? for the span content, so an escaped
+// dollar (\$ — common in cost formulas like \frac{\$60{,}000}{...}) breaks
+// the delimiter matching and the whole formula shows as a parse error.
+// Widen the content pattern to also accept \$ . The inline $-rule already
+// tolerates it. Idempotent; verified against markdown-it-texmath@1.0.0.
+let texmathDollarsPatched = false;
+function patchTexmathDollarRules(texmath) {
+  if (texmathDollarsPatched) return;
+  const dollars = texmath && texmath.rules && texmath.rules.dollars;
+  if (!dollars) return;
+  for (const rule of [...(dollars.inline || []), ...(dollars.block || [])]) {
+    if (rule.tag === "$$" && rule.rex) {
+      rule.rex = new RegExp(rule.rex.source.replace(/\[\^\$\]\*\?/, "(?:\\\\\\$|[^$])*?"), rule.rex.flags);
+    }
+  }
+  texmathDollarsPatched = true;
+}
+
 function getMd() {
   if (!md) {
     // At script load, isLazy() can't see the lecture's `lazy=math` flag yet
