@@ -21,6 +21,9 @@
     : "src/explain_prompt_generate.txt";
   var LS_MODEL = "xplainer_ai_model";
   var LS_KEYS = "xplainer_ai_keys";
+  // Whether the stored speech key is a shared (password-vended) one — the
+  // player's monthly TTS character budget applies only to shared keys.
+  var LS_VENDED = "xplainer_vended_keys";
 
   // Blocks the app accepts (parser-native + registry + aliases). Used only
   // to warn about hallucinated blocks — the parser itself silently renders
@@ -60,6 +63,9 @@
   }
   function getKeys() {
     try { return JSON.parse(lsGet(LS_KEYS, "{}")) || {}; } catch (e) { return {}; }
+  }
+  function getVendedFlags() {
+    try { return JSON.parse(lsGet(LS_VENDED, "{}")) || {}; } catch (e) { return {}; }
   }
 
   // ---------- keys & password redemption ----------
@@ -123,6 +129,17 @@
     PROVIDERS.forEach(function (p) { if (candidates.indexOf(next[p]) >= 0) next[p] = ""; });
     PROVIDERS.forEach(function (p) { if (vended[p]) next[p] = vended[p]; });
     return next;
+  }
+
+  /**
+   * The vended-speech flag after a save: a vend that fills the speech field
+   * sets it, keeping the stored key untouched preserves it, and anything the
+   * user typed themselves (their own key, or clearing the field) drops it.
+   */
+  function speechVended(prev, prevFlag, next, vended) {
+    if (vended && vended.speech) return true;
+    if (next.speech && next.speech === prev.speech) return !!prevFlag;
+    return false;
   }
 
   function setStatus(text, isError) {
@@ -248,10 +265,12 @@
       if (value && !looksLikeKey(p, value) && candidates.indexOf(value) < 0) candidates.push(value);
     });
     if (candidates.length) setStatus("Checking…");
+    var prev = getKeys();
     redeemPassword(candidates).then(function (vended) {
       var next = mergeVended(entered, candidates, vended);
       PROVIDERS.forEach(function (p) { fields[p].value = next[p]; });
       lsSet(LS_KEYS, JSON.stringify(next));
+      lsSet(LS_VENDED, JSON.stringify({ speech: speechVended(prev, getVendedFlags().speech, next, vended) }));
       closeSettings();
       setStatus(vended ? "Keys unlocked." : "API keys saved in this browser.");
     });
@@ -556,6 +575,7 @@
       looksLikeKey: looksLikeKey,
       redeemPassword: redeemPassword,
       mergeVended: mergeVended,
+      speechVended: speechVended,
     };
   }
 

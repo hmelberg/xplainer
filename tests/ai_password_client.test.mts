@@ -51,6 +51,12 @@ function loadAi(fetchImpl?: (url: string, init: RequestInit) => Promise<unknown>
       candidates: string[],
       vended: Record<string, string> | null,
     ) => Record<string, string>;
+    speechVended: (
+      prev: Record<string, string>,
+      prevFlag: boolean | undefined,
+      next: Record<string, string>,
+      vended: Record<string, string> | null,
+    ) => boolean;
   };
 }
 
@@ -187,6 +193,19 @@ test("a speech password entered in the speech field is replaced by the key", () 
   });
   assert.deepEqual(plain(next), { anthropic: "", gemini: "", openai: "", speech: "AIzaRealSpeech" });
   assert.ok(!JSON.stringify(next).includes("tale-passord"));
+});
+
+test("the vended-speech flag: set by a vend, kept while untouched, dropped for the user's own key", () => {
+  const { speechVended } = loadAi();
+  const K = "AIzaVendedSpeech";
+  // a vend that fills the speech field marks the key as shared
+  assert.equal(speechVended({ speech: "" }, false, { speech: K }, { speech: K }), true);
+  // re-saving other fields with the stored key untouched keeps the flag
+  assert.equal(speechVended({ speech: K }, true, { speech: K }, null), true);
+  // the user's own pasted key is never budgeted
+  assert.equal(speechVended({ speech: K }, true, { speech: "AIzaMyOwnKey" }, null), false);
+  // clearing the field clears the flag
+  assert.equal(speechVended({ speech: K }, true, { speech: "" }, null), false);
 });
 
 test("when redemption fails the text is kept exactly as entered", () => {

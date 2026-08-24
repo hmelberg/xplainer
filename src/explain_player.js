@@ -207,6 +207,7 @@ const els = {
   fontIncreaseBtn: document.getElementById("fontIncreaseBtn"),
   ccBtn: document.getElementById("ccBtn"),
   muteBtn: document.getElementById("muteBtn"),
+  recordBtn: document.getElementById("recordBtn"),
   sourceMenuBtn: document.getElementById("sourceMenuBtn"),
   sourcePanel: document.getElementById("sourcePanel"),
   sourceInput: document.getElementById("sourceInput"),
@@ -3978,9 +3979,48 @@ function cloudTtsKey() {
   } catch (_) { return ""; }
 }
 
+// Soft monthly character cap, per browser — applies ONLY when the stored key
+// was vended for a password (explain_ai.js keeps the flag); a user's own
+// pasted key is never budgeted. Cache hits cost nothing and are not counted,
+// and an exceeded budget just means the browser voice takes over.
+const CLOUD_TTS_MONTHLY_CHARS = 200000; // ≈ $3.2/month at Google's ~$16/1M
+
+function speechKeyIsVended() {
+  try {
+    return !!(JSON.parse(localStorage.getItem("xplainer_vended_keys") || "{}") || {}).speech;
+  } catch (_) { return false; }
+}
+
+function ttsUsage() {
+  const month = new Date().toISOString().slice(0, 7);
+  try {
+    const u = JSON.parse(localStorage.getItem("xplainer_tts_usage") || "null");
+    if (u && u.month === month && typeof u.chars === "number") return u;
+  } catch (_) { /* fall through to a fresh month */ }
+  return { month, chars: 0 };
+}
+
+function addTtsChars(n) {
+  const u = ttsUsage();
+  u.chars += n;
+  try { localStorage.setItem("xplainer_tts_usage", JSON.stringify(u)); } catch (_) { /* private mode */ }
+}
+
+function ttsBudgetExceeded() {
+  if (!speechKeyIsVended() || ttsUsage().chars < CLOUD_TTS_MONTHLY_CHARS) return false;
+  if (!cloudTts.budgetWarned) {
+    cloudTts.budgetWarned = true;
+    console.warn(
+      `xplainer: this browser's monthly allowance for the shared speech key (${CLOUD_TTS_MONTHLY_CHARS} characters) is used up — narration uses the browser voice until next month, or your own key.`,
+    );
+  }
+  return true;
+}
+
 const cloudTts = {
   ctx: null,
   gain: null,
+  budgetWarned: false,
   cache: new Map(),   // "rate|voice|text" -> AudioBuffer (session-lived)
   pending: new Map(), // same key -> in-flight Promise, so repeats never double-pay
   active: new Set(),
@@ -4024,6 +4064,7 @@ function cloudTtsBuffer(spoken, apiKey, voice, rate) {
   if (hit) return Promise.resolve(hit);
   const inFlight = cloudTts.pending.get(cacheKey);
   if (inFlight) return inFlight;
+  if (ttsBudgetExceeded()) return Promise.reject(new Error("tts budget spent"));
   const call = (withName) =>
     fetch(`${CLOUD_TTS_ENDPOINT}?key=${encodeURIComponent(apiKey)}`, {
       method: "POST",
@@ -4043,6 +4084,7 @@ function cloudTtsBuffer(spoken, apiKey, voice, rate) {
     })
     .then((json) => {
       if (!json.audioContent) throw new Error("the TTS response carried no audio");
+      addTtsChars(spoken.length);
       const bin = atob(json.audioContent);
       const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
@@ -4061,9 +4103,29 @@ function cloudTtsBuffer(spoken, apiKey, voice, rate) {
   return p;
 }
 
+function cloudTtsRate(opts) {
+  return Math.min(4, Math.max(0.25, (opts.speech_rate ?? state.defaults.speech_rate ?? 1.0) * state.speed));
+}
+
+/**
+ * Warm the cache for a plan's lines (fire-and-forget; errors surface at
+ * speak time): later parts synthesize while earlier ones play, so only the
+ * very first line of a plan ever waits on the network.
+ */
+function prefetchCloudSpeech(parts, baseOpts) {
+  const apiKey = cloudTtsKey();
+  if (!apiKey) return;
+  for (const part of parts || []) {
+    const text = String(part?.text || "");
+    if (!text.trim()) continue;
+    const opts = { ...baseOpts, ...(part?.opts && typeof part.opts === "object" ? part.opts : {}) };
+    const spoken = normalizeSpeechText(text, opts);
+    cloudTtsBuffer(spoken, apiKey, cloudTtsVoice(opts), cloudTtsRate(opts)).catch(() => undefined);
+  }
+}
+
 function speakWithCloud(spoken, apiKey, tokenAtStart, opts) {
-  const rate = Math.min(4, Math.max(0.25, (opts.speech_rate ?? state.defaults.speech_rate ?? 1.0) * state.speed));
-  return cloudTtsBuffer(spoken, apiKey, cloudTtsVoice(opts), rate).then(
+  return cloudTtsBuffer(spoken, apiKey, cloudTtsVoice(opts), cloudTtsRate(opts)).then(
     (buffer) =>
       new Promise((resolve) => {
         if (tokenAtStart !== state.cancelToken) return resolve();
@@ -4141,6 +4203,7 @@ function speakWithBrowser(spoken, opts, resolve) {
 
 async function speakTextPlan(plan, tokenAtStart, baseOpts = {}) {
   if (!Array.isArray(plan) || !plan.length) return;
+  prefetchCloudSpeech(plan, baseOpts);
   for (const part of plan) {
     if (tokenAtStart !== state.cancelToken) return;
     const text = String(part?.text || "");
@@ -4330,6 +4393,7 @@ function getPyodideResultSpeechText(result) {
 }
 
 async function speakExplainPlan(plan, tokenAtStart, action = {}) {
+  prefetchCloudSpeech(plan, { ...action, speak_markdown: false });
   for (const part of plan || []) {
     const text = String(part?.text || "").trim();
     if (!text) continue;
@@ -8361,6 +8425,9 @@ function buildSaveAsAppHtml(editorText, opts) {
   <button id="fullscreenBtn" title="Fullscreen" aria-label="Fullscreen">
     <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6 V3 H6 M10 3 H13 V6 M13 10 V13 H10 M6 13 H3 V10" stroke="currentColor" stroke-width="1.4" fill="none"></path></svg>
   </button>
+  <button id="recordBtn" title="Record video (captures this tab + cloud narration)" aria-label="Record video">
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.4" stroke="currentColor" stroke-width="1.4" fill="none"></circle><circle cx="8" cy="8" r="3.4" fill="currentColor"></circle></svg>
+  </button>
   <button id="editorToggleBtn" title="Edit" aria-label="Edit" style="display:none">
     <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16.5 V20 H7.5 L18.3 9.2 L14.8 5.7 Z" fill="currentColor"></path><path d="M19.7 7.8 L17.2 5.3 L18.6 3.9 A1.2 1.2 0 0 1 20.3 3.9 L21.1 4.7 A1.2 1.2 0 0 1 21.1 6.4 Z" fill="currentColor"></path></svg>
   </button>
@@ -8624,6 +8691,90 @@ els.muteBtn.onclick = () => {
   updateMuteIcon();
   updateCaptions("");
 };
+
+// ---------- video recording (tab capture) ----------
+// Drawcast exports video by re-rendering its canvas offscreen; xplainer plays
+// live DOM, so recording captures the tab instead: the browser asks which
+// surface to share, the show is played normally, and cloud narration is mixed
+// in straight from the WebAudio graph. speechSynthesis is NOT capturable —
+// without a cloud key the recording is video-only (keep captions on).
+const recorder = { rec: null, chunks: [], stream: null, dest: null };
+const RECORD_TITLE = "Record video (captures this tab + cloud narration)";
+
+function recordingCleanup() {
+  if (recorder.stream) for (const t of recorder.stream.getTracks()) t.stop();
+  if (recorder.dest && cloudTts.gain) {
+    try { cloudTts.gain.disconnect(recorder.dest); } catch (_) { /* never connected */ }
+  }
+  recorder.rec = null;
+  recorder.chunks = [];
+  recorder.stream = null;
+  recorder.dest = null;
+  if (els.recordBtn) {
+    setToggleState(els.recordBtn, false);
+    els.recordBtn.title = RECORD_TITLE;
+  }
+}
+
+async function startRecording() {
+  let display;
+  try {
+    display = await navigator.mediaDevices.getDisplayMedia({
+      video: true,
+      audio: false, // narration comes from the WebAudio graph below, not tab audio
+      preferCurrentTab: true, // Chrome: offer "this tab" first
+      selfBrowserSurface: "include", // Chrome: do not hide this tab from the picker
+    });
+  } catch (_) {
+    return; // user dismissed the picker
+  }
+  const tracks = [...display.getVideoTracks()];
+  if (cloudTtsKey()) {
+    const ctx = cloudTts.ensureCtx();
+    recorder.dest = ctx.createMediaStreamDestination();
+    cloudTts.gain.connect(recorder.dest); // gain also keeps feeding the speakers
+    tracks.push(...recorder.dest.stream.getAudioTracks());
+  }
+  recorder.stream = display;
+  const mime = ["video/webm;codecs=vp9,opus", "video/webm"].find((m) => MediaRecorder.isTypeSupported(m));
+  const rec = new MediaRecorder(new MediaStream(tracks), mime ? { mimeType: mime } : undefined);
+  recorder.rec = rec;
+  recorder.chunks = [];
+  rec.ondataavailable = (e) => {
+    if (e.data && e.data.size) recorder.chunks.push(e.data);
+  };
+  rec.onstop = () => {
+    const blob = new Blob(recorder.chunks, { type: rec.mimeType || "video/webm" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    const title = (els.pageTitle?.textContent || "").trim() || "xplainer-recording";
+    a.download = title.replace(/[^\w-]+/g, "_") + ".webm";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    recordingCleanup();
+  };
+  // The browser's own "stop sharing" pill must end the recording too.
+  display.getVideoTracks()[0].addEventListener("ended", stopRecording);
+  rec.start();
+  if (els.recordBtn) {
+    setToggleState(els.recordBtn, true);
+    els.recordBtn.title = "Stop recording";
+  }
+}
+
+function stopRecording() {
+  if (recorder.rec && recorder.rec.state !== "inactive") recorder.rec.stop();
+  else recordingCleanup();
+}
+
+if (els.recordBtn) {
+  if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+    els.recordBtn.title = RECORD_TITLE;
+    els.recordBtn.onclick = () => (recorder.rec ? stopRecording() : startRecording());
+  } else {
+    els.recordBtn.style.display = "none"; // mobile browsers have no tab capture
+  }
+}
 
 window.addEventListener("resize", () => {
   updateAllColumns();

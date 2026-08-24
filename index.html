@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://unpkg.com" crossorigin />
 <!-- Preload the biggest local script so it starts downloading alongside the
      CDN libraries during HTML parsing instead of waiting until the end of body. -->
-<link rel="preload" as="script" href="src/explain_player.js?v=6" />
+<link rel="preload" as="script" href="src/explain_player.js?v=7" />
 <!-- Fonts used by playful/chalk skins so they render without relying on system installs -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,400;0,700;1,400;1,700&family=Patrick+Hand&family=Kalam:wght@300;400;700&family=Fira+Code:wght@400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&display=swap" />
 <style>
@@ -239,6 +239,7 @@
     box-shadow: 0 0 0 1px rgba(147,197,253,.55) inset;
     color: #e0f2fe;
   }
+  #recordBtn.is-on { color: #ef4444; }
   .tutorial-link {
     font-size: var(--font-xs);
     letter-spacing: 0.2px;
@@ -1167,6 +1168,12 @@
       <path d="M3 6 V3 H6 M10 3 H13 V6 M13 10 V13 H10 M6 13 H3 V10" stroke="currentColor" stroke-width="1.4" fill="none"></path>
     </svg>
   </button>
+  <button id="recordBtn" title="Record video (captures this tab + cloud narration)" aria-label="Record video">
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+      <circle cx="8" cy="8" r="6.4" stroke="currentColor" stroke-width="1.4" fill="none"></circle>
+      <circle cx="8" cy="8" r="3.4" fill="currentColor"></circle>
+    </svg>
+  </button>
   <button id="editorToggleBtn" title="Edit" aria-label="Edit">
     <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M4 16.5 V20 H7.5 L18.3 9.2 L14.8 5.7 Z" fill="currentColor"></path>
@@ -1218,8 +1225,8 @@
 <script defer src="src/player/handlers/interactive.js"></script>
 <script defer src="src/player/handlers/engine_meta.js"></script>
 <script defer src="src/player/handlers/fx.js"></script>
-<script defer src="src/explain_player.js?v=6"></script>
-<script defer src="src/explain_ai.js?v=3"></script>
+<script defer src="src/explain_player.js?v=7"></script>
+<script defer src="src/explain_ai.js?v=4"></script>
 <script defer src="src/explain_gdoc.js?v=3"></script>
 <script defer src="src/explain_github.js?v=2"></script>
 </body>
