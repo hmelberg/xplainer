@@ -22,6 +22,8 @@ const VARS = [
   "XPLAINER_ANTHROPIC_KEY",
   "XPLAINER_GEMINI_KEY",
   "XPLAINER_OPENAI_KEY",
+  "XPLAINER_SPEECH_PASSWORD",
+  "XPLAINER_SPEECH_KEY",
 ] as const;
 
 async function withEnv(
@@ -55,6 +57,8 @@ const CONFIGURED = {
   XPLAINER_ANTHROPIC_KEY: "sk-ant-real-anthropic",
   XPLAINER_GEMINI_KEY: "AIzaRealGemini",
   XPLAINER_OPENAI_KEY: "sk-real-openai",
+  XPLAINER_SPEECH_PASSWORD: "speak-friend",
+  XPLAINER_SPEECH_KEY: "AIzaRealSpeech",
 };
 
 test("503 when no password is configured", async () => {
@@ -120,6 +124,7 @@ test("correct password vends every configured key", async () => {
       anthropicKey: "sk-ant-real-anthropic",
       geminiKey: "AIzaRealGemini",
       openaiKey: "sk-real-openai",
+      speechKey: "AIzaRealSpeech",
     });
   });
 });
@@ -134,6 +139,7 @@ test("unconfigured providers come back empty, not missing", async () => {
         anthropicKey: "sk-ant-only",
         geminiKey: "",
         openaiKey: "",
+        speechKey: "",
       });
     },
   );
@@ -141,10 +147,66 @@ test("unconfigured providers come back empty, not missing", async () => {
 
 test("no response ever echoes the password back", async () => {
   await withEnv(CONFIGURED, async () => {
-    for (const body of [{ password: "open-sesame" }, { password: "wrong" }, {}]) {
+    for (const body of [{ password: "open-sesame" }, { password: "speak-friend" }, { password: "wrong" }, {}]) {
       const text = await (await handler(post(body))).text();
       assert.ok(!text.includes("open-sesame"), `password leaked in: ${text}`);
+      assert.ok(!text.includes("speak-friend"), `speech password leaked in: ${text}`);
     }
+  });
+});
+
+// ---------- the speech-only password ----------
+
+test("the speech password vends ONLY the speech key", async () => {
+  await withEnv(CONFIGURED, async () => {
+    const res = await handler(post({ password: "speak-friend" }));
+    assert.equal(res.status, 200);
+    assert.deepEqual(await res.json(), {
+      anthropicKey: "",
+      geminiKey: "",
+      openaiKey: "",
+      speechKey: "AIzaRealSpeech",
+    });
+  });
+});
+
+test("the speech password is useless while no speech key is configured", async () => {
+  // Same uniform 401 as any wrong password — a holder cannot even tell the
+  // password exists until there is something to vend.
+  await withEnv({ ...CONFIGURED, XPLAINER_SPEECH_KEY: undefined as unknown as string }, async () => {
+    delete process.env.XPLAINER_SPEECH_KEY;
+    const charged: string[] = [];
+    const deps: KeysDeps = { ...ALLOW_ALL, recordFailure: async (ip) => { charged.push(ip); } };
+    const res = await handler(post({ password: "speak-friend" }), deps);
+    assert.equal(res.status, 401);
+    assert.deepEqual(await res.json(), { error: "unauthorized" });
+    assert.deepEqual(charged, ["1.2.3.4"]);
+  });
+});
+
+test("speech password + speech key alone is enough to turn vending on", async () => {
+  await withEnv(
+    { XPLAINER_SPEECH_PASSWORD: "speak-friend", XPLAINER_SPEECH_KEY: "AIzaRealSpeech" },
+    async () => {
+      const res = await handler(post({ password: "speak-friend" }));
+      assert.equal(res.status, 200);
+      assert.deepEqual(await res.json(), {
+        anthropicKey: "",
+        geminiKey: "",
+        openaiKey: "",
+        speechKey: "AIzaRealSpeech",
+      });
+    },
+  );
+});
+
+test("a correct speech password is not charged to the budget", async () => {
+  await withEnv(CONFIGURED, async () => {
+    const charged: string[] = [];
+    const deps: KeysDeps = { ...ALLOW_ALL, recordFailure: async (ip) => { charged.push(ip); } };
+    const res = await handler(post({ password: "speak-friend" }), deps);
+    assert.equal(res.status, 200);
+    assert.deepEqual(charged, []);
   });
 });
 

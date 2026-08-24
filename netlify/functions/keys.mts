@@ -2,10 +2,12 @@
 // so people you trust can use the AI features without a key of their own.
 //
 // Secrets live ONLY in Netlify env vars (never in the repo, never bundled):
-//   XPLAINER_PASSWORD       — the shared password
-//   XPLAINER_ANTHROPIC_KEY  — vended on success (any subset may be set)
-//   XPLAINER_GEMINI_KEY     — vended on success
-//   XPLAINER_OPENAI_KEY     — vended on success
+//   XPLAINER_PASSWORD        — the shared password (vends everything)
+//   XPLAINER_ANTHROPIC_KEY   — vended on success (any subset may be set)
+//   XPLAINER_GEMINI_KEY      — vended on success
+//   XPLAINER_OPENAI_KEY      — vended on success
+//   XPLAINER_SPEECH_KEY      — Google Cloud key with Text-to-Speech enabled
+//   XPLAINER_SPEECH_PASSWORD — narrower password vending ONLY the speech key
 //
 // The names are deliberately NOT the provider defaults. The Netlify AI
 // Gateway injects ANTHROPIC_API_KEY / OPENAI_API_KEY / GEMINI_API_KEY plus
@@ -52,12 +54,18 @@ export async function handleKeysRequest(req: Request, deps: KeysDeps): Promise<R
   }
 
   const expected = process.env.XPLAINER_PASSWORD;
+  const speechExpected = process.env.XPLAINER_SPEECH_PASSWORD;
   const anthropicKey = process.env.XPLAINER_ANTHROPIC_KEY ?? "";
   const geminiKey = process.env.XPLAINER_GEMINI_KEY ?? "";
   const openaiKey = process.env.XPLAINER_OPENAI_KEY ?? "";
+  const speechKey = process.env.XPLAINER_SPEECH_KEY ?? "";
 
-  // Vending is off unless there is both a password and something to vend.
-  if (!expected || !(anthropicKey || geminiKey || openaiKey)) {
+  // Vending is off unless some password has something to vend. A password
+  // with nothing behind it is treated as unset — so the speech password only
+  // starts existing (even as a 401-vs-503 signal) once its key is configured.
+  const mainOn = !!expected && !!(anthropicKey || geminiKey || openaiKey || speechKey);
+  const speechOn = !!speechExpected && !!speechKey;
+  if (!mainOn && !speechOn) {
     return new Response(JSON.stringify({ error: "vending disabled" }), { status: 503, headers });
   }
 
@@ -79,13 +87,20 @@ export async function handleKeysRequest(req: Request, deps: KeysDeps): Promise<R
     /* falls through to the uniform 401 below */
   }
 
-  if (!password || !passwordMatches(password, expected)) {
+  // Both comparisons always run so the timing never hints which one matched.
+  const matchesMain = !!password && mainOn && passwordMatches(password, expected!);
+  const matchesSpeech = !!password && speechOn && passwordMatches(password, speechExpected!);
+  if (!matchesMain && !matchesSpeech) {
     // Only failures are charged, so knowing the password never locks you out.
     await deps.recordFailure(ip);
     return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers });
   }
 
-  return new Response(JSON.stringify({ anthropicKey, geminiKey, openaiKey }), { status: 200, headers });
+  // The speech password unlocks narration only; the main password everything.
+  const body = matchesMain
+    ? { anthropicKey, geminiKey, openaiKey, speechKey }
+    : { anthropicKey: "", geminiKey: "", openaiKey: "", speechKey };
+  return new Response(JSON.stringify(body), { status: 200, headers });
 }
 
 export default async (req: Request): Promise<Response> =>

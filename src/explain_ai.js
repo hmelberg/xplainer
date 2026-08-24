@@ -64,9 +64,11 @@
 
   // ---------- keys & password redemption ----------
 
-  var PROVIDERS = ["anthropic", "gemini", "openai"];
+  // "speech" is not a chat provider: it is a Google Cloud key (or the
+  // speech-only password) that explain_player.js reads for cloud narration.
+  var PROVIDERS = ["anthropic", "gemini", "openai", "speech"];
   // Just enough to tell "this is a real key" from "this is something else".
-  var KEY_PREFIXES = { anthropic: "sk-ant-", gemini: "AIza", openai: "sk-" };
+  var KEY_PREFIXES = { anthropic: "sk-ant-", gemini: "AIza", openai: "sk-", speech: "AIza" };
   var VENDING_ENDPOINT = "/api/keys";
 
   function looksLikeKey(provider, text) {
@@ -98,6 +100,7 @@
             anthropic: typeof json.anthropicKey === "string" ? json.anthropicKey : "",
             gemini: typeof json.geminiKey === "string" ? json.geminiKey : "",
             openai: typeof json.openaiKey === "string" ? json.openaiKey : "",
+            speech: typeof json.speechKey === "string" ? json.speechKey : "",
           };
           var usable = PROVIDERS.some(function (p) { return vended[p].length > 0; });
           return usable ? vended : attempt();
@@ -215,6 +218,8 @@
       '<label>Anthropic (Claude) API key</label><input id="aiKeyAnthropic" type="password" autocomplete="off" placeholder="sk-ant-…" />' +
       '<label>Google (Gemini) API key</label><input id="aiKeyGemini" type="password" autocomplete="off" placeholder="AIza…" />' +
       '<label>OpenAI API key</label><input id="aiKeyOpenai" type="password" autocomplete="off" placeholder="sk-…" />' +
+      '<label>Google speech key — cloud voices for narration (Text-to-Speech)</label>' +
+      '<input id="aiKeySpeech" type="password" autocomplete="off" placeholder="AIza…" />' +
       '<div class="editor-ai-modal-actions">' +
       '<button id="aiKeysSaveBtn" class="editor-btn">Save</button>' +
       '<button id="aiKeysCloseBtn" class="editor-btn">Close</button>' +
@@ -224,6 +229,7 @@
     els.keyAnthropic = overlay.querySelector("#aiKeyAnthropic");
     els.keyGemini = overlay.querySelector("#aiKeyGemini");
     els.keyOpenai = overlay.querySelector("#aiKeyOpenai");
+    els.keySpeech = overlay.querySelector("#aiKeySpeech");
 
     overlay.querySelector("#aiKeysSaveBtn").addEventListener("click", saveKeys);
     overlay.querySelector("#aiKeysCloseBtn").addEventListener("click", closeSettings);
@@ -233,7 +239,7 @@
   }
 
   function saveKeys() {
-    var fields = { anthropic: els.keyAnthropic, gemini: els.keyGemini, openai: els.keyOpenai };
+    var fields = { anthropic: els.keyAnthropic, gemini: els.keyGemini, openai: els.keyOpenai, speech: els.keySpeech };
     var entered = {};
     var candidates = [];
     PROVIDERS.forEach(function (p) {
@@ -256,6 +262,7 @@
     els.keyAnthropic.value = keys.anthropic || "";
     els.keyGemini.value = keys.gemini || "";
     els.keyOpenai.value = keys.openai || "";
+    els.keySpeech.value = keys.speech || "";
     els.overlay.classList.add("visible");
   }
   function closeSettings() { els.overlay.classList.remove("visible"); }

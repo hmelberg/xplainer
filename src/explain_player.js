@@ -1401,6 +1401,7 @@ function renderJsResult(result, outputEl) {
 function cancelAll() {
   state.cancelToken++;
   speechSynthesis.cancel();
+  cloudTts.stop();
   // Every pending viewer-wait is abandoned by the token bump, so the balance
   // counter would otherwise drift up and permanently mute the stall watchdog.
   state.awaitingUserInput = 0;
@@ -3956,6 +3957,130 @@ function normalizeSpeechText(text, opts = {}) {
   return out;
 }
 
+// ---------- cloud narration (Google Text-to-Speech) ----------
+// Mirrors drawcast: when a Google Cloud TTS key is stored (pasted in the AI
+// settings dialog, or vended there for the speech-only password), narration
+// is synthesized as MP3 and played through WebAudio. No key — or any cloud
+// failure — falls back to the browser's speechSynthesis below, so published
+// pages keep working with zero setup.
+
+const CLOUD_TTS_ENDPOINT = "https://texttospeech.googleapis.com/v1/text:synthesize";
+// Per-language voice defaults; if a name drifts out of the catalog the 400
+// retry below lets the API choose. Other languages get the API's default.
+const CLOUD_TTS_VOICES = { "en-us": "en-US-Neural2-F", "nb-no": "nb-NO-Wavenet-E", "no-no": "nb-NO-Wavenet-E" };
+
+function cloudTtsKey() {
+  try {
+    const keys = JSON.parse(localStorage.getItem("xplainer_ai_keys") || "{}") || {};
+    // The prefix guard keeps a saved-but-unredeemed password (or stray text)
+    // from ever being sent to Google as a key.
+    return typeof keys.speech === "string" && keys.speech.indexOf("AIza") === 0 ? keys.speech : "";
+  } catch (_) { return ""; }
+}
+
+const cloudTts = {
+  ctx: null,
+  gain: null,
+  cache: new Map(),   // "rate|voice|text" -> AudioBuffer (session-lived)
+  pending: new Map(), // same key -> in-flight Promise, so repeats never double-pay
+  active: new Set(),
+  ensureCtx() {
+    if (!this.ctx) {
+      this.ctx = new AudioContext();
+      this.gain = this.ctx.createGain();
+      this.gain.gain.value = state.muted ? 0 : 1;
+      this.gain.connect(this.ctx.destination);
+    }
+    // Autoplay policy can leave a fresh context suspended; speaking happens
+    // inside the user's play gesture, so resuming here is allowed.
+    if (this.ctx.state === "suspended") this.ctx.resume().catch(() => {});
+    return this.ctx;
+  },
+  setMuted(muted) { if (this.gain) this.gain.gain.value = muted ? 0 : 1; }, // applies mid-line
+  stop() {
+    for (const src of this.active) {
+      try { src.stop(); } catch (_) { /* already stopped */ }
+    }
+    this.active.clear();
+  },
+};
+
+function cloudTtsVoice(opts) {
+  const lang = String(opts.speech_lang ?? state.defaults.speech_lang ?? "en-US");
+  const pref = String(opts.speech_voice ?? state.defaults.speech_voice ?? "");
+  // A Google voice name ("nb-NO-Wavenet-E") carries its own language code;
+  // browser voice preferences ("Samantha", "Google UK English") never match.
+  if (/^[a-z]{2,3}-[A-Z]{2}-[A-Za-z0-9-]+$/.test(pref)) {
+    return { languageCode: pref.split("-").slice(0, 2).join("-"), name: pref };
+  }
+  const name = CLOUD_TTS_VOICES[lang.toLowerCase()];
+  return name ? { languageCode: lang, name } : { languageCode: lang };
+}
+
+function cloudTtsBuffer(spoken, apiKey, voice, rate) {
+  const ctx = cloudTts.ensureCtx();
+  const cacheKey = `${rate.toFixed(2)}|${voice.name || voice.languageCode}|${spoken}`;
+  const hit = cloudTts.cache.get(cacheKey);
+  if (hit) return Promise.resolve(hit);
+  const inFlight = cloudTts.pending.get(cacheKey);
+  if (inFlight) return inFlight;
+  const call = (withName) =>
+    fetch(`${CLOUD_TTS_ENDPOINT}?key=${encodeURIComponent(apiKey)}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      signal: AbortSignal.timeout(15000), // a hung synth must not hang the show
+      body: JSON.stringify({
+        input: { text: spoken },
+        voice: withName && voice.name ? voice : { languageCode: voice.languageCode },
+        audioConfig: { audioEncoding: "MP3", speakingRate: rate },
+      }),
+    });
+  const p = call(true)
+    .then((res) => (res.status === 400 && voice.name ? call(false) : res)) // voice-name drift: let the API choose
+    .then((res) => {
+      if (!res.ok) throw new Error(`TTS HTTP ${res.status}`);
+      return res.json();
+    })
+    .then((json) => {
+      if (!json.audioContent) throw new Error("the TTS response carried no audio");
+      const bin = atob(json.audioContent);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return ctx.decodeAudioData(bytes.buffer);
+    })
+    .then((buffer) => {
+      cloudTts.cache.set(cacheKey, buffer);
+      cloudTts.pending.delete(cacheKey);
+      return buffer;
+    })
+    .catch((err) => {
+      cloudTts.pending.delete(cacheKey);
+      throw err;
+    });
+  cloudTts.pending.set(cacheKey, p);
+  return p;
+}
+
+function speakWithCloud(spoken, apiKey, tokenAtStart, opts) {
+  const rate = Math.min(4, Math.max(0.25, (opts.speech_rate ?? state.defaults.speech_rate ?? 1.0) * state.speed));
+  return cloudTtsBuffer(spoken, apiKey, cloudTtsVoice(opts), rate).then(
+    (buffer) =>
+      new Promise((resolve) => {
+        if (tokenAtStart !== state.cancelToken) return resolve();
+        const ctx = cloudTts.ensureCtx();
+        const src = ctx.createBufferSource();
+        src.buffer = buffer;
+        src.connect(cloudTts.gain);
+        cloudTts.active.add(src);
+        src.onended = () => {
+          cloudTts.active.delete(src);
+          resolve();
+        };
+        src.start();
+      }),
+  );
+}
+
 function speakText(text, tokenAtStart, opts = {}) {
   return new Promise((resolve) => {
     if (!text || !text.trim()) return resolve();
@@ -3964,41 +4089,54 @@ function speakText(text, tokenAtStart, opts = {}) {
 
     const spoken = normalizeSpeechText(text, opts);
     updateCaptions(spoken);
-    const u = new SpeechSynthesisUtterance(spoken);
-    const lang = opts.speech_lang ?? state.defaults.speech_lang ?? "en-US";
-    const pref = opts.speech_voice ?? state.defaults.speech_voice;
-    u.lang = lang;
-    u.rate = (opts.speech_rate ?? state.defaults.speech_rate ?? 1.0) * state.speed;
-    const voice = pickVoice(lang, pref);
-    if (voice) u.voice = voice;
-    if (state.muted) u.volume = 0;
-
-    // Always resolve exactly once, regardless of token state. Callers that
-    // need to abort downstream work re-check the token after awaiting.
-    let done = false;
-    let watchdog = null;
-    const finish = () => {
-      if (done) return;
-      done = true;
-      if (watchdog) { clearTimeout(watchdog); watchdog = null; }
-      resolve();
-    };
-    u.onend = finish;
-    u.onerror = finish;
-
-    // Chrome watchdog: if the engine silently drops the utterance (known
-    // bug on long speeches, tab focus changes, or a wedged internal queue),
-    // force-resolve after an estimated max duration + a 6-second safety
-    // margin. ~11 chars/sec is a generous upper bound for TTS throughput.
-    const rate = u.rate || 1;
-    const estSec = Math.max(3, spoken.length / 11 / rate + 6);
-    watchdog = setTimeout(() => {
-      try { speechSynthesis.cancel(); } catch (_) {}
-      finish();
-    }, estSec * 1000);
-
-    speechSynthesis.speak(u);
+    const cloudKey = cloudTtsKey();
+    if (cloudKey) {
+      speakWithCloud(spoken, cloudKey, tokenAtStart, opts).then(resolve, () => {
+        // Cloud hiccup → browser voice, unless the show moved on meanwhile.
+        if (tokenAtStart !== state.cancelToken) return resolve();
+        speakWithBrowser(spoken, opts, resolve);
+      });
+    } else {
+      speakWithBrowser(spoken, opts, resolve);
+    }
   });
+}
+
+function speakWithBrowser(spoken, opts, resolve) {
+  const u = new SpeechSynthesisUtterance(spoken);
+  const lang = opts.speech_lang ?? state.defaults.speech_lang ?? "en-US";
+  const pref = opts.speech_voice ?? state.defaults.speech_voice;
+  u.lang = lang;
+  u.rate = (opts.speech_rate ?? state.defaults.speech_rate ?? 1.0) * state.speed;
+  const voice = pickVoice(lang, pref);
+  if (voice) u.voice = voice;
+  if (state.muted) u.volume = 0;
+
+  // Always resolve exactly once, regardless of token state. Callers that
+  // need to abort downstream work re-check the token after awaiting.
+  let done = false;
+  let watchdog = null;
+  const finish = () => {
+    if (done) return;
+    done = true;
+    if (watchdog) { clearTimeout(watchdog); watchdog = null; }
+    resolve();
+  };
+  u.onend = finish;
+  u.onerror = finish;
+
+  // Chrome watchdog: if the engine silently drops the utterance (known
+  // bug on long speeches, tab focus changes, or a wedged internal queue),
+  // force-resolve after an estimated max duration + a 6-second safety
+  // margin. ~11 chars/sec is a generous upper bound for TTS throughput.
+  const rate = u.rate || 1;
+  const estSec = Math.max(3, spoken.length / 11 / rate + 6);
+  watchdog = setTimeout(() => {
+    try { speechSynthesis.cancel(); } catch (_) {}
+    finish();
+  }, estSec * 1000);
+
+  speechSynthesis.speak(u);
 }
 
 async function speakTextPlan(plan, tokenAtStart, baseOpts = {}) {
@@ -4222,6 +4360,7 @@ async function runExplainCode(code, container, endBtn, tokenAtStart, action) {
   endBtn.onclick = () => {
     explainEnded = true;
     speechSynthesis.cancel();
+    cloudTts.stop();
     endBtn.style.display = "none";
   };
   const linesEl = document.createElement("ul");
@@ -4321,6 +4460,7 @@ async function runExplainCodeInBlocks(code, container, endBtn, tokenAtStart, act
   endBtn.onclick = () => {
     explainEnded = true;
     speechSynthesis.cancel();
+    cloudTts.stop();
     endBtn.style.display = "none";
   };
   const linesEl = document.createElement("ul");
@@ -8480,6 +8620,7 @@ els.ccBtn.onclick = () => {
 els.muteBtn.onclick = () => {
   state.muted = !state.muted;
   setToggleState(els.muteBtn, state.muted);
+  cloudTts.setMuted(state.muted);
   updateMuteIcon();
   updateCaptions("");
 };

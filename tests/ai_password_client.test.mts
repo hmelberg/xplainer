@@ -73,7 +73,8 @@ test("real provider keys are recognised, arbitrary text is not", () => {
   assert.equal(looksLikeKey("anthropic", "sk-ant-api03-abc"), true);
   assert.equal(looksLikeKey("gemini", "AIzaSyAbc123"), true);
   assert.equal(looksLikeKey("openai", "sk-proj-abc"), true);
-  for (const p of ["anthropic", "gemini", "openai"]) {
+  assert.equal(looksLikeKey("speech", "AIzaSyAbc123"), true);
+  for (const p of ["anthropic", "gemini", "openai", "speech"]) {
     assert.equal(looksLikeKey(p, "min-hemmelighet"), false, `${p} should not accept a password`);
   }
 });
@@ -94,7 +95,7 @@ test("redeeming posts the password and maps the vended keys", async () => {
   }));
   const { redeemPassword } = loadAi(impl);
   const vended = await redeemPassword(["hemmelig"]);
-  assert.deepEqual(plain(vended), { anthropic: "sk-ant-real", gemini: "AIzaReal", openai: "sk-real" });
+  assert.deepEqual(plain(vended), { anthropic: "sk-ant-real", gemini: "AIzaReal", openai: "sk-real", speech: "" });
   assert.equal(calls.length, 1);
   assert.equal(calls[0].url, "/api/keys");
   assert.deepEqual(plain(calls[0].body), { password: "hemmelig" });
@@ -113,7 +114,7 @@ test("a network failure yields null rather than throwing", async () => {
 });
 
 test("a 200 that vends nothing usable yields null", async () => {
-  const { impl } = fakeFetch(() => ({ ok: true, json: { anthropicKey: "", geminiKey: "", openaiKey: "" } }));
+  const { impl } = fakeFetch(() => ({ ok: true, json: { anthropicKey: "", geminiKey: "", openaiKey: "", speechKey: "" } }));
   const { redeemPassword } = loadAi(impl);
   assert.equal(await redeemPassword(["hemmelig"]), null);
 });
@@ -125,7 +126,7 @@ test("candidates are tried in order and stop at the first success", async () => 
   });
   const { redeemPassword } = loadAi(impl);
   const vended = await redeemPassword(["nope", "right", "never-tried"]);
-  assert.deepEqual(plain(vended), { anthropic: "sk-ant-real", gemini: "", openai: "" });
+  assert.deepEqual(plain(vended), { anthropic: "sk-ant-real", gemini: "", openai: "", speech: "" });
   assert.deepEqual(calls.map((c) => (c.body as { password: string }).password), ["nope", "right"]);
 });
 
@@ -146,7 +147,7 @@ test("a redeemed password is replaced by the keys and never stored", () => {
     gemini: "AIzaReal",
     openai: "sk-real",
   });
-  assert.deepEqual(plain(next), { anthropic: "sk-ant-real", gemini: "AIzaReal", openai: "sk-real" });
+  assert.deepEqual(plain(next), { anthropic: "sk-ant-real", gemini: "AIzaReal", openai: "sk-real", speech: "" });
   assert.ok(!JSON.stringify(next).includes("hemmelig"));
 });
 
@@ -162,11 +163,34 @@ test("providers the server did not vend are left empty, not left holding the pas
   const { mergeVended } = loadAi();
   const entered = { anthropic: "hemmelig", gemini: "", openai: "" };
   const next = mergeVended(entered, ["hemmelig"], { anthropic: "sk-ant-real", gemini: "", openai: "" });
-  assert.deepEqual(plain(next), { anthropic: "sk-ant-real", gemini: "", openai: "" });
+  assert.deepEqual(plain(next), { anthropic: "sk-ant-real", gemini: "", openai: "", speech: "" });
+});
+
+test("a speech-only vend (the speech password) counts as usable", async () => {
+  const { impl } = fakeFetch(() => ({
+    ok: true,
+    json: { anthropicKey: "", geminiKey: "", openaiKey: "", speechKey: "AIzaRealSpeech" },
+  }));
+  const { redeemPassword } = loadAi(impl);
+  const vended = await redeemPassword(["tale-passord"]);
+  assert.deepEqual(plain(vended), { anthropic: "", gemini: "", openai: "", speech: "AIzaRealSpeech" });
+});
+
+test("a speech password entered in the speech field is replaced by the key", () => {
+  const { mergeVended } = loadAi();
+  const entered = { anthropic: "", gemini: "", openai: "", speech: "tale-passord" };
+  const next = mergeVended(entered, ["tale-passord"], {
+    anthropic: "",
+    gemini: "",
+    openai: "",
+    speech: "AIzaRealSpeech",
+  });
+  assert.deepEqual(plain(next), { anthropic: "", gemini: "", openai: "", speech: "AIzaRealSpeech" });
+  assert.ok(!JSON.stringify(next).includes("tale-passord"));
 });
 
 test("when redemption fails the text is kept exactly as entered", () => {
   const { mergeVended } = loadAi();
   const entered = { anthropic: "whatever-this-is", gemini: "", openai: "sk-mine" };
-  assert.deepEqual(plain(mergeVended(entered, ["whatever-this-is"], null)), entered);
+  assert.deepEqual(plain(mergeVended(entered, ["whatever-this-is"], null)), { ...entered, speech: "" });
 });
