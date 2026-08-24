@@ -5,7 +5,17 @@
 // it needs and restores them afterwards.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import handler from "../netlify/functions/keys.mts";
+import { handleKeysRequest, type KeysDeps } from "../netlify/functions/keys.mts";
+
+// The vending logic and the rate limiter are tested separately; these tests
+// inject a limiter that always allows, so a budget change cannot silently
+// turn every assertion below into a 429.
+const ALLOW_ALL: KeysDeps = {
+  checkBudget: async () => ({ allowed: true, retryAfterSeconds: 0 }),
+  recordFailure: async () => {},
+  clientIp: () => "1.2.3.4",
+};
+const handler = (req: Request, deps: KeysDeps = ALLOW_ALL) => handleKeysRequest(req, deps);
 
 const VARS = [
   "XPLAINER_PASSWORD",
@@ -138,13 +148,63 @@ test("no response ever echoes the password back", async () => {
   });
 });
 
-// The vending endpoint guesses passwords for a living if left unguarded, so
-// the platform rate limit is part of the contract, not a nice-to-have.
-test("the endpoint declares a per-IP rate limit", async () => {
-  const { config } = await import("../netlify/functions/keys.mts");
-  const rl = config.rateLimit;
-  assert.ok(rl, "keys.mts must export config.rateLimit");
-  assert.equal(rl.aggregateBy, "ip", "must limit per IP, not per domain");
-  assert.ok(rl.windowLimit > 0 && rl.windowLimit <= 60, `windowLimit ${rl.windowLimit} outside sane range`);
-  assert.ok(rl.windowSize >= 600, "window must be at least 10 minutes to be meaningful");
+// ---------- rate limiting ----------
+
+test("a caller out of budget gets 429 before the password is even checked", async () => {
+  await withEnv(CONFIGURED, async () => {
+    let compared = false;
+    const deps: KeysDeps = {
+      checkBudget: async () => ({ allowed: false, retryAfterSeconds: 900 }),
+      recordFailure: async () => { compared = true; },
+      clientIp: () => "1.2.3.4",
+    };
+    const res = await handler(post({ password: "open-sesame" }), deps);
+    assert.equal(res.status, 429);
+    assert.equal(res.headers.get("Retry-After"), "900");
+    assert.equal(compared, false, "a throttled request must not consume the vending path");
+  });
+});
+
+test("a wrong password is charged to the budget", async () => {
+  await withEnv(CONFIGURED, async () => {
+    const charged: string[] = [];
+    const deps: KeysDeps = { ...ALLOW_ALL, recordFailure: async (ip) => { charged.push(ip); } };
+    await handler(post({ password: "wrong" }), deps);
+    assert.deepEqual(charged, ["1.2.3.4"]);
+  });
+});
+
+test("a CORRECT password is not charged to the budget", async () => {
+  // Otherwise somebody who knows the password locks themselves out by saving
+  // the settings dialog a few times.
+  await withEnv(CONFIGURED, async () => {
+    const charged: string[] = [];
+    const deps: KeysDeps = { ...ALLOW_ALL, recordFailure: async (ip) => { charged.push(ip); } };
+    const res = await handler(post({ password: "open-sesame" }), deps);
+    assert.equal(res.status, 200);
+    assert.deepEqual(charged, []);
+  });
+});
+
+test("a malformed body is charged too — it is a guess like any other", async () => {
+  await withEnv(CONFIGURED, async () => {
+    const charged: string[] = [];
+    const deps: KeysDeps = { ...ALLOW_ALL, recordFailure: async (ip) => { charged.push(ip); } };
+    await handler(post(null, "not json"), deps);
+    assert.deepEqual(charged, ["1.2.3.4"]);
+  });
+});
+
+test("the client IP comes from the platform header, never a spoofable one", async () => {
+  const { defaultClientIp } = await import("../netlify/functions/keys.mts");
+  const req = new Request("https://xplainer.app/api/keys", {
+    method: "POST",
+    headers: { "x-nf-client-connection-ip": "9.9.9.9", "x-forwarded-for": "1.1.1.1" },
+  });
+  assert.equal(defaultClientIp(req), "9.9.9.9");
+  const spoofOnly = new Request("https://xplainer.app/api/keys", {
+    method: "POST",
+    headers: { "x-forwarded-for": "1.1.1.1" },
+  });
+  assert.equal(defaultClientIp(spoofOnly), "", "x-forwarded-for is client-controlled and must be ignored");
 });

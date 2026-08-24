@@ -14,9 +14,29 @@
 // break /api/generate. Distinct names keep the two paths independent.
 //
 // Wrong password and malformed request return the SAME 401 — nothing here
-// tells a prober how close they got, not even the password's length.
+// tells a prober how close they got, not even the password's length — and
+// both are charged to a per-IP failure budget so the password cannot be
+// guessed at line speed.
 import type { Config } from "@netlify/functions";
 import { createHash, timingSafeEqual } from "node:crypto";
+import { checkFailureBudget, recordFailure } from "../lib/rate-limit.mts";
+
+/** Injected so the vending logic and the limiter can be tested apart. */
+export interface KeysDeps {
+  checkBudget: (id: string) => Promise<{ allowed: boolean; retryAfterSeconds: number }>;
+  recordFailure: (id: string) => Promise<void>;
+  clientIp: (req: Request) => string;
+}
+
+/**
+ * Netlify sets x-nf-client-connection-ip itself and a client cannot forge it.
+ * x-forwarded-for CAN be forged, so it is deliberately not a fallback —
+ * honouring it would let one attacker rotate through fake IPs to dodge the
+ * budget entirely.
+ */
+export function defaultClientIp(req: Request): string {
+  return req.headers.get("x-nf-client-connection-ip") ?? "";
+}
 
 /** Constant-time equality via digest comparison (also hides length). */
 function passwordMatches(supplied: string, expected: string): boolean {
@@ -25,7 +45,7 @@ function passwordMatches(supplied: string, expected: string): boolean {
   return timingSafeEqual(a, b);
 }
 
-export default async (req: Request): Promise<Response> => {
+export async function handleKeysRequest(req: Request, deps: KeysDeps): Promise<Response> {
   const headers = { "content-type": "application/json", "Cache-Control": "no-store" };
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "method" }), { status: 405, headers });
@@ -41,6 +61,16 @@ export default async (req: Request): Promise<Response> => {
     return new Response(JSON.stringify({ error: "vending disabled" }), { status: 503, headers });
   }
 
+  // Budget check first: a throttled caller never reaches the comparison.
+  const ip = deps.clientIp(req);
+  const budget = await deps.checkBudget(ip);
+  if (!budget.allowed) {
+    return new Response(JSON.stringify({ error: "rate limited" }), {
+      status: 429,
+      headers: { ...headers, "Retry-After": String(budget.retryAfterSeconds) },
+    });
+  }
+
   let password = "";
   try {
     const body = (await req.json()) as { password?: unknown };
@@ -50,24 +80,21 @@ export default async (req: Request): Promise<Response> => {
   }
 
   if (!password || !passwordMatches(password, expected)) {
+    // Only failures are charged, so knowing the password never locks you out.
+    await deps.recordFailure(ip);
     return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers });
   }
 
   return new Response(JSON.stringify({ anthropicKey, geminiKey, openaiKey }), { status: 200, headers });
-};
+}
+
+export default async (req: Request): Promise<Response> =>
+  handleKeysRequest(req, {
+    checkBudget: (id) => checkFailureBudget(id),
+    recordFailure: (id) => recordFailure(id),
+    clientIp: defaultClientIp,
+  });
 
 export const config: Config = {
   path: "/api/keys",
-  // Without this the shared password can be guessed at line speed. Netlify
-  // enforces the limit at the edge, before the function runs, and across all
-  // instances — unlike an in-process counter, which resets on every cold
-  // start. Deliberately generous: a save tries at most one candidate per
-  // filled field, so 30/hour is roughly ten honest attempts, while leaving a
-  // brute-forcer ~720 guesses a day against a long password.
-  rateLimit: {
-    windowSize: 60 * 60,
-    windowLimit: 30,
-    aggregateBy: "ip",
-    action: "rate_limit",
-  },
 };
