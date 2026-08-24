@@ -58,4 +58,16 @@ export default async (req: Request): Promise<Response> => {
 
 export const config: Config = {
   path: "/api/keys",
+  // Without this the shared password can be guessed at line speed. Netlify
+  // enforces the limit at the edge, before the function runs, and across all
+  // instances — unlike an in-process counter, which resets on every cold
+  // start. Deliberately generous: a save tries at most one candidate per
+  // filled field, so 30/hour is roughly ten honest attempts, while leaving a
+  // brute-forcer ~720 guesses a day against a long password.
+  rateLimit: {
+    windowSize: 60 * 60,
+    windowLimit: 30,
+    aggregateBy: "ip",
+    action: "rate_limit",
+  },
 };

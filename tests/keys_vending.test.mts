@@ -137,3 +137,14 @@ test("no response ever echoes the password back", async () => {
     }
   });
 });
+
+// The vending endpoint guesses passwords for a living if left unguarded, so
+// the platform rate limit is part of the contract, not a nice-to-have.
+test("the endpoint declares a per-IP rate limit", async () => {
+  const { config } = await import("../netlify/functions/keys.mts");
+  const rl = config.rateLimit;
+  assert.ok(rl, "keys.mts must export config.rateLimit");
+  assert.equal(rl.aggregateBy, "ip", "must limit per IP, not per domain");
+  assert.ok(rl.windowLimit > 0 && rl.windowLimit <= 60, `windowLimit ${rl.windowLimit} outside sane range`);
+  assert.ok(rl.windowSize >= 600, "window must be at least 10 minutes to be meaningful");
+});
