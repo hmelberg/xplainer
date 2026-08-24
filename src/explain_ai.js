@@ -32,7 +32,7 @@
   var KNOWN_BLOCKS = new Set([
     "accordion", "annotate", "annotate_image", "annotate_table", "bpy",
     "brython", "celebrate", "comment", "comp", "component", "countdown",
-    "defaults", "dim", "draw", "flash-card", "flash_card", "flashcard",
+    "defaults", "dim", "draw", "drawcast", "flash-card", "flash_card", "flashcard",
     "highlight", "html", "ignore", "image", "img", "intro", "js", "link",
     "mark", "mark_image", "math", "mermaid", "message", "multiple_choice",
     "names", "new_page", "no_dim", "p5", "pdf", "presets", "py", "pyodide",

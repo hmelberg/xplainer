@@ -55,7 +55,7 @@ voice right first.
 
 **Pass 2 — MARK.** Re-read the draft. For each sentence or paragraph,
 ask: *does this want to be something other than prose?*
-- A concrete picture → `img`, `draw`, `svg`, `mermaid`
+- A concrete picture → `drawcast` (preferred for diagrams), `img`, `draw`, `svg`, `mermaid`
 - Code that illustrates the idea → `python`, `r`, `js`, `p5`
 - A formal equation → `math` (or `$...$` inline)
 - Suspense, a pause, a delayed answer → `countdown`, `reveal`, `wait`
@@ -108,6 +108,7 @@ ones; omit args you don't need — defaults are sensible.
 | p5 | p5.js sketch / interactive simulation | p5 code (setup/draw) |
 | mermaid | Flowchart / diagram | mermaid source |
 | draw | Step-by-step drawing with optional narration | line(...), text(...), circle(...), rect(...), ellipse(...), polygon(...), path(...); speak="..." per line |
+| drawcast | Animated, narrated hand-drawn figure — BEST for conceptual diagrams | request="what to draw and the story it tells"; size= |
 | svg | Raw SVG, drawn pencil-style | SVG markup; animate=, wait_until_drawn=, data-step="1" on elements |
 | chart-* | Named chart component (e.g. chart-line) | data/config content |
 | table | Markdown table | header row, --- row, body rows |
@@ -144,6 +145,22 @@ Notes on specific blocks:
 - **question / multiple_choice**: test the core idea, not trivia. The
   app may be set to continue on any submitted answer; control with
   `::: defaults` and `question_wait_for_answer=true/false`.
+- **drawcast**: the PREFERRED block for conceptual figures — markets
+  (supply/demand), decision trees, QALY profiles, physics diagrams,
+  timelines, molecules, 2×2 tables. Emit ONLY the header with a request
+  and an EMPTY body:
+  `::: drawcast(request="a supply and demand diagram; demand shifts right; tell the story of the new equilibrium")`
+  A separate drawing engine compiles the figure after generation.
+  Narration division (strict): the figure narrates itself. Put the story
+  into the request; the surrounding script must NOT explain the figure's
+  content — at most one bridging sentence before the block ("Let's see
+  this in a diagram."). Keep the request plain text without " quotes.
+  Figure kinds that work especially well: supply_demand, decision_tree,
+  qaly_profiles, free_body, timeline, two_by_two_table, markov_model,
+  cost_effectiveness_plane, ray_diagram, wave_diagram, energy_diagram,
+  reaction_scheme, cell_diagram, membrane_bilayer, dna_helix, phylo_tree,
+  ring_molecule, protein_secondary — but any drawable idea may be
+  requested. Use draw/svg only for trivial sketches drawcast would waste.
 - **draw**: include axes and label them when relevant (short labels);
   use different colors (`stroke=#f59e0b`, `stroke=#22c55e`) to
   distinguish elements; narrate step by step with `speak="..."` on
@@ -183,11 +200,12 @@ Notes on specific blocks:
    is one coherent argument, not a list of topics.
 8. **Further sources.** Near the end, 1–3 concrete suggestions via
    `link`, `pdf`, `youtube`, or markdown links in `write`.
-9. **Show, don't only tell.** Use `draw`/`svg` for relationships and
-   assumptions, `mermaid` for flows and dependencies, code blocks with
-   visible output for anything computational, `p5` for dynamics and
-   randomness. In technical lectures especially: assumptions,
-   dependencies, and data flow deserve a picture.
+9. **Show, don't only tell.** Use `drawcast` (preferred), or `draw`/`svg`,
+   for relationships and assumptions, `mermaid` for flows and
+   dependencies, code blocks with visible output for anything
+   computational, `p5` for dynamics and randomness. In technical
+   lectures especially: assumptions, dependencies, and data flow
+   deserve a picture.
 
 ## What makes a lecture INTERESTING
 
@@ -216,7 +234,7 @@ Notes on specific blocks:
 - `[INTUITION]` → plain-language explanation
 - `[ALTERNATIVES]` → alternatives with pros/cons
 - `[REFERENCES]` / `[FURTHER SOURCES]` → sources via link/pdf/youtube/write
-- `[DRAWING]` / `[DRAWING: X]` → `::: draw`
+- `[DRAWING]` / `[DRAWING: X]` → `::: drawcast`
 - `[IMAGE: X]` → `::: img` (describe X if no URL)
 - `[CODE]` / `[CODE: R]` / `[CODE: Python]` → `::: r` / `::: python`
 - `[TABLE]` → `::: table`
