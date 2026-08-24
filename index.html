@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://unpkg.com" crossorigin />
 <!-- Preload the biggest local script so it starts downloading alongside the
      CDN libraries during HTML parsing instead of waiting until the end of body. -->
-<link rel="preload" as="script" href="src/explain_player.js?v=8" />
+<link rel="preload" as="script" href="src/explain_player.js?v=9" />
 <!-- Fonts used by playful/chalk skins so they render without relying on system installs -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,400;0,700;1,400;1,700&family=Patrick+Hand&family=Kalam:wght@300;400;700&family=Fira+Code:wght@400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&display=swap" />
 <style>
@@ -1196,7 +1196,7 @@
      on first :::mark / :::annotate / :::highlight / :::annotate_table. Saves
      ~40-80 ms on cold cache for lectures without annotations. -->
 <script defer src="src/explain_parser.js"></script>
-<script defer src="src/explain_defaults.js"></script>
+<script defer src="src/explain_defaults.js?v=2"></script>
 <script>
   window.explainAppBaseUrl = window.explainAppBaseUrl || "https://cdn.jsdelivr.net/gh/explainify/app@main";
   window.explainComponentsScriptUrl = "src/explain_components.js?v=10";
@@ -1222,12 +1222,12 @@
 <script defer src="src/player/handlers/media.js?v=2"></script>
 <script defer src="src/player/handlers/annotation.js"></script>
 <script defer src="src/player/handlers/diagrams.js"></script>
-<script defer src="src/player/handlers/drawcast.js?v=2"></script>
+<script defer src="src/player/handlers/drawcast.js?v=3"></script>
 <script defer src="src/player/handlers/interactive.js"></script>
 <script defer src="src/player/handlers/engine_meta.js"></script>
 <script defer src="src/player/handlers/fx.js"></script>
-<script defer src="src/explain_player.js?v=8"></script>
-<script defer src="src/explain_ai.js?v=7"></script>
+<script defer src="src/explain_player.js?v=9"></script>
+<script defer src="src/explain_ai.js?v=8"></script>
 <script defer src="src/explain_figures.js?v=2"></script>
 <script defer src="src/explain_gdoc.js?v=4"></script>
 <script defer src="src/explain_github.js?v=2"></script>

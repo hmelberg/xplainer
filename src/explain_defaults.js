@@ -21,6 +21,8 @@ window.explainDefaults = {
   typewriter_list_pad_px: 20,
   draw_speed_sec_per_100: 1.0,
   draw_animate: true,
+  /* Default look for :::drawcast figures (clean|sketchy); style= on the block overrides. */
+  drawcast_style: "clean",
   /* Author coordinate space: a square viewBox running 0..draw_height_px on both
      axes. This is NOT the rendered size — the canvas scales to the column width
      (capped by draw_max_width_px) and stays square. */

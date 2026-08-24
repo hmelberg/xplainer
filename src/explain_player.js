@@ -7363,6 +7363,9 @@ async function runActionWatched(action, index, tokenAtStart) {
   // MB), so they get a much longer leash than a narration beat.
   const warnSec = SLOW_RUNTIME_TYPES.has(action && action.type) ? base * 4 : base;
   if (!(base > 0)) return runAction(action, tokenAtStart);
+  // Long-running handlers (drawcast figures) report liveness by stamping
+  // state.actionHeartbeat; a recent stamp counts as progress below.
+  state.actionHeartbeat = 0;
 
   let skipped = false;
   let poll = null;
@@ -7376,7 +7379,8 @@ async function runActionWatched(action, index, tokenAtStart) {
     let deadline = Date.now() + warnSec * 1000;
     let warned = false;
     poll = setInterval(() => {
-      if (state.awaitingUserInput > 0 || tokenAtStart !== state.cancelToken) {
+      if (state.awaitingUserInput > 0 || tokenAtStart !== state.cancelToken ||
+          (state.actionHeartbeat && Date.now() - state.actionHeartbeat < 2000)) {
         deadline = Date.now() + warnSec * 1000;
         if (warned) { warned = false; hideStallNotice(); }
         return;

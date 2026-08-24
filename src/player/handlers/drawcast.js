@@ -9,8 +9,10 @@
  * TTS, captions, mute and speed keep working and nothing speaks twice.
  *
  * Block args: request (stage-1 provenance, shown when the body is missing),
- * size (px max-width, default 480), style (sketchy|clean), speed,
- * location (left|right, drawings default right). Body: YAML (or JSON) spec.
+ * size (px max-width, default 480; shrunk further so the whole figure fits
+ * the viewport), style (sketchy|clean; default = drawcast_style lecture
+ * default, else clean), speed, location (left|right, drawings default
+ * right). Body: YAML (or JSON) spec.
  */
 (function () {
   "use strict";
@@ -47,6 +49,7 @@
     return {
       speak: function (text) {
         if (api.isAborted()) return Promise.resolve();
+        api.state.actionHeartbeat = Date.now();
         return Promise.resolve(api.speak(text, api.tokenAtStart, action));
       },
       cancel: function () {},
@@ -60,6 +63,7 @@
     var size = parseInt(action.size, 10) || 480;
     container.style.maxWidth = size + "px";
     container.style.width = "100%";
+    container.style.margin = "0 auto";
     api.appendToLocation(container, action.location || (api.state && api.state.defaults && api.state.defaults.draw_location) || "right");
 
     var specText = String(action.content || "");
@@ -69,11 +73,14 @@
     });
     if (!meaningful) {
       var comment = (specText.split("\n").find(function (l) { return l.trim().charAt(0) === "#"; }) || "").trim();
+      var compiling = window.XplainerAI && window.XplainerAI.figuresCompiling;
       container.appendChild(errorCard(
-        comment ? comment.replace(/^#\s*/, "")
-          : action.request
-            ? 'this figure has not been generated yet (request="' + action.request + '"). Generate with an Anthropic key or the password (⚙), or paste a drawcast spec into the block.'
-            : "the block body is empty — put a drawcast YAML spec in it."));
+        compiling && action.request
+          ? 'this figure is still being generated ("' + action.request + '"). Wait for the status line to finish, then press Play again.'
+          : comment ? comment.replace(/^#\s*/, "")
+            : action.request
+              ? 'this figure has not been generated yet (request="' + action.request + '"). Generate with an Anthropic key or the password (⚙), or paste a drawcast spec into the block.'
+              : "the block body is empty — put a drawcast YAML spec in it."));
       return;
     }
 
@@ -91,14 +98,26 @@
     }
     if (api.isAborted()) return;
 
+    // Shrink the figure so the whole thing (title + 4:3 stage + caption
+    // strip) fits between its current position and the bottom bar — the
+    // stage's height is width * 3/4, so height budget converts to a width cap.
+    var rect = container.getBoundingClientRect();
+    var bar = document.getElementById("bottomBar");
+    var availH = window.innerHeight - rect.top - (bar ? bar.offsetHeight : 0) - 16;
+    var chromeH = (loaded.spec && loaded.spec.title ? 34 : 0) + 54;
+    var fitWidth = Math.floor((availH - chromeH) * 4 / 3);
+    if (fitWidth >= 260 && fitWidth < size) container.style.maxWidth = fitWidth + "px";
+
     var instant = !!(api.runOpts && api.runOpts.instant);
+    var styleArg = action.style || (api.state && api.state.defaults && api.state.defaults.drawcast_style) || "clean";
     var handle;
     try {
       handle = await engine.render(loaded.spec, container, {
-        style: action.style === "clean" ? "clean" : "sketchy",
+        style: styleArg === "sketchy" ? "sketchy" : "clean",
         mode: instant ? "instant" : "narrated",
         speed: parseFloat(action.speed) || (api.state && api.state.speed) || 1,
         speech: makeSpeechAdapter(api, action),
+        callbacks: { onStep: function () { api.state.actionHeartbeat = Date.now(); } },
       });
     } catch (err) {
       container.appendChild(errorCard(err && err.message ? err.message : String(err)));
@@ -112,6 +131,12 @@
       handle.timeline.inputGate = function () {
         return waitForClick(undefined, action.location || "right", api.tokenAtStart);
       };
+    }
+
+    // The container was appended empty and grew after the async mount, so
+    // xplainer's append-time scroll fired before there was anything to show.
+    if (!instant && typeof container.scrollIntoView === "function") {
+      container.scrollIntoView({ block: "nearest", behavior: "smooth" });
     }
 
     try {

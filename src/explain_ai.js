@@ -572,6 +572,16 @@
     }
     var textAtStart = textarea.value;
     els.generate.disabled = true;
+    // Playback from the placeholder text mid-compile shows "not generated
+    // yet" cards — gate Play and let the drawcast handler explain why.
+    var playBtn = document.getElementById("playPauseBtn");
+    window.XplainerAI.figuresCompiling = true;
+    if (playBtn) { playBtn.disabled = true; playBtn.title = "Drawings are being generated…"; }
+    function ungate() {
+      els.generate.disabled = false;
+      window.XplainerAI.figuresCompiling = false;
+      if (playBtn) { playBtn.disabled = false; playBtn.title = "Play/Pause"; }
+    }
     return fig
       .compileAll(text, {
         apiKey: key,
@@ -581,7 +591,7 @@
       })
       .then(
         function (result) {
-          els.generate.disabled = false;
+          ungate();
           if (textarea.value !== textAtStart) {
             // The textarea changed while stage 2 was running (a second
             // Generate run, or manual edits) — applying now would clobber
@@ -603,7 +613,7 @@
           return { text: result.text, note: note, noteIsError: !!result.failed };
         },
         function (err) {
-          els.generate.disabled = false;
+          ungate();
           var message = err && err.message ? err.message : String(err);
           return { text: text, note: "drawing generation failed: " + message, noteIsError: true };
         }
