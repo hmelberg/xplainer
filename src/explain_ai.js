@@ -538,13 +538,57 @@
       setStatus(accumulated ? "Failed mid-generation (partial kept): " + err.message : err.message, true);
       return;
     }
-    var unknown = lintBlocks(accumulated);
-    var blocks = (accumulated.match(/^:::/gm) || []).length;
-    if (unknown.length) {
-      setStatus("⚠ Done (" + mode + ", " + blocks + " blocks) — unknown blocks will play as plain text: " + unknown.join(", "), true);
-    } else {
-      setStatus("Done (" + mode + ", " + blocks + " blocks). Press Play to preview.");
+    compileFigures(textarea, accumulated).then(function (r) {
+      var unknown = lintBlocks(r.text);
+      var blocks = (r.text.match(/^:::/gm) || []).length;
+      var base = "Done (" + mode + ", " + blocks + " blocks)";
+      if (unknown.length) {
+        setStatus("⚠ " + base + " — unknown blocks will play as plain text: " + unknown.join(", "), true);
+      } else if (r.note) {
+        setStatus(base + " — " + r.note, r.noteIsError);
+      } else {
+        setStatus(base + ". Press Play to preview.");
+      }
+    });
+  }
+
+  // Stage 2: drawcast figure placeholders → full specs (src/explain_figures.js).
+  // Resolves to { text, note, noteIsError } and never rejects; on any skip the
+  // original text is returned so lint/status still run.
+  function compileFigures(textarea, text) {
+    var fig = window.XplainerFigures;
+    if (!fig) return Promise.resolve({ text: text, note: null });
+    var placeholders = fig.findPlaceholders(text);
+    if (!placeholders.length) return Promise.resolve({ text: text, note: null });
+    var key = (getKeys().anthropic || "").trim();
+    if (!key) {
+      return Promise.resolve({
+        text: text,
+        note: placeholders.length + " drawing(s) NOT generated — figures need an Anthropic key or the password (⚙).",
+        noteIsError: true,
+      });
     }
+    return fig
+      .compileAll(text, {
+        apiKey: key,
+        onProgress: function (done, total, request) {
+          setStatus("Drawing " + (done + 1) + " of " + total + "… (" + String(request).slice(0, 60) + ")");
+        },
+      })
+      .then(
+        function (result) {
+          textarea.value = result.text;
+          state.generated = result.text;
+          textarea.dispatchEvent(new Event("input", { bubbles: true }));
+          var note = result.failed
+            ? result.compiled + " drawing(s) generated, " + result.failed + " failed (kept as # comments — regenerate or fill by hand)."
+            : result.compiled + " drawing(s) generated.";
+          return { text: result.text, note: note, noteIsError: !!result.failed };
+        },
+        function (err) {
+          return { text: text, note: "drawing generation failed: " + err.message, noteIsError: true };
+        }
+      );
   }
 
   function swapRestore() {
