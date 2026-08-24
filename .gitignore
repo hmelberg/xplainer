@@ -37,3 +37,7 @@ yarn-error.log*
 dist/
 build/
 *.log
+
+# Local Netlify folder
+.netlify
+deno.lock

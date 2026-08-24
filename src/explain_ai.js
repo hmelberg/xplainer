@@ -62,6 +62,66 @@
     try { return JSON.parse(lsGet(LS_KEYS, "{}")) || {}; } catch (e) { return {}; }
   }
 
+  // ---------- keys & password redemption ----------
+
+  var PROVIDERS = ["anthropic", "gemini", "openai"];
+  // Just enough to tell "this is a real key" from "this is something else".
+  var KEY_PREFIXES = { anthropic: "sk-ant-", gemini: "AIza", openai: "sk-" };
+  var VENDING_ENDPOINT = "/api/keys";
+
+  function looksLikeKey(provider, text) {
+    var prefix = KEY_PREFIXES[provider];
+    return !!prefix && text.indexOf(prefix) === 0;
+  }
+
+  /**
+   * The key fields also accept the shared password (deliberately
+   * unadvertised): anything that doesn't look like that provider's key is
+   * TRIED against the vending endpoint — the server decides. Resolves to the
+   * vended keys, or to null when nothing redeemed (wrong password, vending
+   * off, offline), in which case the text is stored exactly as entered.
+   * Nothing about the password — not even its shape — lives in this file.
+   */
+  function redeemPassword(candidates) {
+    var remaining = candidates.slice();
+    function attempt() {
+      if (!remaining.length) return Promise.resolve(null);
+      var password = remaining.shift();
+      return fetch(VENDING_ENDPOINT, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ password: password }),
+      }).then(function (res) {
+        if (!res.ok) return attempt();
+        return res.json().then(function (json) {
+          var vended = {
+            anthropic: typeof json.anthropicKey === "string" ? json.anthropicKey : "",
+            gemini: typeof json.geminiKey === "string" ? json.geminiKey : "",
+            openai: typeof json.openaiKey === "string" ? json.openaiKey : "",
+          };
+          var usable = PROVIDERS.some(function (p) { return vended[p].length > 0; });
+          return usable ? vended : attempt();
+        });
+      }).catch(function () { return attempt(); });
+    }
+    return attempt();
+  }
+
+  /**
+   * What to persist after a save: the keys as entered, except that any field
+   * whose text turned out to be the password is cleared (never stored) and
+   * every vended key is filled in. Keys the user typed themselves survive a
+   * redemption that didn't cover their provider.
+   */
+  function mergeVended(entered, candidates, vended) {
+    var next = {};
+    PROVIDERS.forEach(function (p) { next[p] = entered[p] || ""; });
+    if (!vended) return next;
+    PROVIDERS.forEach(function (p) { if (candidates.indexOf(next[p]) >= 0) next[p] = ""; });
+    PROVIDERS.forEach(function (p) { if (vended[p]) next[p] = vended[p]; });
+    return next;
+  }
+
   function setStatus(text, isError) {
     var el = document.getElementById("editorStatus");
     if (!el) return;
@@ -165,18 +225,29 @@
     els.keyGemini = overlay.querySelector("#aiKeyGemini");
     els.keyOpenai = overlay.querySelector("#aiKeyOpenai");
 
-    overlay.querySelector("#aiKeysSaveBtn").addEventListener("click", function () {
-      lsSet(LS_KEYS, JSON.stringify({
-        anthropic: els.keyAnthropic.value.trim(),
-        gemini: els.keyGemini.value.trim(),
-        openai: els.keyOpenai.value.trim(),
-      }));
-      closeSettings();
-      setStatus("API keys saved in this browser.");
-    });
+    overlay.querySelector("#aiKeysSaveBtn").addEventListener("click", saveKeys);
     overlay.querySelector("#aiKeysCloseBtn").addEventListener("click", closeSettings);
     overlay.addEventListener("click", function (e) {
       if (e.target === overlay) closeSettings();
+    });
+  }
+
+  function saveKeys() {
+    var fields = { anthropic: els.keyAnthropic, gemini: els.keyGemini, openai: els.keyOpenai };
+    var entered = {};
+    var candidates = [];
+    PROVIDERS.forEach(function (p) {
+      var value = fields[p].value.trim();
+      entered[p] = value;
+      if (value && !looksLikeKey(p, value) && candidates.indexOf(value) < 0) candidates.push(value);
+    });
+    if (candidates.length) setStatus("Checking…");
+    redeemPassword(candidates).then(function (vended) {
+      var next = mergeVended(entered, candidates, vended);
+      PROVIDERS.forEach(function (p) { fields[p].value = next[p]; });
+      lsSet(LS_KEYS, JSON.stringify(next));
+      closeSettings();
+      setStatus(vended ? "Keys unlocked." : "API keys saved in this browser.");
     });
   }
 
@@ -470,6 +541,15 @@
     injectStyles();
     buildRow(toolbar);
     buildSettingsModal();
+  }
+
+  // Pure helpers, exposed for tests (and usable from the console).
+  if (typeof window !== "undefined") {
+    window.XplainerAI = {
+      looksLikeKey: looksLikeKey,
+      redeemPassword: redeemPassword,
+      mergeVended: mergeVended,
+    };
   }
 
   if (document.readyState === "loading") {
