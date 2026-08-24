@@ -1,0 +1,21 @@
+::: title(title=Supply and demand — drawn by drawcast)
+::: write_speak
+Let's look at how a market finds its price.
+::: drawcast(size=520)
+title: Demand and supply
+template: supply_demand
+params:
+  demand: { label: D }
+  supply: { label: S }
+  equilibrium: { show: true, guides: true }
+commands:
+  - speak: Let's build a market diagram and find where the price settles.
+  - draw: [axes]
+    speak: Price on the vertical axis, quantity on the horizontal.
+  - pause: 0.3
+  - draw: [demand_curve, label_D]
+    speak: 'This falling line is demand: as price falls, quantity demanded rises.'
+  - draw: [supply_curve, label_S]
+    speak: 'And this rising line is supply.'
+::: write_speak
+Where the two lines cross, the market settles.
