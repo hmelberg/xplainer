@@ -125,6 +125,20 @@ with an **empty body**. `drawcast` is added to `KNOWN_BLOCKS` in
 `explain_ai.js` and to the parser/prompt drift guard
 (`tests/prompt_block_drift.py`).
 
+The stage-1 prompt addition is ~20 lines, NOT drawcast's material. It
+contains only: (a) the placeholder convention above; (b) a one-line index of
+the 16 template *names* (~100 tokens) so the model knows what kinds of
+figures are cheap and reliable to request — the 45k-char catalog and 22k
+schema stay in stage 2 exclusively; (c) the **narration-division rule**: the
+figure narrates itself. The lecture text must not explain the figure's
+content — at most one bridging sentence before the block ("Let's see this in
+a diagram") — and the `request` must say what story the figure should tell,
+because drawcast's `speak:` lines will carry that explanation. This division
+is structural, not just prompted: stage 2 sees only the `request`, so the
+figure is self-contained, and at runtime all speech (lecture and figure)
+flows sequentially through xplainer's single TTS pipeline, so overlap is
+impossible — the only failure mode is redundancy, which the rule targets.
+
 **Stage 2 — per-figure compilation.** After the main stream completes,
 `explain_ai.js` scans the editor text for drawcast blocks with a `request`
 and empty body. For each, it lazy-loads `vendor/drawcast/compiler.js` and
@@ -146,6 +160,14 @@ header for provenance and later regeneration. Progress shows in the AI bar
 - **Failure path:** a failed compilation leaves the block with its `request`
   and an error comment line in the body; generation continues with the next
   figure.
+- **Cost:** lecture generation itself is essentially unchanged (~1% prompt
+  growth). Each figure costs one drawcast compile — the same as generating
+  that drawing in the drawcast app today (~23k-token system prompt +
+  output + capped repairs). The byte-stable prompt prefix (schema + catalog
+  + few-shots) carries `cache_control`, so in a multi-figure lecture the
+  second and later figures, and all repair rounds, hit the Anthropic prompt
+  cache; repairs also downshift to a cheaper model per drawcast's existing
+  policy.
 
 ## 5. Error handling (playback)
 
