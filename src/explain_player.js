@@ -8826,7 +8826,7 @@ if (typeof window !== "undefined" && window.Xplainer && window.Xplainer.playerAp
       // Structure / defaults / layout helpers
       autoDimLatest, clearDimAll, applySkinDefaults, extractDefaults,
       applyThemeDefaults, applyLayout, preloadPyodide, startBackgroundRequirements,
-      applyWebDefaults, fastForwardTo, cancelAll, waitForClick,
+      applyWebDefaults, fastForwardTo, cancelAll, waitForClick, setPageTitle,
       // Text / speech / markdown helpers
       speakText, speakTextPlan, parseWriteSpeakChunk, splitWriteText,
       renderMarkdownBlock, resolveLocation, getColumnForLocation,

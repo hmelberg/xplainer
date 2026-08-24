@@ -13,7 +13,7 @@
   var SCRIPT_SRC = (document.currentScript && document.currentScript.src) || "";
   var COMPILER_URL = SCRIPT_SRC
     ? new URL("../vendor/drawcast/compiler.js", SCRIPT_SRC).href
-    : "vendor/drawcast/compiler.js";
+    : "./vendor/drawcast/compiler.js";
 
   /**
    * Placeholders = ::: drawcast headers with a request= arg whose body is

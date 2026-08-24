@@ -543,7 +543,9 @@
       var blocks = (r.text.match(/^:::/gm) || []).length;
       var base = "Done (" + mode + ", " + blocks + " blocks)";
       if (unknown.length) {
-        setStatus("⚠ " + base + " — unknown blocks will play as plain text: " + unknown.join(", "), true);
+        var warning = "⚠ " + base + " — unknown blocks will play as plain text: " + unknown.join(", ");
+        if (r.note) warning += " — " + r.note;
+        setStatus(warning, true);
       } else if (r.note) {
         setStatus(base + " — " + r.note, r.noteIsError);
       } else {
@@ -568,6 +570,8 @@
         noteIsError: true,
       });
     }
+    var textAtStart = textarea.value;
+    els.generate.disabled = true;
     return fig
       .compileAll(text, {
         apiKey: key,
@@ -577,6 +581,19 @@
       })
       .then(
         function (result) {
+          els.generate.disabled = false;
+          if (textarea.value !== textAtStart) {
+            // The textarea changed while stage 2 was running (a second
+            // Generate run, or manual edits) — applying now would clobber
+            // whatever is there. Keep the compiled result reachable via
+            // Restore/Redo instead of overwriting silently.
+            state.generated = result.text;
+            return {
+              text: result.text,
+              note: "text changed while drawings were generating — press Restore/Redo to load the compiled version.",
+              noteIsError: true,
+            };
+          }
           textarea.value = result.text;
           state.generated = result.text;
           textarea.dispatchEvent(new Event("input", { bubbles: true }));
@@ -586,7 +603,9 @@
           return { text: result.text, note: note, noteIsError: !!result.failed };
         },
         function (err) {
-          return { text: text, note: "drawing generation failed: " + err.message, noteIsError: true };
+          els.generate.disabled = false;
+          var message = err && err.message ? err.message : String(err);
+          return { text: text, note: "drawing generation failed: " + message, noteIsError: true };
         }
       );
   }

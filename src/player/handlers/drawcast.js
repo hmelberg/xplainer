@@ -23,7 +23,7 @@
   var SCRIPT_SRC = (document.currentScript && document.currentScript.src) || "";
   var ENGINE_URL = SCRIPT_SRC
     ? new URL("../../../vendor/drawcast/engine.js", SCRIPT_SRC).href
-    : "vendor/drawcast/engine.js";
+    : "./vendor/drawcast/engine.js";
   var enginePromise = null;
   function loadEngine() {
     if (!enginePromise) enginePromise = import(ENGINE_URL);
@@ -60,7 +60,7 @@
     var size = parseInt(action.size, 10) || 480;
     container.style.maxWidth = size + "px";
     container.style.width = "100%";
-    api.appendToLocation(container, action.location);
+    api.appendToLocation(container, action.location || (api.state && api.state.defaults && api.state.defaults.draw_location) || "right");
 
     var specText = String(action.content || "");
     var meaningful = specText.split("\n").some(function (l) {
