@@ -88,14 +88,19 @@ defines an unrelated `ui-drawcast` screen-recorder element in
 - **Light DOM**, not shadow: injected styles are `.cs-*`-namespaced already,
   and light DOM avoids the font-in-shadow-DOM problem. The Patrick Hand font
   degrades gracefully when absent (drawcast's `ensureFonts()` races a 900 ms
-  timeout); xplainer adds the Google Fonts link to `index.html`.
+  timeout) — and xplainer's `index.html` already loads Patrick Hand, so no
+  font work is needed.
 
 ## 3. xplainer rendering path
 
 - Built files copied wholesale into `xplainer/vendor/drawcast/` (entry +
   chunks). xplainer stays no-build and self-contained; updating drawcast =
-  rebuild + copy. Save-as-app keeps working because the vendored files ship
-  with the app repo/CDN like every other script.
+  rebuild + copy. Save-as-app correction (found during planning): saved
+  single-file apps load only parser + defaults + player — no `core.js`, no
+  handlers — so ALL registry blocks (mermaid, p5, celebrate, and now
+  drawcast) already degrade to spoken text there. Drawcast matches that
+  existing behavior; fixing save-as-app for handler blocks is a separate
+  follow-up, not this round.
 - New `src/player/handlers/drawcast.js` registers a `:::drawcast` block via
   `window.Xplainer.actions.register` — zero changes to `explain_player.js`.
   Header args: `size`, `style`, `location` (defaults to `right` like
