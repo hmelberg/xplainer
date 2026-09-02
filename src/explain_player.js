@@ -6306,11 +6306,12 @@ async function runAction(action, tokenAtStart, opts = {}) {
       cell.appendChild(output);
       if (shouldAutoRun && code) {
         output.textContent = "Running...";
-        const specs = (action.micropip ?? []).concat(parseMicropipSpecs(code));
-        const autoInstall = action.auto_install ?? state.defaults.pyodide_auto_install ?? true;
-        lastRunPromise = state.pyodideQueue = state.pyodideQueue.then(() => runPyodideCode(code, autoInstall, specs))
+        // This is the webr handler: the code is R, so it must run through the
+        // webR queue and renderer — a copy-paste from the pyodide twin used to
+        // feed R source to the Python runtime here.
+        lastRunPromise = enqueueWebRTask(() => runRCode(code))
           .then((res) => {
-            renderPyodideResult(res, output);
+            renderRResult(res, output);
             scrollColumnToBottom(resultColumn);
           })
           .catch((err) => { output.textContent = String(err); });
